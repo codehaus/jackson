@@ -19,8 +19,6 @@ public abstract class JsonGeneratorBase
     ////////////////////////////////////////////////////
      */
 
-    protected ObjectCodec _objectCodec;
-
     /**
      * Bit flag composed of bits that indicate which
      * {@link org.codehaus.jackson.JsonGenerator.Feature}s
@@ -42,12 +40,11 @@ public abstract class JsonGeneratorBase
     ////////////////////////////////////////////////////
      */
 
-    protected JsonGeneratorBase(int features, ObjectCodec codec)
+    protected JsonGeneratorBase(int features)
     {
         super();
         _features = features;
         _writeContext = JsonWriteContext.createRootContext();
-        _objectCodec = codec;
     }
 
     /*
@@ -74,10 +71,6 @@ public abstract class JsonGeneratorBase
     {
         setPrettyPrinter(new DefaultPrettyPrinter());
     }
-
-    public final void setCodec(ObjectCodec oc) { _objectCodec = oc; }
-
-    public final ObjectCodec getCodec() { return _objectCodec; }
 
     /*
     ////////////////////////////////////////////////////
@@ -217,15 +210,6 @@ public abstract class JsonGeneratorBase
 
     public abstract void writeNull()
         throws IOException, JsonGenerationException;
-
-    /*
-    ////////////////////////////////////////////////////
-    // Public API, write methods, POJOs
-    ////////////////////////////////////////////////////
-     */
-
-    public abstract void writeObject(Object value)
-        throws IOException, JsonProcessingException;
 
     /*
     ////////////////////////////////////////////////////

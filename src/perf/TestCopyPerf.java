@@ -2,23 +2,24 @@ import java.io.*;
 
 import org.codehaus.jackson.*;
 import org.codehaus.jackson.map.TreeMapper;
+import org.codehaus.jackson.map.JsonNode;
 
 public final class TestCopyPerf
 {
     private final static int REPS = 2500;
 
-    final JsonFactory _jsonFactory;
+    final JsonFactory mJsonFactory;
 
-    final JsonNode _tree;
+    final JsonNode mTree;
 
     private TestCopyPerf(File f)
         throws Exception
     {
-        _jsonFactory = new JsonFactory();
+        mJsonFactory = new JsonFactory();
         FileInputStream fis = new FileInputStream(f);
         TreeMapper mapper = new TreeMapper();
-        JsonParser jp = _jsonFactory.createJsonParser(fis);
-        _tree = mapper.readTree(jp);
+        JsonParser jp = mJsonFactory.createJsonParser(fis);
+        mTree = mapper.readTree(jp);
         jp.close();
     }
 
@@ -47,8 +48,8 @@ public final class TestCopyPerf
         JsonGenerator jg = null;
         while (--reps >= 0) {
             bos.reset();
-            jg = _jsonFactory.createJsonGenerator(bos, JsonEncoding.UTF8);
-            _tree.writeTo(jg);
+            jg = mJsonFactory.createJsonGenerator(bos, JsonEncoding.UTF8);
+            mTree.writeTo(jg);
             jg.close();
         }
         return jg.hashCode();

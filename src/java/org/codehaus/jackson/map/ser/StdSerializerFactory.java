@@ -5,8 +5,12 @@ import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.util.*;
 
-import org.codehaus.jackson.*;
-import org.codehaus.jackson.map.*;
+import org.codehaus.jackson.JsonGenerationException;
+import org.codehaus.jackson.JsonGenerator;
+import org.codehaus.jackson.map.JsonSerializable;
+import org.codehaus.jackson.map.JsonSerializer;
+import org.codehaus.jackson.map.SerializerFactory;
+import org.codehaus.jackson.map.SerializerProvider;
 
 /**
  * Factory class that can provide serializers for standard JDK classes,
@@ -95,21 +99,21 @@ public class StdSerializerFactory
         _concrete.put(java.net.URI.class.getName(), StringLikeSerializer.instance);
 
         // Arrays of various types (including common object types)
-        _concrete.put(boolean[].class.getName(), new ArraySerializers.BooleanArraySerializer());
-        _concrete.put(byte[].class.getName(), new ArraySerializers.ByteArraySerializer());
-        _concrete.put(char[].class.getName(), new ArraySerializers.CharArraySerializer());
-        _concrete.put(short[].class.getName(), new ArraySerializers.ShortArraySerializer());
-        _concrete.put(int[].class.getName(), new ArraySerializers.IntArraySerializer());
-        _concrete.put(long[].class.getName(), new ArraySerializers.LongArraySerializer());
-        _concrete.put(float[].class.getName(), new ArraySerializers.FloatArraySerializer());
-        _concrete.put(double[].class.getName(), new ArraySerializers.DoubleArraySerializer());
+        _concrete.put(boolean[].class.getName(), new BooleanArraySerializer());
+        _concrete.put(byte[].class.getName(), new ByteArraySerializer());
+        _concrete.put(char[].class.getName(), new CharArraySerializer());
+        _concrete.put(short[].class.getName(), new ShortArraySerializer());
+        _concrete.put(int[].class.getName(), new IntArraySerializer());
+        _concrete.put(long[].class.getName(), new LongArraySerializer());
+        _concrete.put(float[].class.getName(), new FloatArraySerializer());
+        _concrete.put(double[].class.getName(), new DoubleArraySerializer());
 
-        _concrete.put(Object[].class.getName(), ArraySerializers.ObjectArraySerializer.instance);
-        _concrete.put(String[].class.getName(), new ArraySerializers.StringArraySerializer());
+        _concrete.put(Object[].class.getName(), ObjectArraySerializer.instance);
+        _concrete.put(String[].class.getName(), new StringArraySerializer());
 
         // And then Java Collection classes
-        final ContainerSerializers.IndexedListSerializer indListS = ContainerSerializers.IndexedListSerializer.instance;
-        final ContainerSerializers.CollectionSerializer collectionS = ContainerSerializers.CollectionSerializer.instance;
+        final IndexedListSerializer indListS = IndexedListSerializer.instance;
+        final CollectionSerializer collectionS = CollectionSerializer.instance;
 
         _concrete.put(ArrayList.class.getName(), indListS);
         _concrete.put(Vector.class.getName(), indListS);
@@ -117,7 +121,7 @@ public class StdSerializerFactory
         // (java.util.concurrent has others, but let's allow those to be
         // found via slower introspection; too many to enumerate here)
 
-        final ContainerSerializers.MapSerializer mapS = ContainerSerializers.MapSerializer.instance;
+        final MapSerializer mapS = MapSerializer.instance;
         _concrete.put(HashMap.class.getName(), mapS);
         _concrete.put(Hashtable.class.getName(), mapS);
         _concrete.put(LinkedHashMap.class.getName(), mapS);
@@ -129,8 +133,8 @@ public class StdSerializerFactory
         _concrete.put(TreeSet.class.getName(), collectionS);
 
         // and Enum-variations of set/map
-        _concrete.put(EnumMap.class.getName(), new ContainerSerializers.EnumMapSerializer());
-        _concrete.put(EnumSet.class.getName(), new ContainerSerializers.EnumSetSerializer());
+        _concrete.put(EnumMap.class.getName(), new EnumMapSerializer());
+        _concrete.put(EnumSet.class.getName(), new EnumSetSerializer());
 
         /* Finally, couple of oddball types. Not sure if these are
          * really needed...
@@ -248,16 +252,16 @@ public class StdSerializerFactory
             return SerializableSerializer.instance;
         }
         if (Map.class.isAssignableFrom(type)) {
-            return ContainerSerializers.MapSerializer.instance;
+            return MapSerializer.instance;
         }
         if (Object[].class.isAssignableFrom(type)) {
-            return ArraySerializers.ObjectArraySerializer.instance;
+            return ObjectArraySerializer.instance;
         }
         if (List.class.isAssignableFrom(type)) {
             if (RandomAccess.class.isAssignableFrom(type)) {
-                return ContainerSerializers.IndexedListSerializer.instance;
+                return IndexedListSerializer.instance;
             }
-            return ContainerSerializers.CollectionSerializer.instance;
+            return CollectionSerializer.instance;
         }
         if (Number.class.isAssignableFrom(type)) {
             return NumberSerializer.instance;
@@ -272,7 +276,7 @@ public class StdSerializerFactory
             return UtilDateSerializer.instance;
         }
         if (Collection.class.isAssignableFrom(type)) {
-            return ContainerSerializers.CollectionSerializer.instance;
+            return CollectionSerializer.instance;
         }
         return null;
     }
@@ -289,10 +293,10 @@ public class StdSerializerFactory
     {
         // These need to be in decreasing order of specificity...
         if (Iterator.class.isAssignableFrom(type)) {
-            return ContainerSerializers.IteratorSerializer.instance;
+            return new IteratorSerializer();
         }
         if (Iterable.class.isAssignableFrom(type)) {
-            return ContainerSerializers.IterableSerializer.instance;
+            return new IterableSerializer();
         }
         if (CharSequence.class.isAssignableFrom(type)) {
             return StringLikeSerializer.instance;
@@ -326,7 +330,7 @@ public class StdSerializerFactory
         extends JsonSerializer<String>
     {
         @Override
-            public void serialize(String value, JsonGenerator jgen, SerializerProvider provider)
+		public void serialize(String value, JsonGenerator jgen, SerializerProvider provider)
             throws IOException, JsonGenerationException
         {
             jgen.writeString(value);
@@ -338,18 +342,13 @@ public class StdSerializerFactory
      * type for which {@link Object#toString} returns the desired Json
      * value.
      */
-    public final static class StringLikeSerializer<T>
-        extends JsonSerializer<T>
+    public final static class StringLikeSerializer
+        extends JsonSerializer<Object>
     {
-        public final static StringLikeSerializer<Object> instance = new StringLikeSerializer<Object>();
-
-        /* 17-Feb-2009, tatus: better ensure there is the no-arg constructor,
-         *   so it can be used via annotations
-         */
-        public StringLikeSerializer() { }
+        public final static StringLikeSerializer instance = new StringLikeSerializer();
 
         @Override
-            public void serialize(T value, JsonGenerator jgen, SerializerProvider provider)
+		public void serialize(Object value, JsonGenerator jgen, SerializerProvider provider)
             throws IOException, JsonGenerationException
         {
             jgen.writeString(value.toString());
@@ -366,7 +365,7 @@ public class StdSerializerFactory
         extends JsonSerializer<Integer>
     {
         @Override
-            public void serialize(Integer value, JsonGenerator jgen, SerializerProvider provider)
+		public void serialize(Integer value, JsonGenerator jgen, SerializerProvider provider)
             throws IOException, JsonGenerationException
         {
             jgen.writeNumber(value.intValue());
@@ -384,7 +383,7 @@ public class StdSerializerFactory
         final static IntLikeSerializer instance = new IntLikeSerializer();
 
         @Override
-            public void serialize(Number value, JsonGenerator jgen, SerializerProvider provider)
+		public void serialize(Number value, JsonGenerator jgen, SerializerProvider provider)
             throws IOException, JsonGenerationException
         {
             jgen.writeNumber(value.intValue());
@@ -448,6 +447,475 @@ public class StdSerializerFactory
         }
     }
 
+    /*
+    ////////////////////////////////////////////////////////////
+    // Concrete serializers, Lists/collections
+    ////////////////////////////////////////////////////////////
+     */
+
+    /**
+     * This is an optimizied serializer for Lists that can be efficiently
+     * traversed by index (as opposed to others, such as {@link LinkedList}
+     * that can not}.
+     */
+    public final static class IndexedListSerializer
+        extends JsonSerializer<List<?>>
+    {
+        public final static IndexedListSerializer instance = new IndexedListSerializer();
+
+        @Override
+		public void serialize(List<?> value, JsonGenerator jgen, SerializerProvider provider)
+            throws IOException, JsonGenerationException
+        {
+            jgen.writeStartArray();
+
+            final int len = value.size();
+
+            if (len > 0) {
+                JsonSerializer<Object> prevSerializer = null;
+                Class<?> prevClass = null;
+                for (int i = 0; i < len; ++i) {
+                    Object elem = value.get(i);
+                    if (elem == null) {
+                        provider.getNullValueSerializer().serialize(null, jgen, provider);
+                    } else {
+                        // Minor optimization to avoid most lookups:
+                        Class<?> cc = elem.getClass();
+                        JsonSerializer<Object> currSerializer;
+                        if (cc == prevClass) {
+                            currSerializer = prevSerializer;
+                        } else {
+                            currSerializer = provider.findValueSerializer(cc);
+                            prevSerializer = currSerializer;
+                            prevClass = cc;
+                        }
+                        currSerializer.serialize(elem, jgen, provider);
+                    }
+                }
+            }
+
+            jgen.writeEndArray();
+        }
+    }
+
+    /**
+     * Fallback serializer for cases where Collection is not known to be
+     * of type for which more specializer serializer exists (such as
+     * index-accessible List).
+     * If so, we will just construct an {@link java.util.Iterator}
+     * to iterate over elements.
+     */
+    public final static class CollectionSerializer
+        extends JsonSerializer<Collection<?>>
+    {
+        public final static CollectionSerializer instance = new CollectionSerializer();
+
+        @Override
+		public void serialize(Collection<?> value, JsonGenerator jgen, SerializerProvider provider)
+            throws IOException, JsonGenerationException
+        {
+            jgen.writeStartArray();
+
+            Iterator<?> it = value.iterator();
+            if (it.hasNext()) {
+                JsonSerializer<Object> prevSerializer = null;
+                Class<?> prevClass = null;
+
+                do {
+                    Object elem = it.next();
+                    if (elem == null) {
+                        provider.getNullValueSerializer().serialize(null, jgen, provider);
+                    } else {
+                        // Minor optimization to avoid most lookups:
+                        Class<?> cc = elem.getClass();
+                        JsonSerializer<Object> currSerializer;
+                        if (cc == prevClass) {
+                            currSerializer = prevSerializer;
+                        } else {
+                            currSerializer = provider.findValueSerializer(cc);
+                            prevSerializer = currSerializer;
+                            prevClass = cc;
+                        }
+                        currSerializer.serialize(elem, jgen, provider);
+                    }
+                } while (it.hasNext());
+            }
+
+            jgen.writeEndArray();
+        }
+    }
+
+    public final static class IteratorSerializer
+        extends JsonSerializer<Iterator<?>>
+    {
+        @Override
+		public void serialize(Iterator<?> value, JsonGenerator jgen, SerializerProvider provider)
+            throws IOException, JsonGenerationException
+        {
+            jgen.writeStartArray();
+            if (value.hasNext()) {
+                JsonSerializer<Object> prevSerializer = null;
+                Class<?> prevClass = null;
+                do {
+                    Object elem = value.next();
+                    if (elem == null) {
+                        provider.getNullValueSerializer().serialize(null, jgen, provider);
+                    } else {
+                        // Minor optimization to avoid most lookups:
+                        Class<?> cc = elem.getClass();
+                        JsonSerializer<Object> currSerializer;
+                        if (cc == prevClass) {
+                            currSerializer = prevSerializer;
+                        } else {
+                            currSerializer = provider.findValueSerializer(cc);
+                            prevSerializer = currSerializer;
+                            prevClass = cc;
+                        }
+                        currSerializer.serialize(elem, jgen, provider);
+                    }
+                } while (value.hasNext());
+            }
+            jgen.writeEndArray();
+        }
+    }
+
+    public final static class IterableSerializer
+        extends JsonSerializer<Iterable<?>>
+    {
+        @Override
+		public void serialize(Iterable<?> value, JsonGenerator jgen, SerializerProvider provider)
+            throws IOException, JsonGenerationException
+        {
+            jgen.writeStartArray();
+            Iterator<?> it = value.iterator();
+            if (it.hasNext()) {
+                JsonSerializer<Object> prevSerializer = null;
+                Class<?> prevClass = null;
+                do {
+                    Object elem = it.next();
+                    if (elem == null) {
+                        provider.getNullValueSerializer().serialize(null, jgen, provider);
+                    } else {
+                        // Minor optimization to avoid most lookups:
+                        Class<?> cc = elem.getClass();
+                        JsonSerializer<Object> currSerializer;
+                        if (cc == prevClass) {
+                            currSerializer = prevSerializer;
+                        } else {
+                            currSerializer = provider.findValueSerializer(cc);
+                            prevSerializer = currSerializer;
+                            prevClass = cc;
+                        }
+                        currSerializer.serialize(elem, jgen, provider);
+                    }
+                } while (it.hasNext());
+            }
+            jgen.writeEndArray();
+        }
+    }
+
+    public final static class EnumSetSerializer
+        extends JsonSerializer<EnumSet<? extends Enum<?>>>
+    {
+        public final static CollectionSerializer instance = new CollectionSerializer();
+
+        @Override
+		public void serialize(EnumSet<? extends Enum<?>> value, JsonGenerator jgen, SerializerProvider provider)
+            throws IOException, JsonGenerationException
+        {
+            jgen.writeStartArray();
+            for (Enum<?> en : value) {
+                jgen.writeString(en.name());
+            }
+            jgen.writeEndArray();
+        }
+    }
+
+    /*
+    ////////////////////////////////////////////////////////////
+    // Concrete serializers, Maps
+    ////////////////////////////////////////////////////////////
+     */
+
+    public final static class MapSerializer
+        extends JsonSerializer<Map<?,?>>
+    {
+        public final static MapSerializer instance = new MapSerializer();
+
+        @Override
+		public void serialize(Map<?,?> value, JsonGenerator jgen, SerializerProvider provider)
+            throws IOException, JsonGenerationException
+        {
+            jgen.writeStartObject();
+
+            final int len = value.size();
+
+            if (len > 0) {
+                final JsonSerializer<Object> keySerializer = provider.getKeySerializer();
+                JsonSerializer<Object> prevValueSerializer = null;
+                Class<?> prevValueClass = null;
+
+                for (Map.Entry<?,?> entry : value.entrySet()) {
+                    // First, serialize key
+                    Object keyElem = entry.getKey();
+                    if (keyElem == null) {
+                        provider.getNullKeySerializer().serialize(null, jgen, provider);
+                    } else {
+                        keySerializer.serialize(keyElem, jgen, provider);
+                    }
+
+                    // And then value
+                    Object valueElem = entry.getValue();
+                    if (valueElem == null) {
+                        provider.getNullValueSerializer().serialize(null, jgen, provider);
+                    } else {
+                        Class<?> cc = valueElem.getClass();
+                        JsonSerializer<Object> currSerializer;
+                        if (cc == prevValueClass) {
+                            currSerializer = prevValueSerializer;
+                        } else {
+                            currSerializer = provider.findValueSerializer(cc);
+                            prevValueSerializer = currSerializer;
+                            prevValueClass = cc;
+                        }
+                        currSerializer.serialize(valueElem, jgen, provider);
+                    }
+                }
+            }
+                
+            jgen.writeEndObject();
+        }
+    }
+
+    public final static class EnumMapSerializer
+        extends JsonSerializer<EnumMap<? extends Enum<?>, ?>>
+    {
+		@Override
+		public void serialize(EnumMap<? extends Enum<?>,?> value, JsonGenerator jgen, SerializerProvider provider)
+            throws IOException, JsonGenerationException
+        {
+            jgen.writeStartObject();
+            JsonSerializer<Object> prevSerializer = null;
+            Class<?> prevClass = null;
+
+            for (Map.Entry<? extends Enum<?>,?> entry : value.entrySet()) {
+                // First, serialize key
+                jgen.writeFieldName(entry.getKey().name());
+                // And then value
+                Object valueElem = entry.getKey();
+                if (valueElem == null) {
+                    provider.getNullValueSerializer().serialize(null, jgen, provider);
+                } else {
+                    Class<?> cc = valueElem.getClass();
+                    JsonSerializer<Object> currSerializer;
+                    if (cc == prevClass) {
+                        currSerializer = prevSerializer;
+                    } else {
+                        currSerializer = provider.findValueSerializer(cc);
+                        prevSerializer = currSerializer;
+                        prevClass = cc;
+                    }
+                    currSerializer.serialize(valueElem, jgen, provider);
+                }
+            }
+            jgen.writeEndObject();
+        }
+    }
+
+    /*
+    ////////////////////////////////////////////////////////////
+    // Concrete serializers, arrays
+    ////////////////////////////////////////////////////////////
+     */
+
+    /**
+     * Generic serializer for Object arrays (<code>Object[]</code>).
+     */
+    public final static class ObjectArraySerializer
+        extends JsonSerializer<Object[]>
+    {
+        public final static ObjectArraySerializer instance = new ObjectArraySerializer();
+
+        @Override
+		public void serialize(Object[] value, JsonGenerator jgen, SerializerProvider provider)
+            throws IOException, JsonGenerationException
+        {
+            jgen.writeStartArray();
+            final int len = value.length;
+            if (len > 0) {
+                JsonSerializer<Object> prevSerializer = null;
+                Class<?> prevClass = null;
+                for (int i = 0; i < len; ++i) {
+                    Object elem = value[i];
+                    if (elem == null) {
+                        provider.getNullValueSerializer().serialize(null, jgen, provider);
+                    } else {
+                        // Minor optimization to avoid most lookups:
+                        Class<?> cc = elem.getClass();
+                        JsonSerializer<Object> currSerializer;
+                        if (cc == prevClass) {
+                            currSerializer = prevSerializer;
+                        } else {
+                            currSerializer = provider.findValueSerializer(cc);
+                            prevSerializer = currSerializer;
+                            prevClass = cc;
+                        }
+                        currSerializer.serialize(elem, jgen, provider);
+                    }
+                }
+            }
+            jgen.writeEndArray();
+        }
+    }
+
+    public final static class StringArraySerializer
+        extends JsonSerializer<String[]>
+    {
+        @Override
+		public void serialize(String[] value, JsonGenerator jgen, SerializerProvider provider)
+            throws IOException, JsonGenerationException
+        {
+            jgen.writeStartArray();
+            final int len = value.length;
+            if (len > 0) {
+                /* 08-Dec-2008, tatus: If we want this to be fully overridable
+                 *  (for example, to support String cleanup during writing
+                 *  or something), we should find serializer  by provider.
+                 *  But for now, that seems like an overkill: and caller can
+                 *  add custom serializer if that is needed as well.
+                 */
+                //JsonSerializer<String> ser = (JsonSerializer<String>)provider.findValueSerializer(String.class);
+                for (int i = 0; i < len; ++i) {
+                    //ser.serialize(value[i], jgen, provider);
+                    jgen.writeString(value[i]);
+                }
+            }
+            jgen.writeEndArray();
+        }
+    }
+
+    public final static class BooleanArraySerializer
+        extends JsonSerializer<boolean[]>
+    {
+        @Override
+		public void serialize(boolean[] value, JsonGenerator jgen, SerializerProvider provider)
+            throws IOException, JsonGenerationException
+        {
+            jgen.writeStartArray();
+            for (int i = 0, len = value.length; i < len; ++i) {
+                jgen.writeBoolean(value[i]);
+            }
+            jgen.writeEndArray();
+        }
+    }
+
+    /**
+     * Unlike other integral number array serializers, we do not just print out byte values
+     * as numbers. Instead, we assume that it would make more sense to output content
+     * as base64 encoded bytes (using default base64 encoding).
+     */
+    public final static class ByteArraySerializer
+        extends JsonSerializer<byte[]>
+    {
+        @Override
+		public void serialize(byte[] value, JsonGenerator jgen, SerializerProvider provider)
+            throws IOException, JsonGenerationException
+        {
+            jgen.writeBinary(value);
+        }
+    }
+
+    public final static class ShortArraySerializer
+        extends JsonSerializer<short[]>
+    {
+        @SuppressWarnings("cast")
+		@Override
+		public void serialize(short[] value, JsonGenerator jgen, SerializerProvider provider)
+            throws IOException, JsonGenerationException
+        {
+            jgen.writeStartArray();
+            for (int i = 0, len = value.length; i < len; ++i) {
+                jgen.writeNumber((int)value[i]);
+            }
+            jgen.writeEndArray();
+        }
+    }
+
+    /**
+     * Character arrays are different from other integral number arrays in that
+     * they are most likely to be textual data, and should be written as
+     * Strings, not arrays of entries.
+     */
+    public final static class CharArraySerializer
+        extends JsonSerializer<char[]>
+    {
+        @Override
+		public void serialize(char[] value, JsonGenerator jgen, SerializerProvider provider)
+            throws IOException, JsonGenerationException
+        {
+            jgen.writeString(value, 0, value.length);
+        }
+    }
+
+    public final static class IntArraySerializer
+        extends JsonSerializer<int[]>
+    {
+        @Override
+		public void serialize(int[] value, JsonGenerator jgen, SerializerProvider provider)
+            throws IOException, JsonGenerationException
+        {
+            jgen.writeStartArray();
+            for (int i = 0, len = value.length; i < len; ++i) {
+                jgen.writeNumber(value[i]);
+            }
+            jgen.writeEndArray();
+        }
+    }
+
+    public final static class LongArraySerializer
+        extends JsonSerializer<long[]>
+    {
+        @Override
+		public void serialize(long[] value, JsonGenerator jgen, SerializerProvider provider)
+            throws IOException, JsonGenerationException
+        {
+            jgen.writeStartArray();
+            for (int i = 0, len = value.length; i < len; ++i) {
+                jgen.writeNumber(value[i]);
+            }
+            jgen.writeEndArray();
+        }
+    }
+
+    public final static class FloatArraySerializer
+        extends JsonSerializer<float[]>
+    {
+        @Override
+		public void serialize(float[] value, JsonGenerator jgen, SerializerProvider provider)
+            throws IOException, JsonGenerationException
+        {
+            jgen.writeStartArray();
+            for (int i = 0, len = value.length; i < len; ++i) {
+                jgen.writeNumber(value[i]);
+            }
+            jgen.writeEndArray();
+        }
+    }
+
+    public final static class DoubleArraySerializer
+        extends JsonSerializer<double[]>
+    {
+        @Override
+		public void serialize(double[] value, JsonGenerator jgen, SerializerProvider provider)
+            throws IOException, JsonGenerationException
+        {
+            jgen.writeStartArray();
+            for (int i = 0, len = value.length; i < len; ++i) {
+                jgen.writeNumber(value[i]);
+            }
+            jgen.writeEndArray();
+        }
+    }
 
     /*
     ////////////////////////////////////////////////////////////

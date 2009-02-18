@@ -19,13 +19,8 @@ import org.codehaus.jackson.type.TypeReference;
  * beans), and matching JSON constructs.
  * It will use instances of {@link JsonParser} and {@link JsonGenerator}
  * for implementing actual reading/writing of JSON.
- *<p>
- * The main conversion API is defined in {@link ObjectCodec}, so that
- * implementation details of this class need not be exposed to
- * streaming parser and generator classes.
  */
 public class ObjectMapper
-    extends ObjectCodec
 {
     /*
     ////////////////////////////////////////////////////
@@ -55,8 +50,9 @@ public class ObjectMapper
     /**
      * Object that manages access to deserializers used for deserializing
      * Json content into Java objects, including possible caching
-     * of the deserializers. It contains a reference to
-     * {@link DeserializerFactory} to use for constructing acutal deserializers.
+     * of the deserializers.
+     * It is configured with {@link #_deserializerFactory} to allow
+     * for constructing custom deserializers.
      */
     protected DeserializerProvider _deserializerProvider;
 
@@ -157,7 +153,7 @@ public class ObjectMapper
 
     /*
     ////////////////////////////////////////////////////
-    // Public API (from ObjectCodec): deserialization
+    // Public API: deserialization
     // (mapping from Json to Java types);
     // main methods
     ////////////////////////////////////////////////////
@@ -173,7 +169,6 @@ public class ObjectMapper
      * The reason is that due to type erasure, key and value types
      * can not be introspected when using this method.
      */
-    @Override
     @SuppressWarnings("unchecked")
     public <T> T readValue(JsonParser jp, Class<T> valueType)
         throws IOException, JsonParseException, JsonMappingException
@@ -188,7 +183,6 @@ public class ObjectMapper
      * and specifically needs to be used if the root type is a 
      * parameterized (generic) container type.
      */
-    @Override
     @SuppressWarnings("unchecked")
     public <T> T readValue(JsonParser jp, TypeReference valueTypeRef)
         throws IOException, JsonParseException, JsonMappingException
@@ -198,27 +192,9 @@ public class ObjectMapper
 
     /*
     ////////////////////////////////////////////////////
-    // Public API (from ObjectCodec): serialization
-    // (mapping from Java types to Json)
-    ////////////////////////////////////////////////////
-     */
-
-    /**
-     * Method that can be used to serialize any Java value as
-     * Json output, using provided {@link JsonGenerator}.
-     */
-    @Override
-    public void writeValue(JsonGenerator jgen, Object value)
-        throws IOException, JsonGenerationException, JsonMappingException
-    {
-        _serializerProvider.serializeValue(jgen, value, _serializerFactory);
-        jgen.flush();
-    }
-
-    /*
-    ////////////////////////////////////////////////////
-    // Extended Public API, deserialization,
-    // convenience methods
+    // Public API: deserialization
+    // (mapping from Json to Java types);
+    // additional convenience methods
     ////////////////////////////////////////////////////
      */
 
@@ -310,10 +286,21 @@ public class ObjectMapper
 
     /*
     ////////////////////////////////////////////////////
-    // Extended Public API: serialization
+    // Public API: serialization
     // (mapping from Java types to Json)
     ////////////////////////////////////////////////////
      */
+
+    /**
+     * Method that can be used to serialize any Java value as
+     * Json output, using provided {@link JsonGenerator}.
+     */
+    public void writeValue(JsonGenerator jgen, Object value)
+        throws IOException, JsonGenerationException, JsonMappingException
+    {
+        _serializerProvider.serializeValue(jgen, value, _serializerFactory);
+        jgen.flush();
+    }
 
     /**
      * Method that can be used to serialize any Java value as

@@ -150,8 +150,6 @@ public final class NameCanonicalizer
 
     public synchronized NameCanonicalizer makeChild()
     {
-//System.err.print("[makeChild w "+System.identityHashCode(this)+", "+mCount+"]");
-
         return new NameCanonicalizer(this);
     }
 
@@ -213,6 +211,7 @@ public final class NameCanonicalizer
         mCollCount = parent.mCollCount;
         mCollEnd = parent.mCollEnd;
         mNeedRehash = false;
+
         // And consider all shared, so far:
         mMainHashShared = true;
         mMainNamesShared = true;

@@ -17,5 +17,5 @@ import org.codehaus.jackson.*;
 public interface JsonSerializable
 {
     public void serialize(JsonGenerator jgen, SerializerProvider provider)
-        throws IOException, JsonProcessingException;
+        throws IOException, JsonGenerationException;
 }

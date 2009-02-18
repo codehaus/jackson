@@ -5,10 +5,8 @@
     <!-- Source directories -->
     <property name="dir.src" location="${basedir}/src" />
     <property name="dir.src.java" location="${dir.src}/java" />
-    <property name="dir.src.maven" location="${dir.src}/maven" />
     <property name="dir.src.test" location="${dir.src}/test" />
     <property name="dir.src.sample" location="${dir.src}/sample" />
-    <property name="dir.src.tools" location="${dir.src}/tools" />
     <property name="dir.releasenotes" location="${basedir}/release-notes" />
 
     <!-- Libs -->
@@ -17,7 +15,6 @@
     <property name="dir.build" location="${basedir}/build" />
     <property name="dir.build.classes.core" location="${dir.build}/classes/core" />
     <property name="dir.build.classes.mapper" location="${dir.build}/classes/mapper" />
-    <!-- both "sample" and "tools" java code goes under "extra" -->
     <property name="dir.build.classes.extra" location="${dir.build}/classes/extra" />
     <!-- some support for perf testing -->
     <property name="dir.build.classes.perf" location="${dir.build}/classes/perf" />
@@ -34,6 +31,7 @@
 
     <!-- Distribution -->
     <property name="dir.dist" location="${basedir}/dist" />
+    <property name="dir.dist.maven2" location="${basedir}/dist-maven2" />
 
     <!-- Version information -->
 
@@ -43,13 +41,12 @@
     <property name="JSON_VENDOR" value="http://www.ietf.org/rfc/rfc4627.txt" />
     <property name="IMPL_TITLE_CORE" value="Jackson JSON processor" />
     <property name="IMPL_TITLE_MAPPER" value="Data mapper for Jackson JSON processor" />
-    <property name="IMPL_VERSION" value="0.9.8" />
-    <property name="IMPL_VENDOR" value="http://fasterxml.com" />
+    <property name="IMPL_VERSION" value="0.9.7" />
+    <property name="IMPL_VENDOR" value="http://www.cowtowncoder.com/" />
 
-    <path id="test-libs">
+    <path id="junit-libs">
        <fileset dir="${dir.lib}">
-            <include name="junit/*.jar" />
-            <include name="cglib/*.jar" />
+            <include name="junit/junit*.jar" />
        </fileset>
     </path>
 
@@ -137,12 +134,12 @@
         <delete dir="${dir.doc}"/>
         <delete dir="${dir.test}"/>
         <delete dir="${dir.dist}"/>
+        <delete dir="${dir.dist.maven2}"/>
         <delete file="cobertura.ser" />
     </target>
 
     <target name="compile" depends="compile.all" />
-    <target name="compile.all" depends="
-compile.main, compile.test, compile.extra, compile.perf" />
+    <target name="compile.all" depends="compile.main, compile.extra, compile.test"  /> <!--, compile.perf" /> -->
     <target name="compile.main" depends="compile.core, compile.mapper" />
 
     <target name="compile.core" depends="prepare">
@@ -152,7 +149,6 @@ compile.main, compile.test, compile.extra, compile.perf" />
         >
             <compilerarg value="-Xlint:unchecked" />
             <exclude name="org/codehaus/jackson/map/**/*.java" />
-            <exclude name="org/codehaus/jackson/node/**/*.java" />
             <include name="org/codehaus/**/*.java" />
         </javac>
     </target>
@@ -177,7 +173,7 @@ compile.main, compile.test, compile.extra, compile.perf" />
         >
             <compilerarg value="-Xlint:unchecked" />
             <src path="${dir.src.sample}" /> 
-            <src path="${dir.src.tools}" /> 
+            <src path="${dir.src.java}/test" />
             <include name="**/*.java" />
             <!-- need core and mapper classes -->
             <classpath>
@@ -312,6 +308,35 @@ compile.main, compile.test, compile.extra, compile.perf" />
         </xmlvalidate>
     </target>
 
+    <!-- And for Maven2 repo, we will construct set of different
+         directories
+      --> 
+
+    <target name="dist.maven" depends="dist">
+      <mkdir dir="${dir.dist.maven2}"/>
+
+      <mkdir dir="${dir.dist.maven2}/jackson-core-asl/${IMPL_VERSION}"/>
+      <copy todir="${dir.dist.maven2}/jackson-core-asl/${IMPL_VERSION}">
+        <fileset dir="${dir.dist}" includes="jackson-core-asl*" />
+      </copy>
+
+      <mkdir dir="${dir.dist.maven2}/jackson-mapper-asl/${IMPL_VERSION}"/>
+      <copy todir="${dir.dist.maven2}/jackson-mapper-asl/${IMPL_VERSION}">
+        <fileset dir="${dir.dist}" includes="jackson-mapper-asl*" />
+      </copy>
+
+      <mkdir dir="${dir.dist.maven2}/jackson-core-lgpl/${IMPL_VERSION}"/>
+      <copy todir="${dir.dist.maven2}/jackson-core-lgpl/${IMPL_VERSION}">
+        <fileset dir="${dir.dist}" includes="jackson-core-lgpl*" />
+      </copy>
+
+      <mkdir dir="${dir.dist.maven2}/jackson-mapper-lgpl/${IMPL_VERSION}"/>
+      <copy todir="${dir.dist.maven2}/jackson-mapper-lgpl/${IMPL_VERSION}">
+        <fileset dir="${dir.dist}" includes="jackson-mapper-lgpl*" />
+      </copy>
+
+    </target>
+
     <target name="all" depends="clean,javadoc,test,dist">
         <!-- This target simply depends on others to do its job -->
     </target>
@@ -334,7 +359,7 @@ compile.main, compile.test, compile.extra, compile.perf" />
             <classpath>
                 <pathelement path="${dir.build.classes.core}"/>  
                 <pathelement path="${dir.build.classes.mapper}"/>  
-                <path refid="test-libs"/>
+                <path refid="junit-libs"/>
             </classpath>
         </javac>
     </target>
@@ -358,7 +383,7 @@ compile.main, compile.test, compile.extra, compile.perf" />
                 <pathelement path="${dir.build.classes.core}" />
                 <pathelement path="${dir.build.classes.mapper}" />
                 <pathelement location="${dir.test.classes}" /> 
-                <path refid="test-libs"/>
+                <path refid="junit-libs"/>
             </classpath>     
         </junit>
 

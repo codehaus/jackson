@@ -49,14 +49,13 @@ public final class TestJsonPerf
         while (true) {
             try {  Thread.sleep(100L); } catch (InterruptedException ie) { }
             // Use 9 to test all...
-            int round = (i++ % 5);
+            int round = (i++ % 2);
 
             long curr = System.currentTimeMillis();
             String msg;
             boolean lf = (round == 0);
 
             switch (round) {
-
             case 0:
                 msg = "Jackson, stream/byte";
                 sum += testJacksonStream(REPS, true);
@@ -77,7 +76,7 @@ public final class TestJsonPerf
 
             case 4:
                 msg = "Jackson, JSON types";
-                sum += testJacksonJsonTypes(REPS);
+                sum += testJacksonJavaTypes(REPS);
                 break;
             case 5:
                 msg = "Json.org";

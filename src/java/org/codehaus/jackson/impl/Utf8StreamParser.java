@@ -5,7 +5,6 @@ import java.io.*;
 import org.codehaus.jackson.*;
 import org.codehaus.jackson.io.IOContext;
 import org.codehaus.jackson.sym.*;
-import org.codehaus.jackson.type.TypeReference;
 import org.codehaus.jackson.util.*;
 
 /**
@@ -23,8 +22,6 @@ public final class Utf8StreamParser
     ////////////////////////////////////////////////////
     */
 
-    final ObjectCodec _objectCodec;
-
     final protected NameCanonicalizer _symbols;
 
     /**
@@ -38,14 +35,13 @@ public final class Utf8StreamParser
     ////////////////////////////////////////////////////
      */
 
-    public Utf8StreamParser(IOContext ctxt, int features, InputStream in,
-                            ObjectCodec codec,
+    public Utf8StreamParser(IOContext ctxt, int features,
+                            InputStream in,
                             NameCanonicalizer sym,
                             byte[] inputBuffer, int start, int end,
                             boolean bufferRecyclable)
     {
         super(ctxt, features, in, inputBuffer, start, end, bufferRecyclable);
-        _objectCodec = codec;
         _symbols = sym;
     }
 
@@ -214,41 +210,12 @@ public final class Utf8StreamParser
     }
 
     @Override
-    public void close() throws IOException
+    public void close()
+        throws IOException
     {
         super.close();
         // Merge found symbols, if any:
         _symbols.release();
-    }
-
-    /*
-    ////////////////////////////////////////////////////
-    // Public API, data binding
-    ////////////////////////////////////////////////////
-     */
-
-    @Override
-    public final <T> T readValueAs(Class<T> valueType)
-        throws IOException, JsonProcessingException
-    {
-        if (_objectCodec == null) {
-            throw new IllegalStateException("No ObjectCodec defined for the parser, can not deserialize Json into regular Java objects");
-        }
-        return _objectCodec.readValue(this, valueType);
-    }
-
-    @Override
-    @SuppressWarnings("unchecked")
-    public final <T> T readValueAs(TypeReference valueTypeRef)
-        throws IOException, JsonProcessingException
-    {
-        if (_objectCodec == null) {
-            throw new IllegalStateException("No ObjectCodec defined for the parser, can not deserialize Json into regular Java objects");
-        }
-        /* Ugh. Stupid Java type erasure... can't just chain call,s
-         * must cast here also.
-         */
-        return (T) _objectCodec.readValue(this, valueTypeRef);
     }
 
     /*

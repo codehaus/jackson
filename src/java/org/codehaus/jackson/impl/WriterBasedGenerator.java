@@ -65,10 +65,9 @@ public final class WriterBasedGenerator
     ////////////////////////////////////////////////////
      */
 
-    public WriterBasedGenerator(IOContext ctxt, int features, ObjectCodec codec,
-                                Writer w)
+    public WriterBasedGenerator(IOContext ctxt, int features, Writer w)
     {
-        super(features, codec);
+        super(features);
         _ioContext = ctxt;
         _writer = w;
         _outputBuffer = ctxt.allocConcatBuffer();
@@ -451,16 +450,6 @@ public final class WriterBasedGenerator
         _outputTail = ptr+1;
     }
 
-    public final void writeObject(Object value)
-        throws IOException, JsonProcessingException
-    {
-        _verifyValueWrite("write Java object");
-        if (_objectCodec == null) {
-            throw new IllegalStateException("No ObjectCodec defined for the generator, can not serializer regular Java objects");
-        }
-        _objectCodec.writeValue(this, value);
-    }
-
     /*
     ////////////////////////////////////////////////////
     // Implementations for other methods
@@ -468,7 +457,7 @@ public final class WriterBasedGenerator
      */
 
     @Override
-    protected final void _verifyValueWrite(String typeMsg)
+	protected final void _verifyValueWrite(String typeMsg)
         throws IOException, JsonGenerationException
     {
         int status = _writeContext.writeValue();
