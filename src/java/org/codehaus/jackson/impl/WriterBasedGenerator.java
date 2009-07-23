@@ -192,7 +192,7 @@ public final class WriterBasedGenerator
      */
 
     @Override
-	public void writeString(String text)
+    public void writeString(String text)
         throws IOException, JsonGenerationException
     {
         _verifyValueWrite("write text value");
@@ -209,7 +209,7 @@ public final class WriterBasedGenerator
     }
 
     @Override
-	public void writeString(char[] text, int offset, int len)
+    public void writeString(char[] text, int offset, int len)
         throws IOException, JsonGenerationException
     {
         _verifyValueWrite("write text value");
@@ -382,7 +382,7 @@ public final class WriterBasedGenerator
      */
 
     @Override
-    public void writeNumber(int i)
+	public void writeNumber(int i)
         throws IOException, JsonGenerationException
     {
         _verifyValueWrite("write number");
@@ -394,7 +394,7 @@ public final class WriterBasedGenerator
     }
 
     @Override
-    public void writeNumber(long l)
+	public void writeNumber(long l)
         throws IOException, JsonGenerationException
     {
         // up to 20 digits, minus sign

@@ -26,7 +26,6 @@ import java.math.BigInteger;
  * @author Tatu Saloranta
  */
 public abstract class JsonGenerator
-    implements Closeable
 {
     /**
      * Enumeration that defines all togglable features for generators.
@@ -767,18 +766,6 @@ public abstract class JsonGenerator
         throws IOException;
 
     /**
-     * Method that can be called to determine whether this generator
-     * is closed or not. If it is closed, no more output can be done.
-     */
-    public abstract boolean isClosed();
-
-    /*
-    ////////////////////////////////////////////////////
-    // Closeable implementation
-    ////////////////////////////////////////////////////
-     */
-
-    /**
      * Method called to close this generator, so that no more content
      * can be written.
      *<p>
@@ -793,4 +780,11 @@ public abstract class JsonGenerator
     public abstract void close()
         throws IOException;
 
+    /**
+     * Method that can be called to determine whether this generator
+     * is closed or not. If it is closed, no more output can be done.
+     *
+     * @since 0.9.9-3
+     */
+    public abstract boolean isClosed();
 }

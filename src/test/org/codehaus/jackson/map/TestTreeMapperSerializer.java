@@ -28,8 +28,9 @@ public class TestTreeMapperSerializer
     public void testFromArray()
         throws Exception
     {
-        ObjectMapper mapper = new ObjectMapper();
-        ArrayNode root = mapper.createArrayNode();
+        TreeMapper mapper = new TreeMapper();
+
+        ArrayNode root = mapper.arrayNode();
         root.add(TEXT1);
         root.add(3);
         ObjectNode obj = root.addObject();
@@ -48,7 +49,7 @@ public class TestTreeMapperSerializer
                 root.writeTo(gen);
                 gen.close();
             } else {
-                mapper.writeValue(sw, root);
+                mapper.writeTree(root, sw);
             }
             verifyFromArray(sw.toString());
         }
@@ -60,8 +61,9 @@ public class TestTreeMapperSerializer
     public void testFromMap()
         throws Exception
     {
-        ObjectMapper mapper = new ObjectMapper();
-        ObjectNode root = mapper.createObjectNode();
+        TreeMapper mapper = new TreeMapper();
+
+        ObjectNode root = mapper.objectNode();
         root.put(FIELD4, TEXT2);
         root.put(FIELD3, -1);
         root.putArray(FIELD2);
@@ -78,7 +80,7 @@ public class TestTreeMapperSerializer
                 root.writeTo(gen);
                 gen.close();
             } else {
-                mapper.writeValue(sw, root);
+                mapper.writeTree(root, sw);
             }
             verifyFromMap(sw.toString());
         }

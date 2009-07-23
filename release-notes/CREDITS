@@ -5,8 +5,6 @@ Tatu Saloranta, tatu.saloranta@iki.fi: author
 
 Ryan Heaton, ryan@webcohesion.com: co-author
 
-Peter Harris, Peter.Harris@betfair.com: contributor
-
 Alain Penders:
   * Reported problem with JavaTypeMapper, where floating point numbers were
     accidentally converted to Booleans.
@@ -128,11 +126,3 @@ Peter Harris:
     double values (NaN, Infinity) are serialized as invalid JSON tokens
     (reported by Peter H)
    [1.1.1]
-
-Dain Sundstrom:
-  * Suggested addition of "-use" for javadoc generation
-   [1.2.0]
-  * Suggested [JACKSON-136] JsonParser and JsonGenerator should implement
-    java.io.Closeable (since they already have close() method)
-   [1.2.0]
-

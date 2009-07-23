@@ -16,8 +16,7 @@ public class TestConfig
     @JsonAutoDetect(JsonMethod.NONE)
     final static class ConfigLegacy { }
 
-    @JsonSerialize(include=JsonSerialize.Inclusion.NON_DEFAULT,
-                   typing=JsonSerialize.Typing.STATIC)
+    @JsonSerialize(include=JsonSerialize.Inclusion.NON_DEFAULT)
     @JsonAutoDetect(JsonMethod.NONE)
     final static class Config { }
 
@@ -35,7 +34,6 @@ public class TestConfig
         assertTrue(cfg.isEnabled(SerializationConfig.Feature.WRITE_DATES_AS_TIMESTAMPS));
 
         assertFalse(cfg.isEnabled(SerializationConfig.Feature.INDENT_OUTPUT));
-        assertFalse(cfg.isEnabled(SerializationConfig.Feature.USE_STATIC_TYPING));
     }
 
     @SuppressWarnings("deprecation")
@@ -63,7 +61,6 @@ public class TestConfig
         cfg.fromAnnotations(Config.class);
         assertFalse(cfg.isEnabled(SerializationConfig.Feature.AUTO_DETECT_GETTERS));
         assertEquals(JsonSerialize.Inclusion.NON_DEFAULT, cfg.getSerializationInclusion());
-        assertTrue(cfg.isEnabled(SerializationConfig.Feature.USE_STATIC_TYPING));
     }
 
     public void testIndentation() throws Exception

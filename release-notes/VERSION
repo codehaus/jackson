@@ -1,40 +1,10 @@
-Version: 1.2.0
+Version: 1.1.1
 
 Release date:
-  xx-Jul-2009
+  18-Jul-2009
 
 Description:
-  Development snapshot from trunk, for eventual 1.2 release
-
-  Fixes:
-
-  Improvements:
-
-  * Added "-use" flag for generating javadocs
-   (suggested by Dain S)
-  * [JACKSON-136] JsonParser and JsonGenerator should implement
-    java.io.Closeable (since they already have close() method)
-   (suggested by Dain S)
-
-  New features:
-
-  * [JACKSON-76] Mix-in annotations: allow dynamic attachment of
-    annotations to existing classes, for purposes of configuring
-    serialization/deserialization behavior
-  * [JACKSON-92] Allow use of @JsonCreator for constructors and
-    static methods that take a single deserializable type as argument
-    (so-called delegating creators)
-  * [JACKSON-114] Add feature and annotations to make serialization use
-    static (declared) type over concrete (actual/runtime) type
-  * [JACKSON-131] Allow constructing and passing of non-shared
-    SerializationConfig/DeserializationConfig instances to ObjectMapper
-  * [JACKSON-135] Add basic JsonNode construction support in ObjectMapper
-
-------------------------------------------------------------------------
-== History: ==
-------------------------------------------------------------------------
-
-1.1.1 [18-Jul-2009]
+  Minor patch release for 1.1.
 
   Fixes:
 
@@ -44,6 +14,10 @@ Description:
   * Core jar incorrectly included much of "mapper" classes (in addition
     to core classes)
   * Now compiles again using JDK 1.5 javac (1.1.0 didn't)
+
+------------------------------------------------------------------------
+== History: ==
+------------------------------------------------------------------------
 
 1.1.0 [22-Jun-2009]
 

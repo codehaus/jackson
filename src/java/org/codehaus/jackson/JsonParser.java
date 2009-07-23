@@ -29,7 +29,6 @@ import org.codehaus.jackson.type.TypeReference;
  * @author Tatu Saloranta
  */
 public abstract class JsonParser
-    implements Closeable
 {
     /**
      * Enumeration of possible "native" (optimal) types that can be
@@ -139,31 +138,6 @@ public abstract class JsonParser
 
     /*
     ////////////////////////////////////////////////////
-    // Closeable implementation
-    ////////////////////////////////////////////////////
-     */
-
-    /**
-     * Closes the parser so that no further iteration or data access
-     * can be made.
-     *<p>
-     * Method will also close the underlying input source,
-     * if parser either <b>owns</b> the input source, or feature
-     * {@link Feature#AUTO_CLOSE_SOURCE} is enabled.
-     * Whether parser owns the input source depends on factory
-     * method that was used to construct instance (so check
-     * {@link org.codehaus.jackson.JsonFactory} for details,
-     * but the general
-     * idea is that if caller passes in closable resource (such
-     * as {@link InputStream} or {@link Reader}) parser does NOT
-     * own the source; but if it passes a reference (such as
-     * {@link java.io.File} or {@link java.net.URL} and creates
-     * stream or reader it does own them.
-     */
-    public abstract void close() throws IOException;
-
-    /*
-    ////////////////////////////////////////////////////
     // Public API, configuration
     ////////////////////////////////////////////////////
      */
@@ -262,12 +236,33 @@ public abstract class JsonParser
         throws IOException, JsonParseException;
 
     /**
+     * Closes the parser so that no further iteration or data access
+     * can be made.
+     *<p>
+     * Method will also close the underlying input source,
+     * if parser either <b>owns</b> the input source, or feature
+     * {@link Feature#AUTO_CLOSE_SOURCE} is enabled.
+     * Whether parser owns the input source depends on factory
+     * method that was used to construct instance (so check
+     * {@link org.codehaus.jackson.JsonFactory} for details,
+     * but the general
+     * idea is that if caller passes in closable resource (such
+     * as {@link InputStream} or {@link Reader}) parser does NOT
+     * own the source; but if it passes a reference (such as
+     * {@link java.io.File} or {@link java.net.URL} and creates
+     * stream or reader it does own them.
+     */
+    public abstract void close() throws IOException;
+
+    /**
      * Method that can be called to determine whether this parser
      * is closed or not. If it is closed, no new events can be
      * retrieved by calling {@link #nextToken} (and the underlying
      * stream may be closed). Closing may be due to an explicit
      * call to {@link #close} or because parser has encountered
      * end of input.
+     *
+     * @since 0.9.9-3
      */
     public abstract boolean isClosed();
 
@@ -312,6 +307,8 @@ public abstract class JsonParser
      * Method was added to be used by the optional data binder, since
      * it has to be able to consume last token used for binding (so that
      * it will not be used again).
+     *
+     * @since 0.9.9-3
      */
     public final void clearCurrentToken()
     {
@@ -623,10 +620,9 @@ public abstract class JsonParser
      * not for {@link JsonFactory} (unless its <code>setCodec</code>
      * method has been explicitly called).
      *<p>
-     * This method may advance the event stream, for structured types
+     * This method may advance the evens stream, for structured types
      * the current event will be the closing end marker (END_ARRAY,
      * END_OBJECT) of the bound structure. For non-structured Json types
-     * (and for {@link JsonToken#VALUE_EMBEDDED_OBJECT})
      * stream is not advanced.
      *<p>
      * Note: this method should NOT be used if the result type is a
@@ -652,7 +648,6 @@ public abstract class JsonParser
      * This method may advance the event stream, for structured types
      * the current event will be the closing end marker (END_ARRAY,
      * END_OBJECT) of the bound structure. For non-structured Json types
-     * (and for {@link JsonToken#VALUE_EMBEDDED_OBJECT})
      * stream is not advanced.
      */
     public abstract <T> T readValueAs(TypeReference<?> valueTypeRef)

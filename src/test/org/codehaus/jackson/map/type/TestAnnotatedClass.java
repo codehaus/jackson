@@ -5,7 +5,6 @@ import java.util.*;
 
 import org.codehaus.jackson.map.BaseMapTest;
 import org.codehaus.jackson.map.introspect.AnnotatedClass;
-import org.codehaus.jackson.map.introspect.AnnotatedField;
 import org.codehaus.jackson.map.introspect.AnnotatedMethod;
 import org.codehaus.jackson.map.introspect.BasicClassIntrospector;
 import org.codehaus.jackson.map.introspect.JacksonAnnotationIntrospector;
@@ -65,11 +64,11 @@ public class TestAnnotatedClass
 
         // not public, no annotations, shouldn't be included
         @SuppressWarnings("unused")
-        private long bar;
+		private long bar;
 
         @SuppressWarnings("unused")
-        @JsonProperty
-        private String props;
+		@JsonProperty
+            private String props;
     }
 
     /*
@@ -80,8 +79,7 @@ public class TestAnnotatedClass
 
     public void testSimple()
     {
-        // null -> no mix-in annotations
-        AnnotatedClass ac = AnnotatedClass.construct(SubClass.class, new JacksonAnnotationIntrospector(), null);
+        AnnotatedClass ac = AnnotatedClass.construct(SubClass.class, new JacksonAnnotationIntrospector());
         ac.resolveMemberMethods(BasicClassIntrospector.GetterMethodFilter.instance);
         ac.resolveCreators(true);
         ac.resolveFields();
@@ -111,8 +109,7 @@ public class TestAnnotatedClass
      */
     public void testGenericsWithSetter()
     {
-        // null -> no mix-in annotations
-        AnnotatedClass ac = AnnotatedClass.construct(NumberBean.class, new JacksonAnnotationIntrospector(), null);
+        AnnotatedClass ac = AnnotatedClass.construct(NumberBean.class, new JacksonAnnotationIntrospector());
         ac.resolveMemberMethods(BasicClassIntrospector.SetterMethodFilter.instance);
         assertEquals(1, ac.getMemberMethodCount());
 
@@ -122,24 +119,16 @@ public class TestAnnotatedClass
         assertEquals("setX", am.getName());
         // should be one from sub-class
         assertEquals(NumberBean.class, am.getDeclaringClass());
-        assertEquals(Integer.class, am.getParameterClass(0));
+        Type[] types = am.getGenericParameterTypes();
+        assertEquals(Integer.class, types[0]);
     }
 
     public void testFieldIntrospection()
     {
-        // null -> no mix-in annotations
-        AnnotatedClass ac = AnnotatedClass.construct(FieldBean.class, new JacksonAnnotationIntrospector(), null);
+        AnnotatedClass ac = AnnotatedClass.construct(FieldBean.class, new JacksonAnnotationIntrospector());
         ac.resolveFields();
-        /* 14-Jul-2009, tatu: AnnotatedClass does remove forcibly ignored
-         *   entries, but will still contain non-public fields too (earlier
-         *   versions didn't, but filtering was moved to a later point)
-         */
-        assertEquals(2, ac.getFieldCount());
-        for (AnnotatedField f : ac.fields()) {
-            String fname = f.getName();
-            if (!"bar".equals(fname) && !"props".equals(fname)) {
-                fail("Unexpected field name '"+fname+"'");
-            }
-        }
+        assertEquals(1, ac.getFieldCount());
+        // only one discoverable field property...
+        assertEquals("props", ac.fields().iterator().next().getName());
     }
 }
