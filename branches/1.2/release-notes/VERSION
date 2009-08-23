@@ -1,10 +1,108 @@
-Version: 1.0.1
+Version: 1.2.0
 
 Release date:
-  04-Jun-2009
+  01-Aug-2009
 
 Description:
-  First patch release from 1.0 branch.
+  Official 1.2 release. Contains all bug fixes up to 1.1.2,
+  and a set of new features that significantly include interoperability
+  and ease-of-use, developer ergonomics.
+
+  Improvements:
+
+  * Added "-use" flag for generating javadocs
+   (suggested by Dain S)
+  * [JACKSON-136] JsonParser and JsonGenerator should implement
+    java.io.Closeable (since they already have close() method)
+   (suggested by Dain S)
+  * [JACKSON-148] Changed configuration methods to allow chaining,
+    by returning 'this' (instead of 'void')
+
+  New features:
+
+  * [JACKSON-33] Allow use of "non-default constructors" and
+    multiple-argument factory methods for constructing beans to
+    deserialize
+  * [JACKSON-69] Support parsing non-standard JSON where Object keys are not quoted
+  * [JACKSON-76] Mix-in annotations: allow dynamic attachment of
+    annotations to existing classes, for purposes of configuring
+    serialization/deserialization behavior
+  * [JACKSON-92] Allow use of @JsonCreator for constructors and
+    static methods that take a single deserializable type as argument
+    (so-called delegating creators)
+  * [JACKSON-114] Add feature and annotations to make serialization use
+    static (declared) type over concrete (actual/runtime) type
+  * [JACKSON-131] Allow constructing and passing of non-shared
+    SerializationConfig/DeserializationConfig instances to ObjectMapper
+  * [JACKSON-135] Add basic JsonNode construction support in ObjectMapper
+  * [JACKSON-147] Add global deserialization feature for suppressing error
+    reporting for unknown properties
+  * [JACKSON-149] Add ser/deser features
+    (DeserializationConfig.Feature.USE_ANNOTATIONS,
+    SerializationConfig.Feature.USE_ANNOTATIONS) to allow disabling
+    use of annotations for serialization and/or deserialization config
+
+------------------------------------------------------------------------
+== History: ==
+------------------------------------------------------------------------
+
+1.1.2 [31-Jul-2009]
+
+  Fixes:
+
+  * [JACKSON-143] NPE on ArrayNode.equals() when comparing empty array
+    node to non-empty array node
+   (reported by Gregory G)
+  * [JACKSON-144] Static "getter-like" methods mistaken for getters (for
+    serialization)
+   (reported by Dan S)
+
+1.1.1 [18-Jul-2009]
+
+  Fixes:
+
+  * [JACKSON-139] Non-numeric double values (NaN, Infinity) are serialized
+    as invalid JSON tokens
+    (reported by Peter H)
+  * Core jar incorrectly included much of "mapper" classes (in addition
+    to core classes)
+  * Now compiles again using JDK 1.5 javac (1.1.0 didn't)
+
+1.1.0 [22-Jun-2009]
+
+  Fixes:
+
+  * [JACKSON-109] Allow deserializing into generics Bean classes
+    (like Wrapper<Bean>) not just generic Maps and Collections 
+  * [JACKSON-121] Problems deserializing Date values of some ISO-8601
+    variants (like one using 'Z' to indicate GMT timezone)
+  * [JACKSON-122] Annotated serializers and deserializers had to
+    be public classes with public default constructor; not any more.
+
+  Improvements:
+
+  * [JACKSON-111] Added "jackson-xc" jar to contains XML Compatibility
+    extensions.
+
+  New features:
+
+  * [JACKSON-70] Add support for generating JSON Schema
+  * [JACKSON-98] Allow serializing/deserializing field-accessible properties,
+    in addition to method-accessible ones.
+  * [JACKSON-105] Allow suppressing output of "default values"; which
+    means value of a property when bean is constructed using the default
+    no-arg constructor
+   (requested by Christoph S)
+  * [JACKSON-119] Add (optional) support for using JAXB annotations
+    (by using JaxbAnnotationIntrospector)
+   (requested by Ryan H)
+  * [JACKSON-120] Add annotations @JsonSerialize, @JsonDeserialize,
+    to streamline annotation by replacing host of existing annotations.
+  * [JACKSON-123] Add "chaining" AnnotationIntrospector (implemented
+    as inner class, AnnotationIntrospector.Pair) that allows combining
+    functionality of 2 introspectors.
+
+1.0.1 [04-Jun-2009]
 
   Fixes:
 
@@ -12,10 +110,6 @@ Description:
    (reported by Oleksander A)
   * [JACKSON-121] Problems deserializing Date values of some ISO-8601
     variants (like one using 'Z' to indicate GMT timezone)
-
-------------------------------------------------------------------------
-== History: ==
-------------------------------------------------------------------------
 
 1.0.0 [09-May-2009]
 
