@@ -1,17 +1,12 @@
-Version: 1.3.0
+Version: 1.2.0
 
 Release date:
-  xx-Sep-2009
+  01-Aug-2009
 
 Description:
-
-  Fixes:
-
-------------------------------------------------------------------------
-== History: ==
-------------------------------------------------------------------------
-
-1.2.0 [02-Aug-2009]
+  Official 1.2 release. Contains all bug fixes up to 1.1.2,
+  and a set of new features that significantly include interoperability
+  and ease-of-use, developer ergonomics.
 
   Improvements:
 
@@ -46,6 +41,10 @@ Description:
     (DeserializationConfig.Feature.USE_ANNOTATIONS,
     SerializationConfig.Feature.USE_ANNOTATIONS) to allow disabling
     use of annotations for serialization and/or deserialization config
+
+------------------------------------------------------------------------
+== History: ==
+------------------------------------------------------------------------
 
 1.1.2 [31-Jul-2009]
 

@@ -10,10 +10,6 @@ import javax.xml.bind.annotation.*;
 import javax.xml.bind.annotation.adapters.XmlAdapter;
 import javax.xml.bind.annotation.adapters.XmlJavaTypeAdapter;
 import javax.xml.bind.annotation.adapters.XmlJavaTypeAdapters;
-import javax.xml.datatype.Duration;
-import javax.xml.datatype.XMLGregorianCalendar;
-import javax.xml.namespace.QName;
-import javax.activation.DataHandler;
 import java.beans.BeanInfo;
 import java.beans.IntrospectionException;
 import java.beans.Introspector;
@@ -22,8 +18,6 @@ import java.lang.annotation.Annotation;
 import java.lang.reflect.AnnotatedElement;
 import java.lang.reflect.Member;
 import java.lang.reflect.Field;
-import java.lang.reflect.Modifier;
-import java.net.URI;
 
 /**
  * Annotation introspector that leverages JAXB annotations where applicable to JSON mapping.
@@ -126,13 +120,10 @@ public class JaxbAnnotationIntrospector extends AnnotationIntrospector
         if (m.getAnnotation(XmlTransient.class) != null) {
             return true;
         }
-        for (Annotation annotation : m.getAnnotated().getDeclaredAnnotations()) {
-            if (isHandled(annotation)) {
-                //if any annotations are present, it is NOT ignorable.
-                return false;
-            }
+        if (m.getAnnotationCount() > 0) {
+            //if any annotations are present, it is NOT ignorable.
+            return false;
         }
-
         if (isPropertiesAccessible(m)) {
             //jaxb only accounts for getter/setter pairs.
             PropertyDescriptor pd = findPropertyDescriptor(m);
@@ -164,17 +155,18 @@ public class JaxbAnnotationIntrospector extends AnnotationIntrospector
         if (f.getAnnotation(XmlTransient.class) != null) {
             return true;
         }
-
-        /**
-         * 2009-08-19 (heatonra) The following annotation check is necessary,
-         * see http://jira.codehaus.org/browse/JACKSON-151
+        /* 19-Jun-2009, tatu: It shouldn't be necessary to check for
+         *   auto-detection settings here; rather, only need to verify
+         *   there's no @XmlTransient used.
+         *
+         *   Some other problems:
+         *   - Check for 'if any annotations' wouldn't work if multiple
+         *     annotations are included (case when chaining introspectors)
          */
-
-        for (Annotation annotation : f.getAnnotated().getDeclaredAnnotations()) {
-            if (isHandled(annotation)) {
-                //if any JAXB annotations are present, it is NOT ignorable.
-                return false;
-            }
+        /*
+        if (f.getAnnotationCount() > 0) {
+            //if any annotations are present, it is NOT ignorable.
+            return false;
         }
 
         XmlAccessType accessType = XmlAccessType.PUBLIC_MEMBER;
@@ -185,6 +177,9 @@ public class JaxbAnnotationIntrospector extends AnnotationIntrospector
         
         return accessType != XmlAccessType.FIELD &&
             !(accessType == XmlAccessType.PUBLIC_MEMBER && Modifier.isPublic(f.getAnnotated().getModifiers()));
+        */
+
+        return false;
     }
 
     /*
@@ -200,27 +195,6 @@ public class JaxbAnnotationIntrospector extends AnnotationIntrospector
         if (adapter != null) {
             return new XmlAdapterJsonSerializer(adapter);
         }
-
-        Class<?> type = am.getType();
-        if (type != null) {
-            if (DataHandler.class.isAssignableFrom(type)) {
-                return new DataHandlerJsonSerializer();
-            }
-            else if (URI.class.isAssignableFrom(type)) {
-                return new URIJsonSerializer();
-            }
-            else if (QName.class.isAssignableFrom(type)) {
-                return new QNameJsonSerializer();
-            }
-            else if (Duration.class.isAssignableFrom(type)) {
-                return new DurationJsonSerializer();
-            }
-            else if (XMLGregorianCalendar.class.isAssignableFrom(type)) {
-                return new XMLGregorianCalendarJsonSerializer();
-            }
-        }
-
-
         return null;
     }
 
@@ -325,26 +299,6 @@ public class JaxbAnnotationIntrospector extends AnnotationIntrospector
         if (adapter != null) {
             return new XmlAdapterJsonDeserializer(adapter);
         }
-
-        Class<?> type = am.getType();
-        if (type != null) {
-            if (DataHandler.class.isAssignableFrom(type)) {
-                return new DataHandlerJsonDeserializer();
-            }
-            else if (URI.class.isAssignableFrom(type)) {
-                return new URIJsonDeserializer();
-            }
-            else if (QName.class.isAssignableFrom(type)) {
-                return new QNameJsonDeserializer();
-            }
-            else if (Duration.class.isAssignableFrom(type)) {
-                return new DurationJsonDeserializer();
-            }
-            else if (XMLGregorianCalendar.class.isAssignableFrom(type)) {
-                return new XMLGregorianCalendarJsonDeserializer();
-            }
-        }
-
         return null;
     }
 
