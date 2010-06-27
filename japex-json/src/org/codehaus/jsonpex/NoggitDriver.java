@@ -30,14 +30,14 @@ public class NoggitDriver extends BaseJsonDriver
     public void run(TestCase testCase)
     {
         try {
-            mInputStream.reset();           
+            _inputStream.reset();           
             int total = 0;
             /* Let's use fixed buffer, except for cases where that'd be
              * excessive. 4k memory seems reasonable (== 2000 chars)
              */
-            char[] buf = new char[Math.min(mDataLen, 2000)];
+            char[] buf = new char[Math.min(_dataLen, 2000)];
 
-            JSONParser jp = new JSONParser(new InputStreamReader(mInputStream, "UTF-8"), buf);
+            JSONParser jp = new JSONParser(new InputStreamReader(_inputStream, "UTF-8"), buf);
             int t;
             CharArr chars = new CharArr();
 
@@ -67,7 +67,7 @@ public class NoggitDriver extends BaseJsonDriver
                     break;
                 }
             }
-            mHashCode = total; // just to get some non-optimizable number
+            _hashCode = total; // just to get some non-optimizable number
         }
         catch (Exception e) {
             throw new RuntimeException(e);

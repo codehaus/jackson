@@ -1,23 +1,22 @@
 package org.codehaus.jsonpex;
 
 import org.codehaus.jackson.map.ObjectMapper;
+import org.codehaus.jackson.smile.SmileFactory;
 
-import com.sun.japex.*;
+import com.sun.japex.TestCase;
 
-/**
- * @author Tatu Saloranta
- */
-public class JacksonJavaTypeDriver extends BaseJsonDriver
+public class JacksonMapperSmileDriver
+    extends JacksonManualSmileDriver
 {
     protected ObjectMapper _mapper;
     
-    public JacksonJavaTypeDriver() { super(); }
-
     @Override
-    public void initializeDriver() {
-        _mapper = new ObjectMapper();
+    public void initializeDriver()
+    {
+        _mapper = new ObjectMapper(new SmileFactory());
     }   
-    
+
+    // alas, need to copy frmo JacksonJavaTypeDriver (we need JSON->Smile converter from JacksonManualSmileDriver)
     @Override
     public void run(TestCase testCase) {
         try {
@@ -30,4 +29,5 @@ public class JacksonJavaTypeDriver extends BaseJsonDriver
             throw new RuntimeException(e);
         }
     }
+    
 }

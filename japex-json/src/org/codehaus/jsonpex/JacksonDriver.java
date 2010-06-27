@@ -1,6 +1,7 @@
 package org.codehaus.jsonpex;
 
-import java.io.*;
+import java.io.IOException;
+
 import org.codehaus.jackson.*;
 
 import com.sun.japex.*;
@@ -16,14 +17,15 @@ import com.sun.japex.*;
  */
 public class JacksonDriver extends BaseJsonDriver
 {
-    JsonFactory mJsonFactory;
+    protected JsonFactory _jsonFactory;
     
     public JacksonDriver() { super(); }
 
     @Override
-    public void initializeDriver() {
+    public void initializeDriver()
+    {
         try {
-            mJsonFactory = new JsonFactory();
+            _jsonFactory = new JsonFactory();
         }
         catch (Exception e) {
             throw new RuntimeException(e);
@@ -31,52 +33,57 @@ public class JacksonDriver extends BaseJsonDriver
     }   
     
     @Override
-    public void run(TestCase testCase) {
+    public void run(TestCase testCase)
+    {
         try {
-            mInputStream.reset();            
-            
-            // Parser could be created in the prepare phase too
-            JsonParser jp = mJsonFactory.createJsonParser(mInputStream);
-            int total  = 0;
-            JsonToken t;
-
-            /* Let's exercise enough accessors to ensure all data is
-             * processed; values themselves are irrelevant.
-             */
-            while ((t = jp.nextToken()) != null) {
-                switch (t) {
-                case VALUE_STRING:
-                    {
-                        char[] chars = jp.getTextCharacters();
-                        int offset = jp.getTextOffset();
-                        int len = jp.getTextLength();
-                        total += offset + len;
-                    }
-                    break;
-                case VALUE_NUMBER_INT:
-                    total += jp.getIntValue();
-                    break;
-                case VALUE_NUMBER_FLOAT:
-                    total += (int) jp.getDoubleValue();
-                    break;
-
-                case VALUE_TRUE:
-                    total += 1;
-                    break;
-                case VALUE_FALSE:
-                    total -= 1;
-                    break;
-                case VALUE_NULL:
-                    ++total;
-                    break;
-                }
-                ;
-            }
-            jp.close();
-            mHashCode = total; // just to get some non-optimizable number
-        }
-        catch (Exception e) {
+            _runManual();
+        } catch (Exception e) {
             throw new RuntimeException(e);
         }
+    }
+        
+    private final void _runManual() throws IOException
+    {
+        _inputStream.reset();            
+        
+        // Parser could be created in the prepare phase too
+        JsonParser jp = _jsonFactory.createJsonParser(_inputStream);
+        int total  = 0;
+        JsonToken t;
+
+        /* Let's exercise enough accessors to ensure all data is
+         * processed; values themselves are irrelevant.
+         */
+        while ((t = jp.nextToken()) != null) {
+            switch (t) {
+            case VALUE_STRING:
+                {
+                    //char[] chars = jp.getTextCharacters();
+                    int offset = jp.getTextOffset();
+                    int len = jp.getTextLength();
+                    total += offset + len;
+                }
+                break;
+            case VALUE_NUMBER_INT:
+                total += jp.getIntValue();
+                break;
+            case VALUE_NUMBER_FLOAT:
+                total += (int) jp.getDoubleValue();
+                break;
+
+            case VALUE_TRUE:
+                total += 1;
+                break;
+            case VALUE_FALSE:
+                total -= 1;
+                break;
+            case VALUE_NULL:
+                ++total;
+                break;
+            }
+            ;
+        }
+        jp.close();
+        _hashCode = total; // just to get some non-optimizable number
     }
 }

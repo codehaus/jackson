@@ -12,12 +12,12 @@ import com.sun.japex.*;
  */
 public class BaseJsonDriver extends JapexDriverBase
 {
-    protected ByteArrayInputStream mInputStream;
+    protected ByteArrayInputStream _inputStream;
 
-    protected byte[] mInputData;
-    protected int mDataLen;
+    protected byte[] _inputData;
+    protected int _dataLen;
     
-    protected int mHashCode;
+    protected int _hashCode;
 
     public BaseJsonDriver() { }
     
@@ -31,9 +31,9 @@ public class BaseJsonDriver extends JapexDriverBase
         
         try {
             // Load XML file to factor out I/O
-            mInputData = Util.streamToByteArray(new FileInputStream(new File(xmlFile)));
-            mDataLen = mInputData.length;
-            mInputStream = new ByteArrayInputStream(mInputData);
+            _inputData = Util.streamToByteArray(new FileInputStream(new File(xmlFile)));
+            _dataLen = _inputData.length;
+            _inputStream = new ByteArrayInputStream(_inputData);
         }        
         catch (Exception e) {
             throw new RuntimeException(e);
@@ -48,9 +48,9 @@ public class BaseJsonDriver extends JapexDriverBase
     @Override
     public void finish(TestCase testCase) {
         // Set file size in KB on X axis
-        mInputStream.reset();
+        _inputStream.reset();
         testCase.setDoubleParam("japex.resultValueX", 
-                mInputStream.available() / 1024.0);
+                _inputStream.available() / 1024.0);
         getTestSuite().setParam("japex.resultUnitX", "KB");
 
         /* 30-Sep-2007, tatus: Let's measure throughput in MBps,

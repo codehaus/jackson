@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!-- Let's include all Jackson drivers in a single bundle -->
 <driverGroup name="JacksonGroup" xmlns="http://www.sun.com/japex/testSuite">
-  <driver name="JacksonDriver">
+  <driver name="JacksonManual">
     <description>
         <div xmlns="">
             <p>Driver for Jackson when used in "raw" streaming mode</p>
@@ -12,7 +12,7 @@
     <param name="japex.classPath" value="dist/classes"/>
     <param name="japex.classPath" value="lib/jackson*.jar"/>
   </driver>
-  <driver name="JacksonJavaTypeDriver">
+  <driver name="JacksonMapper">
     <description>
         <div xmlns="">
             <p>Driver for Jackson's "java type" mapper (tree model using Java collections and wrappers)
@@ -25,7 +25,7 @@
     <param name="japex.classPath" value="lib/jackson*.jar"/>
   </driver>
 
-  <driver name="JacksonJsonTypeDriver">
+  <driver name="JacksonTree">
     <description>
         <div xmlns="">
             <p>Driver for Jackson's "JSON type" mapper (tree model using type-safe JSON nodes)

@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Let's include all Jackson drivers in a single bundle -->
+<driverGroup name="JacksonGroup" xmlns="http://www.sun.com/japex/testSuite">
+  <driver name="SmileManualDriver">
+    <description>
+        <div xmlns="">
+            <p>Driver for Jackson/Smile in "manual" mode</p>
+        </div>
+    </description>
+    
+    <param name="japex.driverClass" value="org.codehaus.jsonpex.JacksonManualSmileDriver"/>    
+    <param name="japex.classPath" value="dist/classes"/>
+    <param name="japex.classPath" value="lib/jackson*.jar"/>
+  </driver>
+  <driver name="SmileMapperDriver">
+    <description>
+        <div xmlns="">
+            <p>Driver for Jackson/Smile in data-binding mode</p>
+        </div>
+    </description>
+    
+    <param name="japex.driverClass" value="org.codehaus.jsonpex.JacksonMapperSmileDriver"/>    
+    <param name="japex.classPath" value="dist/classes"/>
+    <param name="japex.classPath" value="lib/jackson*.jar"/>
+  </driver>
+
+</driverGroup>
