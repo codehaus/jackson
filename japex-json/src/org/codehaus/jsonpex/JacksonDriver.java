@@ -38,7 +38,14 @@ public class JacksonDriver extends BaseJsonDriver
         try {
             _runManual();
         } catch (Exception e) {
-            throw new RuntimeException(e);
+            Throwable t = e;
+            while (t.getCause() != null) {
+                t = t.getCause();
+            }
+            if (t instanceof RuntimeException) {
+                throw (RuntimeException) t;
+            }
+            throw new RuntimeException(t);
         }
     }
         

@@ -37,7 +37,7 @@ public class JacksonManualSmileDriver
         try {
             Object ob = plainMapper.readValue(_inputData, 0, origLen, Object.class);
             _inputData = smileMapper.writeValueAsBytes(ob);
-        } catch (Exception e) {
+        } catch (java.io.IOException e) {
             throw new RuntimeException("Could not convert from JSON to Smile format: "+e.getMessage(), e);
         }
         _dataLen = _inputData.length;

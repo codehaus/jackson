@@ -24,8 +24,7 @@ public class JacksonMapperSmileDriver
             // By passing Object.class, we'll get Maps/Lists/wrappers:
             Object ob = _mapper.readValue(_inputStream, Object.class);
             _hashCode = ob.hashCode(); // just to get some non-optimizable number
-        }
-        catch (Exception e) {
+        } catch (java.io.IOException e) {
             throw new RuntimeException(e);
         }
     }
