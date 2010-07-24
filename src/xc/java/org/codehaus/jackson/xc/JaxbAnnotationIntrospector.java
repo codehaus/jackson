@@ -1,60 +1,52 @@
 package org.codehaus.jackson.xc;
 
-import java.beans.BeanInfo;
-import java.beans.IntrospectionException;
-import java.beans.Introspector;
-import java.beans.PropertyDescriptor;
-import java.lang.annotation.Annotation;
-import java.lang.reflect.*;
-import java.util.*;
-
-import javax.xml.bind.JAXBElement;
-import javax.xml.bind.annotation.*;
-import javax.xml.bind.annotation.adapters.XmlAdapter;
-import javax.xml.bind.annotation.adapters.XmlJavaTypeAdapter;
-import javax.xml.bind.annotation.adapters.XmlJavaTypeAdapters;
-
-import org.codehaus.jackson.annotate.JsonAutoDetect.Visibility;
-import org.codehaus.jackson.annotate.JsonTypeInfo;
 import org.codehaus.jackson.map.AnnotationIntrospector;
 import org.codehaus.jackson.map.JsonDeserializer;
 import org.codehaus.jackson.map.JsonSerializer;
 import org.codehaus.jackson.map.KeyDeserializer;
 import org.codehaus.jackson.map.annotate.JsonSerialize;
 import org.codehaus.jackson.map.introspect.*;
-import org.codehaus.jackson.map.jsontype.NamedType;
-import org.codehaus.jackson.map.jsontype.TypeResolverBuilder;
-import org.codehaus.jackson.map.jsontype.impl.StdTypeResolverBuilder;
-import org.codehaus.jackson.type.JavaType;
+
+import javax.xml.bind.annotation.*;
+import javax.xml.bind.annotation.adapters.XmlAdapter;
+import javax.xml.bind.annotation.adapters.XmlJavaTypeAdapter;
+import javax.xml.bind.annotation.adapters.XmlJavaTypeAdapters;
+import java.beans.BeanInfo;
+import java.beans.IntrospectionException;
+import java.beans.Introspector;
+import java.beans.PropertyDescriptor;
+import java.lang.annotation.Annotation;
+import java.lang.reflect.AnnotatedElement;
+import java.lang.reflect.Field;
+import java.lang.reflect.Member;
+import java.lang.reflect.Modifier;
 
 /**
  * Annotation introspector that leverages JAXB annotations where applicable to JSON mapping.
  * <p/>
- * The following JAXB annotations are not supported yet (but some may be supported in future)
+ * The following JAXB annotations were determined to be not-applicable:
  * <ul>
- * <li>{@link XmlAnyAttribute} not yet used (as of 1.5) but may be in future (as an alias for @JsonAnySetter?)
- * <li>{@link XmlAnyElement} not yet used, may be as per [JACKSON-253]
- * <li>{@link javax.xml.bind.annotation.XmlAttachmentRef}: JSON does not support external attachments
+ * <li>{@link XmlAnyAttribute} because it applies only to Map<QName, String>, which jackson can't serialize
+ * <li>{@link XmlAnyElement} because it applies only to JAXBElement, which jackson can't serialize
+ * <li>{@link javax.xml.bind.annotation.XmlAttachmentRef}
  * <li>{@link XmlElementDecl}
- * <li>{@link XmlElementRefs} because Jackson doesn't have any support for 'named' collection items -- however,
- *    this may become partially supported as per [JACKSON-253].
- * <li>{@link XmlID} because Jackson doesn't support referential integrity. NOTE: this too may be supported
- *   in future if/when id references are handled
- * <li>{@link XmlIDREF} same as <code>XmlID</code>
- * <li>{@link javax.xml.bind.annotation.XmlInlineBinaryData} since the underlying concepts
- *    (like XOP) do not exist in JSON -- Jackson will always use inline base64 encoding as the method
- * <li>{@link javax.xml.bind.annotation.XmlList} because JSON does have (or necessarily need)
- *    method of serializing list of values as space-separated Strings
+ * <li>{@link XmlElementRefs} because Jackson doesn't have any support for 'named' collection items.
+ * <li>{@link XmlElements} because Jackson doesn't have any support for 'named' collection items.
+ *    <br />NOTE: it is possible that this annotation will be supported in future.
+ *   </li>
+ * <li>{@link XmlID} because jackson' doesn't support referential integrity.
+ * <li>{@link XmlIDREF} because jackson' doesn't support referential integrity.
+ * <li>{@link javax.xml.bind.annotation.XmlInlineBinaryData}
+ * <li>{@link javax.xml.bind.annotation.XmlList} because jackson doesn't support serializing collections to a single string.
  * <li>{@link javax.xml.bind.annotation.XmlMimeType}
- * <li>{@link javax.xml.bind.annotation.XmlMixed} since JSON has no concept of mixed content
- * <li>{@link XmlNs} not (yet?) used, may be used in future for XML compatibility
+ * <li>{@link javax.xml.bind.annotation.XmlMixed}
+ * <li>{@link XmlNs}
  * <li>{@link XmlRegistry}
  * <li>{@link XmlRootElement} is not currently used, but it may be used in future for XML compatibility features
  * <li>{@link XmlSchema}
  * <li>{@link XmlSchemaType}
  * <li>{@link XmlSchemaTypes}
- * <li>{@link XmlSeeAlso} not needed for anything currently (could theoretically be useful
- *    for locating subtypes for Polymorphic Type Handling)
+ * <li>{@link XmlSeeAlso}
  * </ul>
  *
  * Note also the following limitations:
@@ -64,7 +56,6 @@ import org.codehaus.jackson.type.JavaType;
  * </ul>
  *
  * @author Ryan Heaton
- * @author Tatu Saloranta
  */
 public class JaxbAnnotationIntrospector extends AnnotationIntrospector
 {
@@ -91,9 +82,9 @@ public class JaxbAnnotationIntrospector extends AnnotationIntrospector
     }
 
     /*
-    /************************************************
-    /* General annotation properties
-    /************************************************
+    ////////////////////////////////////////////////////
+    // General annotation properties
+    ////////////////////////////////////////////////////
      */
 
     /**
@@ -119,9 +110,9 @@ public class JaxbAnnotationIntrospector extends AnnotationIntrospector
     }
 
     /*
-    /************************************************
-    /* General annotations
-    /************************************************
+    ////////////////////////////////////////////////////
+    // General annotations
+    ////////////////////////////////////////////////////
      */
 
     @Override
@@ -196,6 +187,12 @@ public class JaxbAnnotationIntrospector extends AnnotationIntrospector
     }
 
     @Override
+    public Boolean findFieldAutoDetection(AnnotatedClass ac)
+    {
+        return isFieldsAccessible(ac);
+    }
+
+    @Override
     public String findRootName(AnnotatedClass ac)
     {
         XmlRootElement elem = findRootElementAnnotation(ac);
@@ -221,203 +218,6 @@ public class JaxbAnnotationIntrospector extends AnnotationIntrospector
          * specify or change this, it seems wrong to claim such setting
          * is in effect. May need to revisit this issue in future
          */
-        return null;
-    }
-
-    /*
-    /******************************************************
-    /* Property auto-detection
-    /******************************************************
-     */
-    
-    @Override
-    public VisibilityChecker<?> findAutoDetectVisibility(AnnotatedClass ac,
-        VisibilityChecker<?> checker)
-    {
-        XmlAccessType at = findAccessType(ac);
-        if (at == null) {
-            /* JAXB default is "PUBLIC_MEMBER"; however, here we should not
-             * override settings if there is no annotation -- that would mess
-             * up global baseline. Fortunately Jackson defaults are very close
-             * to JAXB 'PUBLIC_MEMBER' settings (considering that setters and
-             * getters must come in pairs)
-             */
-            return checker;
-        }
-        
-        // Note: JAXB does not do creator auto-detection, can (and should) ignore
-        switch (at) {
-        case FIELD: // all fields, independent of visibility; no methods
-            return checker.withFieldVisibility(Visibility.ANY)
-                .withSetterVisibility(Visibility.NONE)
-                .withGetterVisibility(Visibility.NONE)
-                .withIsGetterVisibility(Visibility.NONE)
-                ;
-        case NONE: // no auto-detection
-            return checker.withFieldVisibility(Visibility.NONE)
-            .withSetterVisibility(Visibility.NONE)
-            .withGetterVisibility(Visibility.NONE)
-            .withIsGetterVisibility(Visibility.NONE)
-            ;
-        case PROPERTY:
-            return checker.withFieldVisibility(Visibility.NONE)
-            .withSetterVisibility(Visibility.PUBLIC_ONLY)
-            .withGetterVisibility(Visibility.PUBLIC_ONLY)
-            .withIsGetterVisibility(Visibility.PUBLIC_ONLY)
-            ;
-        case PUBLIC_MEMBER:       
-            return checker.withFieldVisibility(Visibility.PUBLIC_ONLY)
-            .withSetterVisibility(Visibility.PUBLIC_ONLY)
-            .withGetterVisibility(Visibility.PUBLIC_ONLY)
-            .withIsGetterVisibility(Visibility.PUBLIC_ONLY)
-            ;
-        }
-        return checker;
-    }
-
-    /**
-     * Whether properties are accessible to this class.
-     *
-     * @param ac The annotated class.
-     * @return Whether properties are accessible to this class.
-     */
-    protected boolean isPropertiesAccessible(Annotated ac)
-    {
-        XmlAccessType accessType = findAccessType(ac);
-        if (accessType == null) {
-            // JAXB default is "PUBLIC_MEMBER"
-            accessType = XmlAccessType.PUBLIC_MEMBER;
-        }
-        return (accessType == XmlAccessType.PUBLIC_MEMBER) || (accessType == XmlAccessType.PROPERTY);
-    }
-
-    /**
-     * Method for locating JAXB {@link XmlAccessType} annotation value
-     * for given annotated entity, if it has one, or inherits one from
-     * its ancestors (in JAXB sense, package etc). Returns null if
-     * nothing has been explicitly defined.
-     */
-    protected XmlAccessType findAccessType(Annotated ac)
-    {
-        XmlAccessorType at = findAnnotation(XmlAccessorType.class, ac, true, true, true);
-        return (at == null) ? null : at.value();
-    }
-    /*
-    protected boolean isFieldsAccessible(Annotated ac)
-    {
-        XmlAccessType at = findAccessType(ac);
-        if (accessType == null) {
-            // JAXB default is "PUBLIC_MEMBER"
-            accessType = XmlAccessType.PUBLIC_MEMBER;
-        }
-        return accessType == XmlAccessType.PUBLIC_MEMBER || accessType == XmlAccessType.FIELD;
-    }
-    */
-
-    
-    /*
-    /****************************************************
-    /* Class annotations for PM type handling (1.5+)
-    /****************************************************
-    */
-    
-    @Override
-    public TypeResolverBuilder<?> findTypeResolver(AnnotatedClass ac, JavaType baseType)
-    {
-        // no per-class type resolvers, right?
-        return null;
-    }
-
-    @Override
-    public TypeResolverBuilder<?> findPropertyTypeResolver(AnnotatedMember am, JavaType baseType)
-    {
-        /* First: @XmlElements and @XmlElementRefs only applies type for immediate property, if it
-         * is NOT a structured type.
-         */
-        if (baseType.isContainerType()) return null;
-        return _typeResolverFromXmlElements(am);
-    }
-
-    @Override
-    public TypeResolverBuilder<?> findPropertyContentTypeResolver(AnnotatedMember am, JavaType containerType)
-    {
-        /* First: let's ensure property is a container type: caller should have
-         * verified but just to be sure
-         */
-        if (!containerType.isContainerType()) {
-        	throw new IllegalArgumentException("Must call method with a container type (got "+containerType+")");
-        }
-        return _typeResolverFromXmlElements(am);
-    }
-
-    protected TypeResolverBuilder<?> _typeResolverFromXmlElements(AnnotatedMember am)
-    {
-        /* If simple type, @XmlElements and @XmlElementRefs are applicable.
-         * Note: @XmlElement and @XmlElementRef are NOT handled here, since they
-         * are handled specifically as non-polymorphic indication
-         * of the actual type
-         */
-        XmlElements elems = findAnnotation(XmlElements.class, am, false, false, false);
-        XmlElementRefs elemRefs = findAnnotation(XmlElementRefs.class, am, false, false, false);
-        if (elems == null && elemRefs == null) {
-            return null;
-        }
-
-        TypeResolverBuilder<?> b = new StdTypeResolverBuilder();
-        // JAXB always uses type name as id
-        b = b.init(JsonTypeInfo.Id.NAME, null);
-        // and let's consider WRAPPER_OBJECT to be canonical inclusion method
-        b = b.inclusion(JsonTypeInfo.As.WRAPPER_OBJECT);
-        return b;        
-    }
-    
-    @Override
-    public List<NamedType> findSubtypes(Annotated a)
-    {
-        // No package/superclass defaulting (only used with fields, methods)
-        XmlElements elems = findAnnotation(XmlElements.class, a, false, false, false);
-        if (elems != null) {
-            ArrayList<NamedType> result = new ArrayList<NamedType>();
-            for (XmlElement elem : elems.value()) {
-                String name = elem.name();
-                if (MARKER_FOR_DEFAULT.equals(name)) name = null;
-                result.add(new NamedType(elem.type(), name));
-            }
-            return result;
-        }
-        else {
-            XmlElementRefs elemRefs = findAnnotation(XmlElementRefs.class, a, false, false, false);
-            if (elemRefs != null) {
-                ArrayList<NamedType> result = new ArrayList<NamedType>();
-                for (XmlElementRef elemRef : elemRefs.value()) {
-                    Class<?> refType = elemRef.type();
-                    if (!JAXBElement.class.isAssignableFrom(refType)) {
-                        XmlRootElement rootElement = (XmlRootElement) refType.getAnnotation(XmlRootElement.class);
-                        if (rootElement != null) {
-                            String name = rootElement.name();
-                            if (MARKER_FOR_DEFAULT.equals(name)) {
-                                name = Introspector.decapitalize(refType.getSimpleName());
-                            }
-                            result.add(new NamedType(refType, name));
-                        }
-                        else {
-                            //todo: (heatonra) should be illegal, per JAXB. Should we throw an exception?
-                        }
-                    }
-                }
-                return result;
-            }
-        }
-        return null;
-    }
-
-    @Override
-    public String findTypeName(AnnotatedClass ac) {
-        XmlType type = findAnnotation(XmlType.class, ac, false, false, false);
-        if (type != null) {
-            String name = type.name();
-            if (!MARKER_FOR_DEFAULT.equals(name)) return name;
-        }
         return null;
     }
     
@@ -469,7 +269,7 @@ public class JaxbAnnotationIntrospector extends AnnotationIntrospector
         /* [JACKSON-150]: add support for additional core XML
          * types needed by JAXB
          */
-        Class<?> type = am.getRawType();
+        Class<?> type = am.getType();
         if (type != null) {
             if (_dataHandlerSerializer != null && isDataHandler(type)) {
                 return _dataHandlerSerializer;
@@ -496,32 +296,22 @@ public class JaxbAnnotationIntrospector extends AnnotationIntrospector
 
     public Class<?> findSerializationType(Annotated a)
     {
-        /* 15-Feb-2010, tatu: May need to support in future; if so, would make use of
-         *    @XmlElement annotation. Reason it is not (yet) needed is that serialization
-         *    uses dynamic runtime types
-         */
         return null;
     }
 
     /**
-     * Implementation of this method is slightly tricky, given that JAXB defaults differ
-     * from Jackson defaults. As of version 1.5 and above, this is resolved by honoring
-     * Jackson defaults (which are configurable), and only using JAXB explicit annotations.
+     * By default only non-null properties are written (per the JAXB spec.)
+     *
+     * @return JsonSerialize.Inclusion.NON_NULL
      */
     public JsonSerialize.Inclusion findSerializationInclusion(Annotated a, JsonSerialize.Inclusion defValue)
     {
-        XmlElementWrapper w = a.getAnnotation(XmlElementWrapper.class);
-        if (w != null) {
-            return w.nillable() ? JsonSerialize.Inclusion.ALWAYS : JsonSerialize.Inclusion.NON_NULL;
+        if ((a instanceof AnnotatedField) || (a instanceof AnnotatedMethod)) {
+            boolean nillable = a.getAnnotation(XmlElementWrapper.class) != null ? a.getAnnotation(XmlElementWrapper.class).nillable() :
+                    a.getAnnotation(XmlElement.class) != null && a.getAnnotation(XmlElement.class).nillable();
+            return nillable ? JsonSerialize.Inclusion.ALWAYS : JsonSerialize.Inclusion.NON_NULL;
         }
-        XmlElement e = a.getAnnotation(XmlElement.class);
-        if (e != null) {
-            return e.nillable() ? JsonSerialize.Inclusion.ALWAYS : JsonSerialize.Inclusion.NON_NULL;
-        }
-        /* [JACKSON-256]: better pass default value through, if no explicit direction indicating
-         * otherwise
-         */
-        return defValue;
+        return JsonSerialize.Inclusion.NON_NULL;
     }
 
     @Override
@@ -542,6 +332,29 @@ public class JaxbAnnotationIntrospector extends AnnotationIntrospector
     // Serialization: class annotations
     ///////////////////////////////////////////////////////
     */
+
+    public Boolean findGetterAutoDetection(AnnotatedClass ac)
+    {
+        /* Ok: should only return non-null if there is explicit
+         * definition; default (of "PUBLIC_MEMBER") should
+         * be indicated as null return value
+         */
+        XmlAccessType at = findAccessType(ac);
+        if (at != null) {
+            boolean enabled = (at == XmlAccessType.PUBLIC_MEMBER) || (at == XmlAccessType.PROPERTY);
+            return enabled ? Boolean.TRUE : Boolean.FALSE;
+        }
+        return null;
+    }
+
+    /**
+     * @since 1.3
+     */
+    public Boolean findIsGetterAutoDetection(AnnotatedClass ac)
+    {
+        // No difference between regular getters, "is getters"
+        return findGetterAutoDetection(ac);
+    }
 
     public String[] findSerializationPropertyOrder(AnnotatedClass ac) {
         // @XmlType.propOrder fits the bill here:
@@ -585,7 +398,7 @@ public class JaxbAnnotationIntrospector extends AnnotationIntrospector
     protected boolean isInvisible(AnnotatedField f)
     {
         boolean invisible = true;
-        
+
         for (Annotation annotation : f.getAnnotated().getDeclaredAnnotations()) {
             if (isHandled(annotation)) {
                 //if any JAXB annotations are present, it is NOT ignorable.
@@ -621,6 +434,7 @@ public class JaxbAnnotationIntrospector extends AnnotationIntrospector
                 invisible = false;
             }
         }
+
         if (isPropertiesAccessible(m)) {
             //jaxb only accounts for getter/setter pairs.
             PropertyDescriptor pd = findPropertyDescriptor(m);
@@ -635,7 +449,6 @@ public class JaxbAnnotationIntrospector extends AnnotationIntrospector
     ///////////////////////////////////////////////////////
     */
 
-    @Override
     public String findSerializablePropertyName(AnnotatedField af)
     {
         if (isInvisible(af)) {
@@ -667,7 +480,7 @@ public class JaxbAnnotationIntrospector extends AnnotationIntrospector
         /* [JACKSON-150]: add support for additional core XML
          * types needed by JAXB
          */
-        Class<?> type = am.getRawType();
+        Class<?> type = am.getType();
         if (type != null) {
             if (_dataHandlerDeserializer != null && isDataHandler(type)) {
                 return _dataHandlerDeserializer;
@@ -677,75 +490,61 @@ public class JaxbAnnotationIntrospector extends AnnotationIntrospector
         return null;
     }
 
-    @Override
     public Class<KeyDeserializer> findKeyDeserializer(Annotated am)
     {
         // Is there something like this in JAXB?
         return null;
     }
 
-    @Override
     public Class<JsonDeserializer<?>> findContentDeserializer(Annotated am)
     {
         // Is there something like this in JAXB?
         return null;
     }
 
-    /**
-     * JAXB does allow specifying (more) concrete class for
-     * deserialization by using \@XmlElement annotation.
-     */
-    @Override
-    public Class<?> findDeserializationType(Annotated a, JavaType baseType, String propName)
-    {
-        /* First: only applicable for non-structured types (yes, JAXB annotations
-         * are tricky)
-         */
-        if (!baseType.isContainerType()) {
-            return _doFindDeserializationType(a, baseType, propName);
-        }
-        return null;
-    }
-
-    @Override
-    public Class<?> findDeserializationKeyType(Annotated am, JavaType baseKeyType,
-            String propName)
-    {
-        return null;
-    }
-
-    @Override
-    public Class<?> findDeserializationContentType(Annotated a, JavaType baseContentType, String propName)
-    {
-        /* 15-Feb-2010, tatus: JAXB usage of XmlElement/XmlElements is really
-         *   confusing: sometimes it's for type (non-container types), sometimes for
-         *   contents (container) types. I guess it's frugal to reuse these... but
-         *   I think it's rather short-sighted. Whatever, it is what it is, and here
-         *   we are being given content type explicitly.
-         */
-        return _doFindDeserializationType(a, baseContentType, propName);
-    }
-
-    protected Class<?> _doFindDeserializationType(Annotated a, JavaType baseType, String propName)
+    public Class<?> findDeserializationType(Annotated am)
     {
         /* false for class, package, super-class, since annotation can
          * only be attached to fields and methods
          */
-        //
-        XmlElement annotation = findAnnotation(XmlElement.class, a, false, false, false);
+        XmlElement annotation = findAnnotation(XmlElement.class, am, false, false, false);
         if (annotation != null && annotation.type() != XmlElement.DEFAULT.class) {
             return annotation.type();
         }
-        /* 16-Feb-2010, tatu: May also have annotation associated with field, not method
-         *    itself... and findAnnotation() won't find that (nor property descriptor)
+        return null;
+    }
+
+    public Class<?> findDeserializationKeyType(Annotated am)
+    {
+        return null;
+    }
+
+    public Class<?> findDeserializationContentType(Annotated am)
+    {
+        /* 16-Dec-2009, tatus: I think this is wrong: annotation
+         *   really refers to type of property itself, not contents.
+         *   Content type can (only?) be effected by @XmlElements (which in
+         *   turn contains instances of @XmlElement)
+         *
+         * TODO: implement support for @XmlElements
          */
-        if ((a instanceof AnnotatedMethod) && propName != null) {
-            AnnotatedMethod am = (AnnotatedMethod) a;
-            annotation = this.findFieldAnnotation(XmlElement.class, am.getDeclaringClass(), propName);
-            if (annotation != null && annotation.type() != XmlElement.DEFAULT.class) {
-                return annotation.type();
-            }
+        /*
+        XmlElement annotation = findAnnotation(XmlElement.class, am, false, false, false);
+        if (annotation != null && annotation.type() != XmlElement.DEFAULT.class) {
+            return annotation.type();
         }
+        */
+
+        return null;
+    }
+
+    public Boolean findSetterAutoDetection(AnnotatedClass ac)
+    {
+        return isPropertiesAccessible(ac);
+    }
+
+    public Boolean findCreatorAutoDetection(AnnotatedClass ac)
+    {
         return null;
     }
 
@@ -762,8 +561,7 @@ public class JaxbAnnotationIntrospector extends AnnotationIntrospector
     {
         //(ryan) JAXB has @XmlAnyAttribute and @XmlAnyElement annotations, but they're not applicable in this case
         // because JAXB says those annotations are only applicable to methods with specific signatures
-        // that Jackson doesn't support (Jackson's any setter needs 2 arguments, name and value, whereas
-        // JAXB expects use of Map
+        // that Jackson doesn't support. Yet.
         return false;
     }
 
@@ -800,15 +598,13 @@ public class JaxbAnnotationIntrospector extends AnnotationIntrospector
     }
 
     /*
-    /**************************************************
-    /* Helper methods (non-API)
-    /**************************************************
+    ///////////////////////////////////////////////////////
+    // Helper methods (non-API)
+    ///////////////////////////////////////////////////////
     */
 
     /**
-     * Finds an annotation associated with given annotatable thing; or if
-     * not found, a default annotation it may have (from super class, package
-     * and so on)
+     * Finds an annotation.
      *
      * @param annotationClass the annotation class.
      * @param annotated The annotated element.
@@ -864,186 +660,76 @@ public class JaxbAnnotationIntrospector extends AnnotationIntrospector
     }
 
     /**
-     * Helper method for locating field on given class, checking if
-     * it has specified annotation, and returning it if found.
-     * 
-     * @since 1.5
+     * Whether properties are accessible to this class.
+     *
+     * @param ac The annotated class.
+     * @return Whether properties are accessible to this class.
      */
-    protected <A extends Annotation> A findFieldAnnotation(Class<A> annotationType, Class<?> cls,
-                                                      String fieldName)
+    protected boolean isPropertiesAccessible(Annotated ac)
     {
-        do {
-            for (Field f : cls.getDeclaredFields()) {
-                if (fieldName.equals(f.getName())) {
-                    return f.getAnnotation(annotationType);
-                }
-            }
-            if (cls.isInterface() || cls == Object.class) {
-                break;
-            }
-            cls = cls.getSuperclass();
-        } while (cls != null);
-        return null;
+        XmlAccessType accessType = findAccessType(ac);
+        if (accessType == null) {
+            // JAXB default is "PUBLIC_MEMBER"
+            accessType = XmlAccessType.PUBLIC_MEMBER;
+        }
+        return (accessType == XmlAccessType.PUBLIC_MEMBER) || (accessType == XmlAccessType.PROPERTY);
     }
 
-    /*
-    /************************************************************************
-    /* Helper methods for bean property introspection
-    /************************************************************************
-     */
-
-    /* 27-Feb-2010, tatu: Since bean property descriptors are accessed so
-     *   often, let's try some trivially simple reuse. Since introspectors
-     *   are currently stateless (bad initial decision), need to add
-     *   local caching between calls. For now, no need to cache for more
-     *   than a single class, since intent is to avoid repetitive same
-     *   lookups (during handling of a single class)
-     */
-    
-    private final Object _propertyDescriptorCacheLock = new Object();
-    private List<PropertyDescriptor> _cachedPropertyDescriptors = null;
-    private Class<?> _propertyDescriptorForClass = null;
-    
     /**
-     * Finds the property descriptor (adapted to AnnotatedElement) for the specified
-     * method.
+     * Method for locating JAXB {@link XmlAccessType} annotation value
+     * for given annotated entity, if it has one, or inherits one from
+     * its ancestors (in JAXB sense, package etc). Returns null if
+     * nothing has been explicitly defined.
+     */
+    protected XmlAccessType findAccessType(Annotated ac)
+    {
+        XmlAccessorType at = findAnnotation(XmlAccessorType.class, ac, true, true, true);
+        return (at == null) ? null : at.value();
+    }
+
+    /**
+     * Whether fields are accessible to this class.
+     *
+     * @param ac The annotated class.
+     * @return Whether fields are accessible to this class.
+     */
+    protected boolean isFieldsAccessible(Annotated ac)
+    {
+        XmlAccessType accessType = XmlAccessType.PUBLIC_MEMBER;
+        XmlAccessorType at = findAnnotation(XmlAccessorType.class, ac, true, true, true);
+        if (at != null) {
+            accessType = at.value();
+        }
+        return accessType == XmlAccessType.PUBLIC_MEMBER || accessType == XmlAccessType.FIELD;
+    }
+
+    /**
+     * Finds the property descriptor (adapted to AnnotatedElement) for the specified method.
      *
      * @param m The method.
      * @return The property descriptor, or null if not found.
      */
     protected PropertyDescriptor findPropertyDescriptor(AnnotatedMethod m)
     {
-        /* 27-Feb-2010, tatu: Code used to only ask bean introspector to find properties,
-         *   without any post-processing. This would cause problems like [JACKSON-246].
-         *   At minimum, we must do renaming as per JAXB annotations.
-         */
-        String methodName = m.getName();
-        for (PropertyDescriptor pd : findPropertyDescriptors(m.getDeclaringClass())) {
-            if (pd.getReadMethod().getName().equals(methodName)) {
-                return pd;
-            }
-            if (pd.getWriteMethod().getName().equals(methodName)) {
-                return pd;
-            }
-        }
-        return null;
-    }
-
-    
-    /**
-     * Helper method for finding all <b>complete</b> property descriptors of given
-     * class. This means descriptors that have both getter and setter
-     * available.
-     * 
-     * @since 1.5
-     */
-    protected List<PropertyDescriptor> findPropertyDescriptors(Class<?> cls)
-    {
-        // First: trivial caching (or reuse), since this gets called a lot:
-        synchronized (_propertyDescriptorCacheLock) {
-            if (cls == _propertyDescriptorForClass && _cachedPropertyDescriptors != null) {
-                return _cachedPropertyDescriptors;
-            }
-        }
-        
-        BeanInfo beanInfo;
-        List<PropertyDescriptor> result;
         try {
-            beanInfo = Introspector.getBeanInfo(cls);
-            PropertyDescriptor[] pds = beanInfo.getPropertyDescriptors();
-            if (pds.length == 0) { // nothing found?
-                result = Collections.emptyList();
-            } else {
-                result = new ArrayList<PropertyDescriptor>();
-                // May need to reconnect renamed pieces:
-                Map<String,PropertyDescriptor> partials = null;
-                for (PropertyDescriptor pd : beanInfo.getPropertyDescriptors()) {
-                    Method read = pd.getReadMethod();
-                    String readName = (read == null) ? null : findJaxbPropertyName(read, pd.getPropertyType(), null);
-                    Method write = pd.getWriteMethod();
-                    String writeName = (write == null) ? null : findJaxbPropertyName(write, pd.getPropertyType(), null);
-                    if (write == null) { // only read method
-                        if (readName == null) {
-                            readName = pd.getName();
-                        }
-                        partials = _processReadMethod(partials, read, readName, result);
-                    } else if (read == null) { // only write method
-                        if (writeName == null) {
-                            writeName = pd.getName();
-                        }
-                        partials = _processWriteMethod(partials, write, writeName, result);                   
-                    } else { // both -> either add one (if matching names), or split
-                        // only possible kink: both have explicitly different names...
-                        if (readName != null && writeName != null && !readName.equals(writeName)) {
-                            partials = _processReadMethod(partials, read, readName, result);
-                            partials = _processWriteMethod(partials, write, writeName, result);                        
-                        } else { // otherwise just need to figure out the name
-                            String name;
-                            if (readName != null) {
-                                name = readName;
-                            } else if (writeName != null) {
-                                name = writeName;
-                            } else {
-                                name = pd.getName();
-                            }
-                            result.add(new PropertyDescriptor(name, read, write));
-                        }
-                    }
+            BeanInfo beanInfo = Introspector.getBeanInfo(m.getDeclaringClass());
+            PropertyDescriptor[] descriptors = beanInfo.getPropertyDescriptors();
+            for (int i = 0; i < descriptors.length; i++) {
+                PropertyDescriptor descriptor = descriptors[i];
+                if (descriptor.getReadMethod() != null && descriptor.getReadMethod().getName().equals(m.getName())) {
+                    return descriptor;
+                }
+                if (descriptor.getWriteMethod() != null && descriptor.getWriteMethod().getName().equals(m.getName())) {
+                    return descriptor;
                 }
             }
         } catch (IntrospectionException e) {
-            throw new IllegalArgumentException("Problem introspecting bean properties: "+e.getMessage(), e);
+            return null;
         }
 
-        // and update cache for reuse:
-        synchronized (_propertyDescriptorCacheLock) {
-            _cachedPropertyDescriptors = result;
-        }
-        return result;
+        return null;
     }
 
-    private Map<String,PropertyDescriptor> _processReadMethod(Map<String,PropertyDescriptor> partials,
-            Method method, String propertyName, List<PropertyDescriptor> pds)
-        throws IntrospectionException
-    {
-        if (partials == null) {
-            partials = new HashMap<String,PropertyDescriptor>();
-        } else {
-            PropertyDescriptor pd = partials.get(propertyName);
-            if (pd != null) {
-                pd.setReadMethod(method);
-                if (pd.getWriteMethod() != null) { // now complete!
-                    pds.add(pd);
-                    partials.remove(propertyName);
-                    return partials;
-                }
-            } 
-        }
-        partials.put(propertyName, new PropertyDescriptor(propertyName, method, null));
-        return partials;
-    }
-
-    private Map<String,PropertyDescriptor> _processWriteMethod(Map<String,PropertyDescriptor> partials,
-            Method method, String propertyName, List<PropertyDescriptor> pds)
-        throws IntrospectionException
-    {
-        if (partials == null) {
-            partials = new HashMap<String,PropertyDescriptor>();
-        } else {
-            PropertyDescriptor pd = partials.get(propertyName);
-            if (pd != null) {
-                pd.setWriteMethod(method);
-                if (pd.getReadMethod() != null) { // now complete!
-                    pds.add(pd);
-                    partials.remove(propertyName);
-                    return partials;
-                }
-            }
-        }
-        partials.put(propertyName, new PropertyDescriptor(propertyName, null, method));
-        return partials;
-    }
-    
     /**
      * Find the property name for the specified annotated method. Takes into account any JAXB annotation that
      * can be mapped to a JSON property.
@@ -1067,8 +753,9 @@ public class JaxbAnnotationIntrospector extends AnnotationIntrospector
      * @param aeType The type of the annotated element.
      * @param defaultName The default name if nothing is specified.
      *
-     * @return The JAXB property name, if found; null if no annotations;
-     *    defaultName if annotation has value indicating default should be used.
+     * @return The JAXB property name, if found (null if no annotations
+     *    found); defaultName if annotation has value indicating default
+     *    should be used.
      */
     protected String findJaxbPropertyName(AnnotatedElement ae, Class<?> aeType, String defaultName)
     {
@@ -1089,6 +776,7 @@ public class JaxbAnnotationIntrospector extends AnnotationIntrospector
             }
             return defaultName;
         }
+
         XmlElement element = ae.getAnnotation(XmlElement.class);
         if (element != null) {
             String name = element.name();
@@ -1097,21 +785,20 @@ public class JaxbAnnotationIntrospector extends AnnotationIntrospector
             }
             return defaultName;
         }
+
         XmlElementRef elementRef = ae.getAnnotation(XmlElementRef.class);
         if (elementRef != null) {
             String name = elementRef.name();
             if (!MARKER_FOR_DEFAULT.equals(name)) {
                 return name;
             }
-            if (aeType != null) {
-                XmlRootElement rootElement = (XmlRootElement) aeType.getAnnotation(XmlRootElement.class);
-                if (rootElement != null) {
-                    name = rootElement.name();
-                    if (!MARKER_FOR_DEFAULT.equals(name)) {
-                        return name;
-                    }
-                    return Introspector.decapitalize(aeType.getSimpleName());
+            XmlRootElement rootElement = (XmlRootElement) aeType.getAnnotation(XmlRootElement.class);
+            if (rootElement != null) {
+                name = rootElement.name();
+                if (!MARKER_FOR_DEFAULT.equals(name)) {
+                    return name;
                 }
+                return Introspector.decapitalize(aeType.getSimpleName());
             }
         }
 
@@ -1184,12 +871,6 @@ public class JaxbAnnotationIntrospector extends AnnotationIntrospector
         return adapter;
     }
 
-    /*
-    /************************************************************************
-    /* Helper classes
-    /************************************************************************
-     */
-    
     private static class AnnotatedProperty implements AnnotatedElement {
 
         private final PropertyDescriptor pd;

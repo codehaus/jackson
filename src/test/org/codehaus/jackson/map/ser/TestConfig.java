@@ -13,12 +13,11 @@ public class TestConfig
     extends BaseMapTest
 {
     /*
-    /**********************************************************
-    /* Helper beans
-    /**********************************************************
+    //////////////////////////////////////////////
+    // Helper beans
+    //////////////////////////////////////////////
      */
 
-    @SuppressWarnings("deprecation")
     @JsonWriteNullProperties(false)
     @JsonAutoDetect(JsonMethod.NONE)
     final static class ConfigLegacy { }
@@ -37,13 +36,13 @@ public class TestConfig
     }
 
     /*
-    /**********************************************************
-    /* Main tests
-    /**********************************************************
+    //////////////////////////////////////////////
+    // Main tests
+    //////////////////////////////////////////////
      */
 
     @SuppressWarnings("deprecation")
-    public void testDefaults()
+	public void testDefaults()
     {
         ObjectMapper m = new ObjectMapper();
         SerializationConfig cfg = m.getSerializationConfig();
@@ -61,12 +60,6 @@ public class TestConfig
 
         // since 1.3:
         assertTrue(cfg.isEnabled(SerializationConfig.Feature.AUTO_DETECT_IS_GETTERS));
-        // since 1.4
-        
-        assertTrue(cfg.isEnabled(SerializationConfig.Feature.FAIL_ON_EMPTY_BEANS));
-        // since 1.5
-        assertTrue(cfg.isEnabled(SerializationConfig.Feature.DEFAULT_VIEW_INCLUSION));
-
     }
 
     public void testOverrideIntrospectors()
@@ -97,13 +90,9 @@ public class TestConfig
          * subset of features affected this way
          */
         cfg.fromAnnotations(ConfigLegacy.class);
-        assertFalse(cfg.isEnabled(SerializationConfig.Feature.WRITE_NULL_PROPERTIES));
-
-        /* 08-Mar-2010, tatu: the way auto-detection is handled was changed; these
-         *    tests are not correct any more:
         assertFalse(cfg.isEnabled(SerializationConfig.Feature.AUTO_DETECT_GETTERS));
         assertFalse(cfg.isEnabled(SerializationConfig.Feature.AUTO_DETECT_IS_GETTERS));
-         */
+        assertFalse(cfg.isEnabled(SerializationConfig.Feature.WRITE_NULL_PROPERTIES));
     }
 
     public void testFromAnnotations()
@@ -121,14 +110,10 @@ public class TestConfig
          * subset of features affected this way
          */
         cfg.fromAnnotations(Config.class);
-        assertEquals(JsonSerialize.Inclusion.NON_DEFAULT, cfg.getSerializationInclusion());
-        assertTrue(cfg.isEnabled(SerializationConfig.Feature.USE_STATIC_TYPING));
-
-        /* 08-Mar-2010, tatu: the way auto-detection is handled was changed; these
-         *    tests are not correct any more:
         assertFalse(cfg.isEnabled(SerializationConfig.Feature.AUTO_DETECT_GETTERS));
         assertFalse(cfg.isEnabled(SerializationConfig.Feature.AUTO_DETECT_IS_GETTERS));
-        */
+        assertEquals(JsonSerialize.Inclusion.NON_DEFAULT, cfg.getSerializationInclusion());
+        assertTrue(cfg.isEnabled(SerializationConfig.Feature.USE_STATIC_TYPING));
     }
 
     public void testIndentation() throws Exception
@@ -167,21 +152,17 @@ public class TestConfig
         ObjectMapper mapper = new ObjectMapper();
         assertEquals(0, mapper.getSerializerProvider().cachedSerializersCount());
         // and then should get one constructed for:
-        Map<String,Object> result = this.writeAndMap(mapper, new AnnoBean());
-        assertEquals(2, result.size());
-        assertEquals(Integer.valueOf(1), result.get("x"));
-        assertEquals(Integer.valueOf(2), result.get("y"));
+        String value = mapper.writeValueAsString(new AnnoBean());
+	// order is somewhat arbitrary, thus shouldn't compare value:
+        //assertEquals("{\"x\":1,\"y\":2}", value);
+        assertNotNull(value);
+        assertTrue(value.indexOf("\"x\":1") > 0);
+        assertTrue(value.indexOf("\"y\":2") > 0);
 
         /* Note: it is 2 because we'll also get serializer for basic 'int', not
          * just AnnoBean
          */
-        /* 12-Jan-2010, tatus: Actually, probably more, if and when we typing
-         *   aspects are considered (depending on what is cached)
-         */
-        int count = mapper.getSerializerProvider().cachedSerializersCount();
-        if (count < 2) {
-            fail("Should have at least 2 cached serializers, got "+count);
-        }
+        assertEquals(2, mapper.getSerializerProvider().cachedSerializersCount());
         mapper.getSerializerProvider().flushCachedSerializers();
         assertEquals(0, mapper.getSerializerProvider().cachedSerializersCount());
     }

@@ -2,22 +2,16 @@ package org.codehaus.jackson.map;
 
 import java.io.*;
 import java.net.URL;
-import java.util.Collection;
 import java.util.concurrent.ConcurrentHashMap;
 
 import org.codehaus.jackson.*;
-import org.codehaus.jackson.annotate.JsonTypeInfo;
 import org.codehaus.jackson.io.SegmentedStringWriter;
 import org.codehaus.jackson.map.deser.StdDeserializationContext;
 import org.codehaus.jackson.map.deser.StdDeserializerProvider;
 import org.codehaus.jackson.map.introspect.BasicClassIntrospector;
 import org.codehaus.jackson.map.introspect.JacksonAnnotationIntrospector;
-import org.codehaus.jackson.map.introspect.VisibilityChecker;
 import org.codehaus.jackson.map.ser.StdSerializerProvider;
 import org.codehaus.jackson.map.ser.BeanSerializerFactory;
-import org.codehaus.jackson.map.jsontype.NamedType;
-import org.codehaus.jackson.map.jsontype.TypeResolverBuilder;
-import org.codehaus.jackson.map.jsontype.impl.StdTypeResolverBuilder;
 import org.codehaus.jackson.map.type.TypeFactory;
 import org.codehaus.jackson.node.ArrayNode;
 import org.codehaus.jackson.node.JsonNodeFactory;
@@ -27,12 +21,10 @@ import org.codehaus.jackson.node.ObjectNode;
 import org.codehaus.jackson.schema.JsonSchema;
 import org.codehaus.jackson.type.JavaType;
 import org.codehaus.jackson.type.TypeReference;
-import org.codehaus.jackson.util.ByteArrayBuilder;
-import org.codehaus.jackson.util.TokenBuffer;
 
 /**
  * This mapper (or, data binder, or codec) provides functionality for
- * converting between Java objects (instances of JDK provided core classes,
+ * conversting between Java objects (instances of JDK provided core classes,
  * beans), and matching JSON constructs.
  * It will use instances of {@link JsonParser} and {@link JsonGenerator}
  * for implementing actual reading/writing of JSON.
@@ -54,124 +46,7 @@ import org.codehaus.jackson.util.TokenBuffer;
 public class ObjectMapper
     extends ObjectCodec
 {
-    /*
-    /**********************************************************
-    /* Helper classes, enums
-    /**********************************************************
-     */
-
-    /**
-     * Enumeration used with {@link ObjectMapper#enableDefaultTyping()}
-     * to specify what kind of types (classes) default typing should
-     * be used for. It will only be used if no explicit type information
-     * is found, but this enumeration further limits subset of those
-     * types.
-     * 
-     * @since 1.5
-     */
-    public enum DefaultTyping {
-        /**
-         * This value means that only properties that have
-         * {@link java.lang.Object} as declared type (including
-         * generic types without explicit type) will use default
-         * typing.
-         */
-        JAVA_LANG_OBJECT,
-        
-        /**
-         * Value that means that default typing will be used for
-         * properties with declared type of {@link java.lang.Object}
-         * or an abstract type (abstract class or interface).
-         * Note that this does <b>not</b> include array types.
-         */
-        OBJECT_AND_NON_CONCRETE,
-
-        /**
-         * Value that means that default typing will be used for
-         * all types covered by {@link #OBJECT_AND_NON_CONCRETE}
-         * plus all array types for them.
-         */
-        NON_CONCRETE_AND_ARRAYS,
-        
-        /**
-         * Value that means that default typing will be used for
-         * all non-final types, with exception of small number of
-         * "natural" types (String, Boolean, Integer, Double), which
-         * can be correctly inferred from JSON; as well as for
-         * all arrays of non-final types.
-         */
-        NON_FINAL
-    }
-
-    /**
-     * Customized {@link TypeResolverBuilder} that provides
-     * resolver builders based on its configuration. It is used
-     * when default typing is enabled (see
-     * {@link ObjectMapper#enableDefaultTyping()} for details).
-     */
-    public static class DefaultTypeResolverBuilder
-        extends StdTypeResolverBuilder
-    {
-        /**
-         * Definition of what types is this default typer valid for.
-         */
-        protected final DefaultTyping _appliesFor;
-
-        public DefaultTypeResolverBuilder(DefaultTyping t) {
-            _appliesFor = t;
-        }
-
-        @Override
-        public TypeDeserializer buildTypeDeserializer(JavaType baseType,
-                Collection<NamedType> subtypes)
-        {
-            return useForType(baseType) ? super.buildTypeDeserializer(baseType, subtypes) : null;
-        }
-
-        @Override
-        public TypeSerializer buildTypeSerializer(JavaType baseType,
-                Collection<NamedType> subtypes)
-        {
-            return useForType(baseType) ? super.buildTypeSerializer(baseType, subtypes) : null;            
-        }
-
-        /**
-         * Method called to check if the default type handler should be
-         * used for given type.
-         * Note: "natural types" (String, Boolean, Integer, Double) will never
-         * use typing; that is both due to them being concrete and final,
-         * and since actual serializers and deserializers will also ignore any
-         * attempts to enforce typing.
-         */
-        public boolean useForType(JavaType t)
-        {
-            switch (_appliesFor) {
-            case NON_CONCRETE_AND_ARRAYS:
-                if (t.isArrayType()) {
-                    t = t.getContentType();
-                }
-                // fall through
-            case OBJECT_AND_NON_CONCRETE:
-                return (t.getRawClass() == Object.class) || !t.isConcrete();
-            case NON_FINAL:
-                if (t.isArrayType()) {
-                    t = t.getContentType();
-                }
-                return !t.isFinal(); // includes Object.class
-            default:
-            //case JAVA_LANG_OBJECT:
-                return (t.getRawClass() == Object.class);
-            }
-        }
-    }
-
-    /*
-    /**********************************************************
-    /* Internal constants, singletons
-    /**********************************************************
-     */
-    
-    private final static JavaType JSON_NODE_TYPE = TypeFactory.type(JsonNode.class);
+    final static JavaType JSON_NODE_TYPE = TypeFactory.type(JsonNode.class);
 
     /* !!! 03-Apr-2009, tatu: Should try to avoid direct reference... but not
      *   sure what'd be simple and elegant way. So until then:
@@ -181,13 +56,10 @@ public class ObjectMapper
     // 16-May-2009, tatu: Ditto ^^^
     protected final static AnnotationIntrospector DEFAULT_ANNOTATION_INTROSPECTOR = new JacksonAnnotationIntrospector();
 
-    // @since 1.5
-    protected final static VisibilityChecker<?> STD_VISIBILITY_CHECKER = VisibilityChecker.Std.defaultInstance();
-    
     /*
-    /**********************************************************
-    /* Configuration settings, shared
-    /**********************************************************
+    ////////////////////////////////////////////////////
+    // Configuration settings, shared
+    ////////////////////////////////////////////////////
      */
 
     /**
@@ -196,35 +68,10 @@ public class ObjectMapper
      */
     protected final JsonFactory _jsonFactory;
 
-    /**
-     * Object that defines how to add type information for types that do not
-     * have explicit type information settings (which are usually
-     * indicated by {@link org.codehaus.jackson.annotate.JsonTypeInfo})
-     * If set to null, no type information will be added unless annotations
-     * are used; if set to non-null, resolver builder is used to check
-     * which type serializers and deserializers are to be used (if any)
-     * 
-     * @since 1.5
-     */
-    protected TypeResolverBuilder<?> _defaultTyper;
-
-    /**
-     * Object used for determining whether specific property elements
-     * (method, constructors, fields) can be auto-detected based on
-     * their visibility (access modifiers). Can be changed to allow
-     * different minimum visibility levels for auto-detection. Note
-     * that this is the global handler; individual types (classes)
-     * can further override active checker used (using
-     * {@link JsonAutoDetect} annotation)
-     * 
-     * @since 1.5
-     */
-    protected VisibilityChecker<?> _visibilityChecker;
-    
     /*
-    /**********************************************************
-    /* Configuration settings, serialization
-    /**********************************************************
+    ////////////////////////////////////////////////////
+    // Configuration settings, serialization
+    ////////////////////////////////////////////////////
      */
 
     /**
@@ -247,9 +94,9 @@ public class ObjectMapper
     protected SerializerFactory _serializerFactory;
 
     /*
-    /**********************************************************
-    /* Configuration settings, deserialization
-    /**********************************************************
+    ////////////////////////////////////////////////////
+    // Configuration settings, deserialization
+    ////////////////////////////////////////////////////
      */
 
     /**
@@ -267,9 +114,22 @@ public class ObjectMapper
     protected DeserializerProvider _deserializerProvider;
 
     /*
-    /**********************************************************
-    /* Caching
-    /**********************************************************
+    ////////////////////////////////////////////////////
+    // Configuration settings, other
+    ////////////////////////////////////////////////////
+     */
+
+    /**
+     * Node factory to use for creating 
+     *
+     * @since 1.2
+     */
+    protected JsonNodeFactory _nodeFactory;
+
+    /*
+    ////////////////////////////////////////////////////
+    // Caching
+    ////////////////////////////////////////////////////
      */
 
     /* Note: handling of serializers and deserializers is not symmetric;
@@ -289,18 +149,14 @@ public class ObjectMapper
      * Given that we don't expect much concurrency for additions
      * (should very quickly converge to zero after startup), let's
      * explicitly define a low concurrency setting.
-     *<p>
-     * Since version 1.5, these may are either "raw" deserializers (when
-     * no type information is needed for base type), or type-wrapped
-     * deserializers (if it is needed)
      */
     final protected ConcurrentHashMap<JavaType, JsonDeserializer<Object>> _rootDeserializers
         = new ConcurrentHashMap<JavaType, JsonDeserializer<Object>>(64, 0.6f, 2);
 
     /*
-    /**********************************************************
-    /* Life-cycle (construction, configuration)
-    /**********************************************************
+    ////////////////////////////////////////////////////
+    // Life-cycle (construction, configuration)
+    ////////////////////////////////////////////////////
      */
 
     /**
@@ -370,17 +226,16 @@ public class ObjectMapper
          *    to create actual linking.
          */
         _jsonFactory = (jf == null) ? new MappingJsonFactory(this) : jf;
-        // visibility checker; usually default
-        _visibilityChecker = STD_VISIBILITY_CHECKER;
-        _serializationConfig = (sconfig != null) ? sconfig :
-            new SerializationConfig(DEFAULT_INTROSPECTOR, DEFAULT_ANNOTATION_INTROSPECTOR, _visibilityChecker);
-        _deserializationConfig = (dconfig != null) ? dconfig :
-            new DeserializationConfig(DEFAULT_INTROSPECTOR, DEFAULT_ANNOTATION_INTROSPECTOR, _visibilityChecker);
+        _serializationConfig = (sconfig == null) ? new SerializationConfig(DEFAULT_INTROSPECTOR, DEFAULT_ANNOTATION_INTROSPECTOR) : sconfig;
+        _deserializationConfig = (dconfig == null) ? new DeserializationConfig(DEFAULT_INTROSPECTOR, DEFAULT_ANNOTATION_INTROSPECTOR) : dconfig;
         _serializerProvider = (sp == null) ? new StdSerializerProvider() : sp;
         _deserializerProvider = (dp == null) ? new StdDeserializerProvider() : dp;
 
         // Default serializer factory is stateless, can just assign
         _serializerFactory = BeanSerializerFactory.instance;
+
+        // and use standard JsonNodeFactory initially
+        _nodeFactory = JsonNodeFactory.instance;
     }
 
     /**
@@ -432,38 +287,14 @@ public class ObjectMapper
      * @since 1.2
      */
     public ObjectMapper setNodeFactory(JsonNodeFactory f) {
-        _deserializationConfig.setNodeFactory(f);
+        _nodeFactory = f;
         return this;
     }
 
-    /**
-     * Method for accessing currently configured visibility checker;
-     * object used for determining whether given property element
-     * (method, field, constructor) can be auto-detected or not.
-     * 
-     * @since 1.5
-     */
-    public VisibilityChecker<?> getVisibilityChecker() {
-    	return _visibilityChecker;
-    }
-
-    /**
-     * Method for setting currently configured visibility checker;
-     * object used for determining whether given property element
-     * (method, field, constructor) can be auto-detected or not.
-     * This default checker is used if no per-class overrides
-     * are defined.
-     * 
-     * @since 1.5
-     */    
-    public void setVisibilityChecker(VisibilityChecker<?> vc) {
-        _visibilityChecker = vc;
-    }
-    
     /*
-    /**********************************************************
-    /* Access to configuration settings
-    /**********************************************************
+    ////////////////////////////////////////////////////
+    // Access to configuration settings
+    ////////////////////////////////////////////////////
      */
 
     /**
@@ -492,7 +323,7 @@ public class ObjectMapper
      * (like date format being used, see {@link SerializationConfig#setDateFormat}).
      */
     public SerializationConfig copySerializationConfig() {
-        return _serializationConfig.createUnshared(_defaultTyper, _visibilityChecker);
+        return _serializationConfig.createUnshared();
     }
 
     /**
@@ -544,7 +375,7 @@ public class ObjectMapper
      * see {@link DeserializationConfig#addHandler})
      */
     public DeserializationConfig copyDeserializationConfig() {
-        return _deserializationConfig.createUnshared(_defaultTyper, _visibilityChecker);
+        return _deserializationConfig.createUnshared();
     }
 
     /**
@@ -615,89 +446,19 @@ public class ObjectMapper
      * Method that can be used to get hold of {@link JsonNodeFactory}
      * that this mapper will use when directly constructing
      * root {@link JsonNode} instances for Trees.
-     *<p>
-     * Note: this is just a shortcut for calling
-     *<pre>
-     *   getDeserializationConfig().getNodeFactory()
-     *</pre>
      *
      * @since 1.2
      */
     public JsonNodeFactory getNodeFactory() {
-        return _deserializationConfig.getNodeFactory();
+        return _nodeFactory;
     }
 
     /*
-    /**********************************************************
-    /* Type information configuration (1.5+)
-    /**********************************************************
-     */
-
-    /**
-     * Convenience method that is equivalant to calling
-     *<pre>
-     *  enableObjectTyping(DefaultTyping.OBJECT_AND_NON_CONCRETE);
-     *</pre>
-     */
-    public ObjectMapper enableDefaultTyping() {
-        return enableDefaultTyping(DefaultTyping.OBJECT_AND_NON_CONCRETE);
-    }
-
-    /**
-     * Convenience method that is equivalent to calling
-     *<pre>
-     *  enableObjectTyping(dti, JsonTypeInfo.As.WRAPPER_ARRAY);
-     *</pre>
-     */
-    public ObjectMapper enableDefaultTyping(DefaultTyping dti) {
-        return enableDefaultTyping(dti, JsonTypeInfo.As.WRAPPER_ARRAY);
-    }
-
-    /**
-     * Method for enabling automatic inclusion of type information, needed
-     * for proper deserialization of polymorphic types (unless types
-     * have been annotated with {@link org.codehaus.jackson.annotate.JsonTypeInfo}).
-     * 
-     * @param applicability Defines kinds of types for which additional type information
-     *    is added; see {@link DefaultTyping} for more information.
-     */
-    public ObjectMapper enableDefaultTyping(DefaultTyping applicability, JsonTypeInfo.As includeAs)
-    {
-        TypeResolverBuilder<?> typer = new DefaultTypeResolverBuilder(applicability);
-        // we'll always use full class name, when using defaulting
-        typer = typer.init(JsonTypeInfo.Id.CLASS, null);
-        typer = typer.inclusion(includeAs);
-        return setDefaltTyping(typer);
-    }
-
-    /**
-     * Method for disabling automatic inclusion of type information; if so, only
-     * explicitly annotated types (ones with
-     * {@link org.codehaus.jackson.annotate.JsonTypeInfo}) will have
-     * additional embedded type information.
-     */
-    public ObjectMapper disableDefaultTyping() {
-        return setDefaltTyping(null);
-    }
-
-    /**
-     * Method for enabling automatic inclusion of type information, using
-     * specified handler object for determining which types this affects,
-     * as well as details of how information is embedded.
-     * 
-     * @param typer Type information inclusion handler
-     */
-    public ObjectMapper setDefaltTyping(TypeResolverBuilder<?> typer) {
-        _defaultTyper = typer;
-        return this;
-    }
-    
-    /*
-    /**********************************************************
-    /* Public API (from ObjectCodec): deserialization
-    /* (mapping from Json to Java types);
-    /* main methods
-    /**********************************************************
+    ////////////////////////////////////////////////////
+    // Public API (from ObjectCodec): deserialization
+    // (mapping from Json to Java types);
+    // main methods
+    ////////////////////////////////////////////////////
      */
 
     /**
@@ -715,7 +476,7 @@ public class ObjectMapper
     public <T> T readValue(JsonParser jp, Class<T> valueType)
         throws IOException, JsonParseException, JsonMappingException
     {
-        return (T) _readValue(copyDeserializationConfig(), jp, TypeFactory.type(valueType));
+        return (T) _readValue(jp, TypeFactory.type(valueType), copyDeserializationConfig());
     } 
 
     /**
@@ -740,7 +501,7 @@ public class ObjectMapper
                            DeserializationConfig cfg)
         throws IOException, JsonParseException, JsonMappingException
     {
-        return (T) _readValue(cfg, jp, TypeFactory.type(valueType));
+        return (T) _readValue(jp, TypeFactory.type(valueType), cfg);
     } 
 
     /**
@@ -755,7 +516,8 @@ public class ObjectMapper
     public <T> T readValue(JsonParser jp, TypeReference<?> valueTypeRef)
         throws IOException, JsonParseException, JsonMappingException
     {
-        return (T) _readValue(copyDeserializationConfig(), jp, TypeFactory.type(valueTypeRef));
+        return (T) _readValue(jp, TypeFactory.type(valueTypeRef),
+                              copyDeserializationConfig());
     } 
 
     /**
@@ -778,7 +540,7 @@ public class ObjectMapper
                            DeserializationConfig cfg)
         throws IOException, JsonParseException, JsonMappingException
     {
-        return (T) _readValue(cfg, jp, TypeFactory.type(valueTypeRef));
+        return (T) _readValue(jp, TypeFactory.type(valueTypeRef), cfg);
     } 
 
     /**
@@ -792,7 +554,7 @@ public class ObjectMapper
     public <T> T readValue(JsonParser jp, JavaType valueType)
         throws IOException, JsonParseException, JsonMappingException
     {
-        return (T) _readValue(copyDeserializationConfig(), jp, valueType);
+        return (T) _readValue(jp, valueType, copyDeserializationConfig());
     } 
 
     /**
@@ -814,7 +576,7 @@ public class ObjectMapper
                            DeserializationConfig cfg)
         throws IOException, JsonParseException, JsonMappingException
     {
-        return (T) _readValue(cfg, jp, valueType);
+        return (T) _readValue(jp, valueType, cfg);
     } 
 
     /**
@@ -853,7 +615,7 @@ public class ObjectMapper
          *   will map Json null straight into Java null. But what
          *   we want to return is the "null node" instead.
          */
-        JsonNode n = (JsonNode) _readValue(cfg, jp, JSON_NODE_TYPE);
+        JsonNode n = (JsonNode) _readValue(jp, JSON_NODE_TYPE, cfg);
         return (n == null) ? NullNode.instance : n;
     }
 
@@ -915,32 +677,27 @@ public class ObjectMapper
     }
 
     /*
-    /**********************************************************
-    /* Public API (from ObjectCodec): serialization
-    /* (mapping from Java types to Json)
-    /**********************************************************
+    ////////////////////////////////////////////////////
+    // Public API (from ObjectCodec): serialization
+    // (mapping from Java types to Json)
+    ////////////////////////////////////////////////////
      */
 
     /**
      * Method that can be used to serialize any Java value as
-     * JSON output, using provided {@link JsonGenerator}.
+     * Json output, using provided {@link JsonGenerator}.
      */
     @Override
     public void writeValue(JsonGenerator jgen, Object value)
         throws IOException, JsonGenerationException, JsonMappingException
     {
-        SerializationConfig config = copySerializationConfig();
-        if (config.isEnabled(SerializationConfig.Feature.CLOSE_CLOSEABLE) && (value instanceof Closeable)) {
-            _writeCloseableValue(jgen, value, config);
-        } else {
-            _serializerProvider.serializeValue(config, jgen, value, _serializerFactory);
-            jgen.flush();
-        }
+        _serializerProvider.serializeValue(copySerializationConfig(), jgen, value, _serializerFactory);
+        jgen.flush();
     }
 
     /**
      * Method that can be used to serialize any Java value as
-     * JSON output, using provided {@link JsonGenerator},
+     * Json output, using provided {@link JsonGenerator},
      * configured as per passed configuration object.
      *
      * @since 1.1
@@ -948,17 +705,12 @@ public class ObjectMapper
     public void writeValue(JsonGenerator jgen, Object value, SerializationConfig config)
         throws IOException, JsonGenerationException, JsonMappingException
     {
-        // [JACKSON-282] Consider java.util.Closeable
-        if (config.isEnabled(SerializationConfig.Feature.CLOSE_CLOSEABLE) && (value instanceof Closeable)) {
-            _writeCloseableValue(jgen, value, config);
-        } else {
-            _serializerProvider.serializeValue(config, jgen, value, _serializerFactory);
-            jgen.flush();
-        }
+        _serializerProvider.serializeValue(config, jgen, value, _serializerFactory);
+        jgen.flush();
     }
 
     /**
-     * Method to serialize given JSON Tree, using generator
+     * Method to serialize given Json Tree, using generator
      * provided.
      */
     public void writeTree(JsonGenerator jgen, JsonNode rootNode)
@@ -983,9 +735,9 @@ public class ObjectMapper
     }
 
     /*
-    /**********************************************************
-    /* Public API (from ObjectCodec): Tree Model support
-    /**********************************************************
+    ////////////////////////////////////////////////////
+    // Public API (from ObjectCodec): Tree Model support
+    ////////////////////////////////////////////////////
      */
 
     /**
@@ -998,7 +750,7 @@ public class ObjectMapper
      * @since 1.2
      */
     public ObjectNode createObjectNode() {
-        return _deserializationConfig.getNodeFactory().objectNode();
+        return _nodeFactory.objectNode();
     }
 
     /**
@@ -1011,7 +763,7 @@ public class ObjectMapper
      * @since 1.2
      */
     public ArrayNode createArrayNode() {
-        return _deserializationConfig.getNodeFactory().arrayNode();
+        return _nodeFactory.arrayNode();
     }
 
     /**
@@ -1022,6 +774,18 @@ public class ObjectMapper
         return new TreeTraversingParser(n, this);
     }
 
+    /*
+     * @since 1.3
+     *
+    public JsonGenerator treeFromTokens(JsonNode n)
+    {
+        if (!n.isContainerNode()) {
+            throw new IllegalArgumentException("JsonNode passed in is not a container node (type "+n.getClass().getName()+")");
+        }
+        return new TreeAppendingGenerator((ContainerNode) n, this);
+    }
+    */
+
     public <T> T treeToValue(JsonNode n, Class<T> valueType)
         throws IOException, JsonParseException, JsonMappingException
     {
@@ -1030,9 +794,9 @@ public class ObjectMapper
     }
 
     /*
-    /**********************************************************
-    /* Extended Public API, accessors
-    /**********************************************************
+    ////////////////////////////////////////////////////
+    // Extended Public API, accessors
+    ////////////////////////////////////////////////////
      */
 
     /**
@@ -1066,10 +830,10 @@ public class ObjectMapper
     }
 
     /*
-    /**********************************************************
-    /* Extended Public API, deserialization,
-    /* convenience methods
-    /**********************************************************
+    ////////////////////////////////////////////////////
+    // Extended Public API, deserialization,
+    // convenience methods
+    ////////////////////////////////////////////////////
      */
 
     @SuppressWarnings("unchecked")
@@ -1202,15 +966,15 @@ public class ObjectMapper
     } 
 
     /*
-    /**********************************************************
-    /* Extended Public API: serialization
-    /* (mapping from Java types to Json)
-    /**********************************************************
+    ////////////////////////////////////////////////////
+    // Extended Public API: serialization
+    // (mapping from Java types to Json)
+    ////////////////////////////////////////////////////
      */
 
     /**
      * Method that can be used to serialize any Java value as
-     * JSON output, written to File provided.
+     * Json output, written to File provided.
      */
     public void writeValue(File resultFile, Object value)
         throws IOException, JsonGenerationException, JsonMappingException
@@ -1220,7 +984,7 @@ public class ObjectMapper
 
     /**
      * Method that can be used to serialize any Java value as
-     * JSON output, using output stream provided (using encoding
+     * Json output, using output stream provided (using encoding
      * {@link JsonEncoding#UTF8}).
      *<p>
      * Note: method does not close the underlying stream explicitly
@@ -1237,7 +1001,7 @@ public class ObjectMapper
 
     /**
      * Method that can be used to serialize any Java value as
-     * JSON output, using Writer provided.
+     * Json output, using Writer provided.
      *<p>
      * Note: method does not close the underlying stream explicitly
      * here; however, {@link JsonFactory} this mapper uses may choose
@@ -1268,33 +1032,10 @@ public class ObjectMapper
         return sw.getAndClear();
     }
     
-    /**
-     * Method that can be used to serialize any Java value as
-     * a byte array. Functionally equivalent to calling
-     * {@link #writeValue(Writer,Object)} with {@link java.io.ByteArrayOutputStream}
-     * and getting bytes, but more efficient.
-     * Encoding used will be UTF-8.
-     *
-     * @since 1.5
-     */
-    public byte[] writeValueAsBytes(Object value)
-        throws IOException, JsonGenerationException, JsonMappingException
-    {        
-        ByteArrayBuilder bb = new ByteArrayBuilder(_jsonFactory._getBufferRecycler());
-        _configAndWriteValue(_jsonFactory.createJsonGenerator(bb, JsonEncoding.UTF8), value);
-        byte[] result = bb.toByteArray();
-        bb.release();
-        return result;
-    }
-
     /*
-    /**********************************************************
-    /* Extended Public API: serialization using JSON Views
-    /* (since version 1.4)
-    /* 
-    /* NOTE: as of version 1.5, should use ObjectWriter
-    /* instead 
-    /**********************************************************
+    ////////////////////////////////////////////////////
+    // Extended Public API: serialization using Json Views
+    ////////////////////////////////////////////////////
      */
 
     /**
@@ -1312,8 +1053,6 @@ public class ObjectMapper
      * @param viewClass (optional) Identifier for View to use. If null,
      *   equivalent to passing <code>Object.class</code>; both of which
      *   mean "default view" (all properties always included)
-     *   
-     * @deprecated Use {@link #viewWriter} instead
      */
     public void writeValueUsingView(JsonGenerator jgen, Object value, Class<?> viewClass)
         throws IOException, JsonGenerationException, JsonMappingException
@@ -1331,8 +1070,6 @@ public class ObjectMapper
      * @param viewClass (optional) Identifier for View to use. If null,
      *   equivalent to passing <code>Object.class</code>; both of which
      *   mean "default view" (all properties always included)
-     *   
-     * @deprecated Use {@link #viewWriter} instead
      */
     public void writeValueUsingView(Writer w, Object value, Class<?> viewClass)
         throws IOException, JsonGenerationException, JsonMappingException
@@ -1350,8 +1087,6 @@ public class ObjectMapper
      * @param viewClass (optional) Identifier for View to use. If null,
      *   equivalent to passing <code>Object.class</code>; both of which
      *   mean "default view" (all properties always included)
-     *   
-     * @deprecated Use {@link #viewWriter} instead
      */
     public void writeValueUsingView(OutputStream out, Object value, Class<?> viewClass)
         throws IOException, JsonGenerationException, JsonMappingException
@@ -1360,112 +1095,9 @@ public class ObjectMapper
     }
 
     /*
-    /**********************************************************
-    /* Extended Public API: constructing ObjectWriters
-    /* for more advanced configuration
-    /**********************************************************
-     */
-
-    /**
-     * Factory method for constructing {@link ObjectWriter} that will
-     * serialize objects using specified JSON View (filter).
-     * 
-     * @since 1.5
-     */
-    public ObjectWriter viewWriter(Class<?> serializationView) {
-        return new ObjectWriter(this, serializationView, /*type*/ null);
-    }
-
-    /**
-     * Factory method for constructing {@link ObjectWriter} that will
-     * serialize objects using specified root type, instead of actual
-     * runtime type of value. Type must be a super-type of runtime
-     * type.
-     * 
-     * @since 1.5
-     */
-    public ObjectWriter typedWriter(Class<?> rootType) {
-        JavaType t = (rootType == null) ? null : TypeFactory.type(rootType);
-        return new ObjectWriter(this, null, t);
-    }
-
-    /**
-     * Factory method for constructing {@link ObjectWriter} that will
-     * serialize objects using specified root type, instead of actual
-     * runtime type of value. Type must be a super-type of runtime
-     * type.
-     * 
-     * @since 1.5
-     */
-    public ObjectWriter typedWriter(JavaType rootType) {
-        return new ObjectWriter(this, null, rootType);
-    }
-
-    /*
-    /**********************************************************
-    /* Extended Public API: constructing ObjectReaders
-    /* for more advanced configuration
-    /**********************************************************
-     */
-
-    /**
-     * Factory method for constructing {@link ObjectReader} that will
-     * update given Object (usually Bean, but can be a Collection or Map
-     * as well, but NOT an array) with JSON data. Deserialization occurs
-     * normally except that the root-level value in JSON is not used for
-     * instantiating a new object; instead give updateable object is used
-     * as root.
-     * Runtime type of value object is used for locating deserializer,
-     * unless overridden by other factory methods of {@link ObjectReader}
-     * 
-     * @since 1.6
-     */
-    public ObjectReader updatingReader(Object valueToUpdate)
-    {
-        JavaType t = TypeFactory.type(valueToUpdate.getClass());
-        return new ObjectReader(this, t, valueToUpdate);
-    }
-
-    /**
-     * Factory method for constructing {@link ObjectReader} that will
-     * read or update instances of specified type
-     */
-    public ObjectReader reader(JavaType type)
-    {
-        return new ObjectReader(this, type, null);
-    }
-
-    /**
-     * Factory method for constructing {@link ObjectReader} that will
-     * read or update instances of specified type
-     */
-    public ObjectReader reader(Class<?> type)
-    {
-        return reader(TypeFactory.type(type));
-    }
-
-    /**
-     * Factory method for constructing {@link ObjectReader} that will
-     * read or update instances of specified type
-     */
-    public ObjectReader reader(TypeReference<?> type)
-    {
-        return reader(TypeFactory.type(type));
-    }
-
-    /**
-     * Factory method for constructing {@link ObjectReader} that will
-     * use specified {@link JsonNodeFactory} for constructing JSON trees.
-     */
-    public ObjectReader reader(JsonNodeFactory f)
-    {        
-        return new ObjectReader(this, null, null).withNodeFactory(f);
-    }
-    
-    /*
-    /**********************************************************
-    /* Extended Public API: convenience type conversion
-    /**********************************************************
+    ////////////////////////////////////////////////////
+    // Extended Public API: convenience type conversion
+    ////////////////////////////////////////////////////
      */
    
     /**
@@ -1506,26 +1138,22 @@ public class ObjectMapper
     {
         // sanity check for null first:
         if (fromValue == null) return null;
-        /* Then use TokenBuffer, which is a JsonGenerator:
-         * (see [JACKSON-175])
-         */
-        TokenBuffer buf = new TokenBuffer(this);
         try {
-            writeValue(buf, fromValue);
-            // and provide as with a JsonParser for contents as well!
-            JsonParser jp = buf.asParser();
-            Object result = readValue(jp, toValueType);
-            jp.close();
-            return result;
-        } catch (IOException e) { // should not occur, no real i/o...
+            /* TODO: [JACKSON-175], use an intermediate token buffer
+             */
+            ByteArrayOutputStream bos = new ByteArrayOutputStream(200);
+            writeValue(bos, fromValue);
+            byte[] data = bos.toByteArray();
+            return readValue(data, 0, data.length, toValueType);
+        } catch (IOException e) {
             throw new IllegalArgumentException(e.getMessage(), e);
         }
     }
         
     /*
-    /**********************************************************
-    /* Extended Public API: JSON Schema generation
-    /**********************************************************
+    ////////////////////////////////////////////////////
+    // Extended Public API: JSON Schema generation
+    ////////////////////////////////////////////////////
      */
 
     /**
@@ -1556,9 +1184,9 @@ public class ObjectMapper
     }
 
     /*
-    /**********************************************************
-    /* Internal methods, overridable
-    /**********************************************************
+    ////////////////////////////////////////////////////
+    // Internal methods, overridable
+    ////////////////////////////////////////////////////
      */
 
     /**
@@ -1572,11 +1200,6 @@ public class ObjectMapper
         // [JACKSON-96]: allow enabling pretty printing for ObjectMapper directly
         if (cfg.isEnabled(SerializationConfig.Feature.INDENT_OUTPUT)) {
             jgen.useDefaultPrettyPrinter();
-        }
-        // [JACKSON-282]: consider Closeable
-        if (cfg.isEnabled(SerializationConfig.Feature.CLOSE_CLOSEABLE) && (value instanceof Closeable)) {
-            _configAndWriteCloseable(jgen, value, cfg);
-            return;
         }
         boolean closed = false;
         try {
@@ -1603,11 +1226,6 @@ public class ObjectMapper
             jgen.useDefaultPrettyPrinter();
         }
         cfg.setSerializationView(viewClass);
-        // [JACKSON-282]: consider Closeable
-        if (cfg.isEnabled(SerializationConfig.Feature.CLOSE_CLOSEABLE) && (value instanceof Closeable)) {
-            _configAndWriteCloseable(jgen, value, cfg);
-            return;
-        }
         boolean closed = false;
         try {
             _serializerProvider.serializeValue(cfg, jgen, value, _serializerFactory);
@@ -1623,65 +1241,10 @@ public class ObjectMapper
     }
 
     /**
-     * Helper method used when value to serialize is {@link Closeable} and its <code>close()</code>
-     * method is to be called right after serialization has been called
-     */
-    private final void _configAndWriteCloseable(JsonGenerator jgen, Object value, SerializationConfig cfg)
-        throws IOException, JsonGenerationException, JsonMappingException
-    {
-        Closeable toClose = (Closeable) value;
-        try {
-            _serializerProvider.serializeValue(cfg, jgen, value, _serializerFactory);
-            JsonGenerator tmpJgen = jgen;
-            jgen = null;
-            tmpJgen.close();
-            Closeable tmpToClose = toClose;
-            toClose = null;
-            tmpToClose.close();
-        } finally {
-            /* Need to close both generator and value, as long as they haven't yet
-             * been closed
-             */
-            if (jgen != null) {
-                try {
-                    jgen.close();
-                } catch (IOException ioe) { }
-            }
-            if (toClose != null) {
-                try {
-                    toClose.close();
-                } catch (IOException ioe) { }
-            }
-        }
-    }
-
-    /**
-     * Helper method used when value to serialize is {@link Closeable} and its <code>close()</code>
-     * method is to be called right after serialization has been called
-     */
-    private final void _writeCloseableValue(JsonGenerator jgen, Object value, SerializationConfig cfg)
-        throws IOException, JsonGenerationException, JsonMappingException
-    {
-        Closeable toClose = (Closeable) value;
-        try {
-            _serializerProvider.serializeValue(cfg, jgen, value, _serializerFactory);
-            jgen.flush();
-            Closeable tmpToClose = toClose;
-            toClose = null;
-            tmpToClose.close();
-        } finally {
-            if (toClose != null) {
-                try {
-                    toClose.close();
-                } catch (IOException ioe) { }
-            }
-        }
-    }
-    
-    /**
      * Actual implementation of value reading+binding operation.
      */
-    protected Object _readValue(DeserializationConfig cfg, JsonParser jp, JavaType valueType)
+    protected Object _readValue(JsonParser jp, JavaType valueType,
+                                DeserializationConfig cfg)
         throws IOException, JsonParseException, JsonMappingException
     {
         /* First: may need to read the next token, to initialize
@@ -1690,31 +1253,33 @@ public class ObjectMapper
          */
         Object result;
         JsonToken t = _initForReading(jp);
-        if (t == JsonToken.VALUE_NULL || t == JsonToken.END_ARRAY || t == JsonToken.END_OBJECT) {
+        if (t == JsonToken.VALUE_NULL
+            || t == JsonToken.END_ARRAY
+            || t == JsonToken.END_OBJECT) {
             result = null;
         } else { // pointing to event other than null
             DeserializationContext ctxt = _createDeserializationContext(jp, cfg);
             // ok, let's get the value
-            result = _findRootDeserializer(cfg, valueType).deserialize(jp, ctxt);
+            result = _findRootDeserializer(valueType).deserialize(jp, ctxt);
         }
         // Need to consume the token too
         jp.clearCurrentToken();
         return result;
     }
 
-    
     protected Object _readMapAndClose(JsonParser jp, JavaType valueType)
         throws IOException, JsonParseException, JsonMappingException
     {
         try {
             Object result;
             JsonToken t = _initForReading(jp);
-            if (t == JsonToken.VALUE_NULL || t == JsonToken.END_ARRAY || t == JsonToken.END_OBJECT) {
+            if (t == JsonToken.VALUE_NULL
+                || t == JsonToken.END_ARRAY
+                || t == JsonToken.END_OBJECT) {
                 result = null;
             } else {
-                DeserializationConfig cfg = copyDeserializationConfig();
-                DeserializationContext ctxt = _createDeserializationContext(jp, cfg);
-                result = _findRootDeserializer(cfg, valueType).deserialize(jp, ctxt);
+                DeserializationContext ctxt = _createDeserializationContext(jp, copyDeserializationConfig());
+                result = _findRootDeserializer(valueType).deserialize(jp, ctxt);
             }
             // Need to consume the token too
             jp.clearCurrentToken();
@@ -1763,15 +1328,15 @@ public class ObjectMapper
     }
 
     /*
-    /**********************************************************
-    /* Internal methods, other
-    /**********************************************************
+    ////////////////////////////////////////////////////
+    // Internal methods, other
+    ////////////////////////////////////////////////////
      */
 
     /**
      * Method called to locate deserializer for the passed root-level value.
      */
-    protected JsonDeserializer<Object> _findRootDeserializer(DeserializationConfig cfg, JavaType valueType)
+    protected JsonDeserializer<Object> _findRootDeserializer(JavaType valueType)
         throws JsonMappingException
     {
         // First: have we already seen it?
@@ -1779,8 +1344,9 @@ public class ObjectMapper
         if (deser != null) {
             return deser;
         }
+
         // Nope: need to ask provider to resolve it
-        deser = _deserializerProvider.findTypedValueDeserializer(cfg, valueType);
+        deser = _deserializerProvider.findValueDeserializer(_deserializationConfig, valueType, null, null);
         if (deser == null) { // can this happen?
             throw new JsonMappingException("Can not find a deserializer for type "+valueType);
         }
@@ -1790,7 +1356,6 @@ public class ObjectMapper
 
     protected DeserializationContext _createDeserializationContext(JsonParser jp, DeserializationConfig cfg)
     {
-        // 04-Jan-2010, tatu: we do actually need the provider too... (for polymorphic deser)
-        return new StdDeserializationContext(cfg, jp, _deserializerProvider);
+        return new StdDeserializationContext(cfg, jp);
     }
 }

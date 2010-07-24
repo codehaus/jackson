@@ -1,7 +1,6 @@
 package org.codehaus.jackson.map.deser;
 
 import java.io.*;
-import java.util.Currency;
 import java.util.regex.Pattern;
 
 import org.codehaus.jackson.map.*;
@@ -32,11 +31,5 @@ public class TestJdkTypes
         String json = m.writeValueAsString(exp);
         Pattern result = m.readValue(json, Pattern.class);
         assertEquals(exp.pattern(), result.pattern());
-    }
-
-    public void testCurrency() throws IOException
-    {
-        Currency usd = Currency.getInstance("USD");
-        assertEquals(usd, new ObjectMapper().readValue(quote("USD"), Currency.class));
     }
 }

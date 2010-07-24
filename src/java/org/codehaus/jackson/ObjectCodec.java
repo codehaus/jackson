@@ -18,9 +18,9 @@ public abstract class ObjectCodec
     protected ObjectCodec() { }
 
     /*
-    /**********************************************************
-    /* API for de-serialization (JSON-to-Object)
-    /**********************************************************
+    /////////////////////////////////////////////////
+    // API for serialization (Object-to-JSON)
+    /////////////////////////////////////////////////
      */
 
     /**
@@ -67,9 +67,9 @@ public abstract class ObjectCodec
         throws IOException, JsonProcessingException;
     
     /*
-    /**********************************************************
-    /* API for serialization (Object-to-JSON)
-    /**********************************************************
+    /////////////////////////////////////////////////
+    // API for de-serialization (Json-to-Object)
+    /////////////////////////////////////////////////
      */
 
     /**
@@ -87,9 +87,9 @@ public abstract class ObjectCodec
         throws IOException, JsonProcessingException;
 
     /*
-    /**********************************************************
-    /* API for Tree Model handling
-    /**********************************************************
+    /////////////////////////////////////////////////
+    // API for Tree Model handling
+    /////////////////////////////////////////////////
      */
 
     /**

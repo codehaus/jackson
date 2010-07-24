@@ -113,6 +113,10 @@ abstract class NodeCursor
 
         JsonNode _currentNode;
 
+        /**
+         * @param returnStartArray Whether cursor should return {@link JsonToken#START_ARRAY}
+         *    before contents or not.
+         */
         public Array(JsonNode n, NodeCursor p) {
             super(JsonStreamContext.TYPE_ARRAY, p);
             _contents = n.getElements();

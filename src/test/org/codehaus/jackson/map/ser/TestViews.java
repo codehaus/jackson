@@ -15,13 +15,7 @@ import org.codehaus.jackson.map.annotate.JsonView;
 public class TestViews
     extends BaseMapTest
 {
-    /*
-     ****************************************************** 
-     * Helper types
-     ****************************************************** 
-     */
-
-	// Classes that represent views
+    // Classes that represent views
     static class ViewA { }
     static class ViewAA extends ViewA { }
     static class ViewB { }
@@ -39,36 +33,6 @@ public class TestViews
         public String getB() { return "3"; }
     }
 
-    /**
-     * Bean with mix of explicitly annotated
-     * properties, and implicit ones that may or may
-     * not be included in views.
-     */
-    static class MixedBean
-    {
-        @JsonView(ViewA.class)
-        public String a = "1";
-
-        public String getB() { return "2"; }
-    }
-
-    /**
-     * As indicated by [JACKSON-261], @JsonView should imply
-     * that associated element (method, field) is to be considered
-     * a property
-     */
-    static class ImplicitBean {
-    	@SuppressWarnings("unused")
-		@JsonView(ViewA.class)
-    	private int a = 1;
-    }
-    
-    /*
-     ****************************************************** 
-     * Unit tests
-     ****************************************************** 
-     */    
-    
     @SuppressWarnings("unchecked")
     public void testSimple() throws IOException
     {
@@ -81,72 +45,33 @@ public class TestViews
 
         // Then with "ViewA", just one property
         sw = new StringWriter();
-        mapper.viewWriter(ViewA.class).writeValue(sw, bean);
+        mapper.writeValueUsingView(sw, bean, ViewA.class);
         map = mapper.readValue(sw.toString(), Map.class);
         assertEquals(1, map.size());
         assertEquals("1", map.get("a"));
 
         // "ViewAA", 2 properties
         sw = new StringWriter();
-        mapper.viewWriter(ViewAA.class).writeValue(sw, bean);
+        mapper.writeValueUsingView(sw, bean, ViewAA.class);
         map = mapper.readValue(sw.toString(), Map.class);
         assertEquals(2, map.size());
         assertEquals("1", map.get("a"));
         assertEquals("2", map.get("aa"));
 
         // "ViewB", 2 prop2
-        String json = mapper.viewWriter(ViewB.class).writeValueAsString(bean);
-        map = mapper.readValue(json, Map.class);
+        sw = new StringWriter();
+        mapper.writeValueUsingView(sw, bean, ViewB.class);
+        map = mapper.readValue(sw.toString(), Map.class);
         assertEquals(2, map.size());
         assertEquals("2", map.get("aa"));
         assertEquals("3", map.get("b"));
 
         // and "ViewBB", 2 as well
-        json = mapper.viewWriter(ViewBB.class).writeValueAsString(bean);
-        map = mapper.readValue(json, Map.class);
+        sw = new StringWriter();
+        mapper.writeValueUsingView(sw, bean, ViewBB.class);
+        map = mapper.readValue(sw.toString(), Map.class);
         assertEquals(2, map.size());
         assertEquals("2", map.get("aa"));
         assertEquals("3", map.get("b"));
-    }
-
-    /**
-     * Unit test to verify implementation of [JACKSON-232], to
-     * allow "opt-in" handling for JSON Views: that is, that
-     * default for properties is to exclude unless included in
-     * a view.
-     */
-    @SuppressWarnings("unchecked")
-    public void testDefaultExclusion() throws IOException
-    {
-        MixedBean bean = new MixedBean();
-        StringWriter sw = new StringWriter();
-
-        ObjectMapper mapper = new ObjectMapper();
-        // default setting: both fields will get included
-        mapper.viewWriter(ViewA.class).writeValue(sw, bean);
-        Map<String,Object> map = mapper.readValue(sw.toString(), Map.class);
-        assertEquals(2, map.size());
-        assertEquals("1", map.get("a"));
-        assertEquals("2", map.get("b"));
-
-        // but can also change (but not necessarily on the fly...)
-        mapper = new ObjectMapper();
-        sw = new StringWriter();
-        mapper.configure(SerializationConfig.Feature.DEFAULT_VIEW_INCLUSION, false);
-        // with this setting, only explicit inclusions count:
-        mapper.viewWriter(ViewA.class).writeValue(sw, bean);
-        map = mapper.readValue(sw.toString(), Map.class);
-        assertEquals(1, map.size());
-        assertEquals("1", map.get("a"));
-        assertNull(map.get("b"));
-    }
-
-    /**
-     * As per [JACKSON-261], @JsonView annotation should imply that associated
-     * method/field does indicate a property.
-     */
-    public void testImplicitAutoDetection() throws Exception
-    {
-    	assertEquals("{\"a\":1}", serializeAsString(new ImplicitBean()));
     }
 }

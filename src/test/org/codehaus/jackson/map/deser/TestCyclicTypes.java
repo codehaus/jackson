@@ -45,24 +45,6 @@ public class TestCyclicTypes
         protected JaxbBean circular;
     }
 
-    static class LinkA {
-        public LinkB next;
-    }
-
-    static class LinkB {
-        private LinkA a;
-
-        public void setA(LinkA a) { this.a = a; }
-        public LinkA getA() { return a; }
-    }
-
-    static class GenericLink<T> {
-        public GenericLink<T> next;
-    }
-
-    static class StringLink extends GenericLink<String> {
-    }
-
     /*
     //////////////////////////////////////////////
     // Unit tests
@@ -84,28 +66,14 @@ public class TestCyclicTypes
         assertNull(last._next);
     }
 
-    public void testLinkedGeneric() throws Exception
-    {
-        StringLink link = new ObjectMapper().readValue
-            ("{\"next\":null}", StringLink.class);
-        assertNotNull(link);
-        assertNull(link.next);
-    }
-
-    // Added to check for [JACKSON-171]
+    /* Added to check for [JACKSON-171]
+     */
     public void testWithJAXB() throws Exception
     {
         String jsonData = "{\"id\":1}";
         ObjectMapper mapper = new ObjectMapper();
         mapper.getDeserializationConfig().setAnnotationIntrospector(new JaxbAnnotationIntrospector());
         mapper.readValue(jsonData, JaxbBean.class);
-    }
 
-    public void testCycleWith2Classes() throws Exception
-    {
-        LinkA a = new ObjectMapper().readValue("{\"next\":{\"a\":null}}", LinkA.class);
-        assertNotNull(a.next);
-        LinkB b = a.next;
-        assertNull(b.a);
     }
 }

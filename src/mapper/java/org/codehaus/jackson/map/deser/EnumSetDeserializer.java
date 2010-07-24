@@ -7,7 +7,6 @@ import org.codehaus.jackson.JsonProcessingException;
 import org.codehaus.jackson.JsonParser;
 import org.codehaus.jackson.JsonToken;
 import org.codehaus.jackson.map.DeserializationContext;
-import org.codehaus.jackson.map.TypeDeserializer;
 
 /**
  * 
@@ -60,14 +59,6 @@ public final class EnumSetDeserializer
         return result;
     }
 
-    @Override
-    public Object deserializeWithType(JsonParser jp, DeserializationContext ctxt,
-            TypeDeserializer typeDeserializer)
-        throws IOException, JsonProcessingException
-    {
-        return typeDeserializer.deserializeTypedFromArray(jp, ctxt);
-    }
-    
     @SuppressWarnings("unchecked") 
     private EnumSet constructSet()
     {

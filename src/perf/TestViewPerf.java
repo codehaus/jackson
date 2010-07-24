@@ -1,5 +1,6 @@
 import java.io.*;
 
+import org.codehaus.jackson.*;
 import org.codehaus.jackson.map.*;
 import org.codehaus.jackson.map.annotate.JsonView;
 
@@ -68,6 +69,7 @@ public final class TestViewPerf
         throws Exception
     {
         int i = 0;
+        int sum = 0;
 
         ByteArrayOutputStream out = new ByteArrayOutputStream();
 
@@ -114,12 +116,11 @@ public final class TestViewPerf
     protected int testViewSer(Object value, int reps, ByteArrayOutputStream result, Class<?> view)
         throws Exception
     {
-    	ObjectWriter w = _mapper.viewWriter(view);
         for (int i = 0; i < reps; ++i) {
             result.reset();
-            w.writeValue(result, value);
-            w.writeValue(result, value);
-            w.writeValue(result, value);
+            _mapper.writeValueUsingView(result, value, view);
+            _mapper.writeValueUsingView(result, value, view);
+            _mapper.writeValueUsingView(result, value, view);
         }
         return result.size();
     }

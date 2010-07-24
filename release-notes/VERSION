@@ -1,194 +1,22 @@
-Version: 1.6.0
+Version: 1.4.5
 
 Release date:
-  xx-Jun-2010
+  24-Jul-2010
 
 Description:
-  Version 1.6
+  Fifth patch release for 1.4.
 
   Fixes:
 
-  * [JACKSON-265] Problems with generic wildcard type, type info.
-   (reported by Fabrice D)
-
-  Improvements:
-
-  * [JACKSON-193] @JsonCreator-annotated factory methods and @JsonValue annotated
-    output methods now work with enums, allowing more customizable enum ser/deser.
-    (requested by Paul B)
-  * [JACKSON-261] @JsonView now implies that associated element (field,
-    getter/setter) is to be considered a property; similar to how
-    @JsonSerialize/@JsonDeserialize/@JsonProperty are used.
-  * [JACKSON-274] Un-deprecated @JsonGetter and @JsonSetter.
-  * [JACKSON-283] JDK atomic types (java.util.concurrent.atomic) supported
-  * [JACKSON-289] Added "SerializationConfig.Feature.WRITE_CHAR_ARRAYS_AS_JSON_ARRAYS"
-    to allow serializing char[]s as JSON Arrays with single-char-String values
-    (also fixed issues with deserializing the same on deserializer side)
-    (requested by Brian O)
-  * [JACKSON-290] @JsonWriteNullProperties can be used with fields too;
-    annotation itself is now deprecated (use JsonSerialize#include instead).
-  * [JACKSON-301] Allow JsonMappingException to return name of "bad" (unrecognized)
-    field
-    (requested by Rob O)
-  * [JACKSON-302] Add JsonNode.has(String/int) to allow for more convenient checking
-    of whether JSON Object/Array nodes have specified value.
-  * [JACKSON-321] Allow passing JsonNodeFactory to use for ObjectMapper, ObjectReader,
-    to allow use of custom JsonNode types.
-  * [JACKSON-326] Add 'JsonParser.hasTextCharacters()' to make it easire to optimize
-    text access (esp. when copying events)
-  * [JACKSON-328] Precedence of "getters-as-setters" (for Maps, Collections) was
-    accidentally higher than that of property fields (public, @JsonProperty)
-    (reported by Thomas D)
-
-  New features:
-
-  * [JACKSON-212] Allow serializer/deserializing Enums using toString() method
-    instead name()
-  * [JACKSON-235] Handle bi-directional (parent/child, double-linked lists) references
-  * [JACKSON-264] Ability to "update" values; to read and bind JSON
-    content as properties of existing beans. This is done by using
-    "ObjectMapper.updatingReader()" (and "reader.readValue(source)")
-  * [JACKSON-267] Allow unquoted field names to start with '@' in
-    (when unquoted name support is enabled, to support polymorphic
-    typing (which defaults to property names like "@class").
-   (requested by Michel G)
-  * [JACKSON-282] Added SerializationConfig.Feature.CLOSE_CLOSEABLE
-    which when enabled forced a call to value.close() right after
-    serialization of a (root-level) value.
-  * [JACKSON-299] Added 'org.codehaus.jackson.impl.MinimalPrettyPrinter'
-    to make it easier to add simple output customizations
-    (suggested b y David P)
-  * [JACKSON-300] Add 'JsonParser.Feature.ALLOW_BACKSLASH_ESCAPING_ANY_CHARACTER
-    to allow non-standard character escapes like \'.
-    (requested by Ketan G)
-  * [JACKSON-314] (go Pi, go!) Add 'SerializationConfig.Feature.WRITE_NULL_MAP_VALUES'
-    to suppress writing of Map entries with null values.
-  * [JACKSON-325] Add new Jackson "internal" annotation (@JacksonStdCodec?) to allow
-    marking default/standard serializers, deserializers
-  
-  Backwards incompatible changes:
-
-  * [JACKSON-328] (see above) fixes precedence of "getter-as-setter" (for Maps, Collections)
-    to be LOWER than that of fields; this is the original intended behavior. However,
-    versions 1.1 - 1.5 accidentally had fields at lower precedence. This fix can
-    change behavior of code.
-
+  * [JACKSON-227] Earlier fixes were incomplete; still more work done
+  * [JACKSON-285] Problem with @JsonCreator annotated constructor that
+    also uses @JsonDeserialize annotations
+  * [JACKSON-307] JAX-RS provider (JacksonJsonProvider) regression from
+    1.3; single-argument (ObjectMapper) constructor was missing.
 
 ------------------------------------------------------------------------
 == History: ==
 ------------------------------------------------------------------------
-
-1.5.3 [31-May-2010]
-
-  Fixes:
-
-  * [JACKSON-285]: Problem with @JsonCreator annotated constructor that
-    also uses @JsonDeserialize annotations
-
-  Improvements:
-
-  * [JACKSON-284]: Reduce scope of sync block in
-    SerializerCache.getReadOnlyLookupMap()
-  * Partial fix for [JACKSON-289]: allow JSON Array with single-character
-    Strings to be bound to char[] during deserialization
-   (suggested by Brian O)
-
-1.5.2 [25-Apr-2010]
-
-  Fixes:
-
-  * [JACKSON-273] Yet another OSGi issue, "org.codehaus.jackson.map.util"
-    not exported by mapper module, needed by jax-rs module.
-   (reported by Lukasz D)
-  * [JACKSON-281] JsonGenerator.writeObject() only supports subset of
-    wrapper types (when not specifying ObjectCodec)
-   (reported by Aron A)
-
-  (and all fixes from 1.4.x branch up to 1.4.4)
-
-1.5.1 [09-Apr-2010]
-
-  Fixes:
-
-  * [JACKSON-265]: problems with generic type handling for serialization
-    (reported by Fabrice D)
-  * [JACKSON-269]: missing OSGi export by mapper (o.c.j.m.jsontype.impl),
-    needed by jackson-xc module
-    (reported by Raymond F)
-
-  (and all fixes from 1.4.x branch up to 1.4.3)
-
-
-1.5.0 [14-Mar-2010]
-
-  Fixes:
-
-  * [JACKSON-246] JAXB property name determination not working correctly.
-    (reported by Lars C)
-
-  Improvements:
-
-  * [JACKSON-160] Factory Creator methods now handle polymorphic
-    construction correctly, allowing manual polymorphic deserialization
-  * [JACKSON-218] Extended support for Joda date/time types like
-    LocalDate, LocalDateTime and DateMidnight
-  * [JACKSON-220] @JsonSerialize.using() was not working properly for
-    non-Bean types (Collections, Maps, wrappers)
-  * [JACKSON-236] Allow deserialization of timestamps-as-Strings (not
-    just timestamps as JSON integer numbers).
-   (requested by Chris C)
-  * [JACKSON-255] Allow setter override even with incompatible type
-    (as long as only one setter per class, so there is no ambiguity)
-  * [JACKSON-256] AnnotationIntrospector.findSerializationInclusion
-    was not combining values correctly for JAXB annotations.
-   (reported by John L)
-
-  New features:
-
-  * [JACKSON-91] Polymorphic Type Handling: automatic handling of
-    polymorphic types, based on annotations (@JsonTypeInfo) and/or
-    global settings (ObjectMapper.enableDefaultTyping()) 
-  * [JACKSON-175] Add "org.codehaus.jackson.util.TokenBuffer", used for
-    much more efficient type conversions (and other internal buffering)
-  * [JACKSON-195] Add methods to ObjectMapper to allow specification of
-    root object serialization type.
-  * [JACKSON-221] Add 'ObjectMapper.writeValueAsBytes()' convenience
-    method to simplify a common usage pattern
-  * [JACKSON-229] TypeFactory should have methods to construct parametric
-     types programmatically (TypeFactory.parametricType())
-  * [JACKSON-232] Add 'SerializationConfig.Feature.DEFAULT_VIEW_INCLUSION'
-    to disable inclusion of non-annotated properties with explicit views
-    (suggested by Andrei V)
-  * [JACKSON-234] Add support for JSONP, by adding JSONPObject wrapper
-    that serializes as expected.
-  * [JACKSON-241] Add a mechanism for adding new "untouchable" types for
-    JAX-RS JSON provider, to allow excluding types from being handled
-    (added method "JacksonJsonProvider.addUntouchable()")
-  * [JACKSON-244] Allow specifying specific minimum visibility levels for
-    auto-detecting getters, setters, fields and creators
-    (requested by Pierre-Yves R)
-  * [JACKSON-245] Add configuration setting in JAX-RS provider to allow
-    automatic JSONP wrapping (provider.setJSONPFunctionName())
-  * [JACKSON-259] Add JsonParser.Feature to allow disabling field name
-    canonicalization (JsonParser.Feature.CANONICALIZE_FIELD_NAMES)
-
-  Backwards incompatible changes:
-
-  * Moved following serializers out of BasicSerializerFactory
-    JdkSerializers: ClassSerializer (into JdkSerializers),
-    NullSerializer (separate class)
-  * Add one parameter to StdDeserializer.handleUnknownProperty:
-    addition was required for handling polymorphic cases that
-    can use nested JsonParser instances.
-  * Fixed issues in generic type handling (was not resolving all named
-    types completely)
-  * Annotation changes:
-     * Moved "NoClass" into "org.codehaus.jackson.map.annotate" package
-     * Removed @JsonUseSerializer and @JsonUseDeserializer annotations
-       (which has been deprecated for 1.1; replaced by
-       @JsonSerialize.using and @JsonDeserialize.using, respectively)
-     * @JsonGetter and @JsonSetter are marked as deprecated, since
-       @JsonProperty can (and should) be used instead.
 
 1.4.4 [25-Apr-2010]
 
@@ -206,7 +34,6 @@ Description:
 
  * [JACKSON-237]: NPE in deserialization due to race condition
    (reported by Benjamin D)
-
 
 1.4.2 [31-Jan-2010]
 

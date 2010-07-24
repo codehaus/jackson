@@ -12,12 +12,12 @@ public class TestGenerics
     }
 
     static class NumberBean
-        extends BaseNumberBean<Long>
+        extends BaseNumberBean<Integer>
     {
-        long _number;
+        int _number;
 
         @Override
-        public void setNumber(Long value)
+        public void setNumber(Integer value)
         {
             _number = value.intValue();
         }
@@ -41,14 +41,14 @@ public class TestGenerics
 
         @Override
         public boolean equals(Object o) {
-            return (o instanceof Wrapper<?>) && (((Wrapper<?>) o).value.equals(value));
+            return (o instanceof Wrapper) && (((Wrapper<?>) o).value.equals(value));
         }
     }
 
     /*
-    /***************************************************
-    /* Test cases
-    /***************************************************
+    //////////////////////////////////////////////////////////
+    // Test cases
+    //////////////////////////////////////////////////////////
      */
 
     public void testSimpleNumberBean() throws Exception

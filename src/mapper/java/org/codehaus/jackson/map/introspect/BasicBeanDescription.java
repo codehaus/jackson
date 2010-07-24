@@ -8,41 +8,28 @@ import java.util.*;
 import org.codehaus.jackson.map.AnnotationIntrospector;
 import org.codehaus.jackson.map.BeanDescription;
 import org.codehaus.jackson.map.annotate.JsonSerialize;
-import org.codehaus.jackson.map.introspect.VisibilityChecker;
-import org.codehaus.jackson.map.type.TypeBindings;
 import org.codehaus.jackson.map.util.ClassUtil;
 import org.codehaus.jackson.type.JavaType;
 
-/**
- * Default {@link BeanDescription} implementation.
- * Can theoretically be subclassed to customize
- * some aspects of property introspection.
- */
 public class BasicBeanDescription extends BeanDescription
 {
     /*
-    /**********************************************************
-    /* Configuration
-    /**********************************************************
+    ///////////////////////////////////////////////////////
+    // Configuration
+    ///////////////////////////////////////////////////////
      */
 
     /**
      * Information collected about the class introspected.
      */
-    final protected AnnotatedClass _classInfo;
+    final AnnotatedClass _classInfo;
 
-    final protected AnnotationIntrospector _annotationIntrospector;
-
-    /**
-     * We may need type bindings for the bean type. If so, we'll
-     * construct it lazily
-     */
-    protected TypeBindings _bindings;
+    final AnnotationIntrospector _annotationIntrospector;
 
     /*
-    /**********************************************************
-    /* Life-cycle
-    /**********************************************************
+    ///////////////////////////////////////////////////////
+    // Life-cycle
+    ///////////////////////////////////////////////////////
      */
 
     public BasicBeanDescription(JavaType type, AnnotatedClass ac,
@@ -55,12 +42,14 @@ public class BasicBeanDescription extends BeanDescription
     }
 
     /*
-    /**********************************************************
-    /* Simple accessors
-    /**********************************************************
+    ///////////////////////////////////////////////////////
+    // Simple accessors
+    ///////////////////////////////////////////////////////
      */
 
     public AnnotatedClass getClassInfo() { return _classInfo; }
+
+    public Class<?> classDescribed() { return _classInfo.getAnnotated(); }
 
     /**
      * Method for checking whether class being described has any
@@ -104,30 +93,48 @@ public class BasicBeanDescription extends BeanDescription
             throw new IllegalArgumentException("Failed to instantiate bean of type "+_classInfo.getAnnotated().getName()+": ("+t.getClass().getName()+") "+t.getMessage(), t);
         }
     }
-
-    public TypeBindings bindingsForBeanType()
-    {
-        if (_bindings == null) {
-            _bindings = new TypeBindings(_type);
-        }
-        return _bindings;
-    }
     
     /*
-    /**********************************************************
-    /* Basic API
-    /**********************************************************
+    ///////////////////////////////////////////////////////
+    // Basic API
+    ///////////////////////////////////////////////////////
      */
 
     /*
-    /**********************************************************
-    /* Introspection for serialization (write JSON), getters
-    /**********************************************************
+    ///////////////////////////////////////////////////////
+    // Introspection for serialization (write Json), getters
+    ///////////////////////////////////////////////////////
      */
     
-    public LinkedHashMap<String,AnnotatedMethod> findGetters(VisibilityChecker<?> visibilityChecker,
+    /**
+     * @param getterAutoDetect Whether to use Bean naming convention to
+     *   automatically detect bean properties matching 'getXxx' methods
+     *   (unless overridden by per-class annotations)
+     * @param isGetterAutoDetect Whether to use Bean naming convention to
+     *   automatically detect boolean bean properties matching 'isXxx' methods
+     *   (unless overridden by per-class annotations)
+     *
+     * @return Ordered Map with logical property name as key, and
+     *    matching getter method as value.
+     */
+    public LinkedHashMap<String,AnnotatedMethod> findGetters(boolean getterAutoDetect,
+                                                             boolean isGetterAutoDetect,
                                                              Collection<String> ignoredProperties)
     {
+        /* As part of [JACKSON-52] we'll use baseline settings for
+         * auto-detection, but also see if the class might override
+         * that setting.
+         */
+        Boolean classAD = _annotationIntrospector.findGetterAutoDetection(_classInfo);
+        if (classAD != null) {
+            getterAutoDetect = classAD.booleanValue();
+        }
+        // similarly for [JACKSON-166] (separate "is getters")
+        classAD = _annotationIntrospector.findIsGetterAutoDetection(_classInfo);
+        if (classAD != null) {
+            isGetterAutoDetect = classAD.booleanValue();
+        }
+
         LinkedHashMap<String,AnnotatedMethod> results = new LinkedHashMap<String,AnnotatedMethod>();
         for (AnnotatedMethod am : _classInfo.memberMethods()) {
             /* note: signature has already been checked to some degree
@@ -154,17 +161,18 @@ public class BasicBeanDescription extends BeanDescription
                     }
                 }
             } else {
+                /* For getters (but not for setters), auto-detection
+                 * requires method to be public:
+                 */
+                if (!am.isPublic()) continue;
+
                 propName = am.getName();
                 // [JACKSON-166], need to separate getXxx/isXxx methods
                 if (propName.startsWith("get")) { // nope, but is public bean-getter name?
-                    if (!visibilityChecker.isGetterVisible(am)) {
-                        continue;
-                    }
+                    if (!getterAutoDetect) continue;
                     propName = okNameForGetter(am, propName);
                 } else {
-                    if (!visibilityChecker.isIsGetterVisible(am)) {
-                        continue;
-                    }
+                    if (!isGetterAutoDetect) continue;
                     propName = okNameForIsGetter(am, propName);
                 }
                 // null return value means 'not valid'
@@ -176,7 +184,7 @@ public class BasicBeanDescription extends BeanDescription
                     continue;
                 }
             }
-            
+
             /* Yup, it is a valid name. But now... do we have a conflict?
              * If so, should throw an exception
              */
@@ -221,9 +229,9 @@ public class BasicBeanDescription extends BeanDescription
     }
 
     /*
-    /**********************************************************
-    /* Introspection for serialization, factories
-    /**********************************************************
+    ///////////////////////////////////////////////////////
+    // Introspection for serialization, factories
+    ///////////////////////////////////////////////////////
      */
 
     /**
@@ -320,7 +328,7 @@ public class BasicBeanDescription extends BeanDescription
          * (i.e. allowed to be sub-class, although usually is the same
          * class)
          */
-        Class<?> rt = am.getRawType();
+        Class<?> rt = am.getReturnType();
         if (!getBeanClass().isAssignableFrom(rt)) {
             return false;
         }
@@ -375,21 +383,21 @@ public class BasicBeanDescription extends BeanDescription
     }
 
     /*
-    /**********************************************************
-    /* Introspection for serialization, fields
-    /**********************************************************
+    ///////////////////////////////////////////////////////
+    // Introspection for serialization, fields
+    ///////////////////////////////////////////////////////
      */
 
-    public LinkedHashMap<String,AnnotatedField> findSerializableFields(VisibilityChecker<?> vchecker,
+    public LinkedHashMap<String,AnnotatedField> findSerializableFields(boolean autodetect,
                                                                        Collection<String> ignoredProperties)
     {
-        return _findPropertyFields(vchecker, ignoredProperties, true);
+        return _findPropertyFields(autodetect, ignoredProperties, true);
     }
     
     /*
-    /**********************************************************
-    /* Introspection for serialization, other
-    /**********************************************************
+    ///////////////////////////////////////////////////////
+    // Introspection for serialization, other
+    ///////////////////////////////////////////////////////
      */
 
     /**
@@ -404,13 +412,31 @@ public class BasicBeanDescription extends BeanDescription
     }
 
     /*
-    /**********************************************************
-    /* Introspection for deserialization, setters:
-    /**********************************************************
+    ///////////////////////////////////////////////////////
+    // Introspection for deserialization, setters:
+    ///////////////////////////////////////////////////////
      */
 
-    public LinkedHashMap<String,AnnotatedMethod> findSetters(VisibilityChecker<?> vchecker)
+    /**
+     * @param autodetect Whether setter auto-detection is on: if true,
+     *    it is enough for a method to have appropriate signature and
+     *    name ("set[PropertyName]") to qualify; if false, it must have
+     *    an annotation to be considered.
+     * 
+     * @return Ordered Map with logical property name as key, and
+     *    matching setter method as value.
+     */
+    public LinkedHashMap<String,AnnotatedMethod> findSetters(boolean autodetect)
     {
+        /* As part of [JACKSON-52] we'll use baseline settings for
+         * auto-detection, but also see if the class might override
+         * that setting.
+         */
+        Boolean classAD = _annotationIntrospector.findSetterAutoDetection(_classInfo);
+        if (classAD != null) {
+            autodetect = classAD.booleanValue();
+        }
+
         LinkedHashMap<String,AnnotatedMethod> results = new LinkedHashMap<String,AnnotatedMethod>();
         for (AnnotatedMethod am : _classInfo.memberMethods()) {
             // note: signature has already been checked via filters
@@ -438,7 +464,7 @@ public class BasicBeanDescription extends BeanDescription
                     }
                 }
             } else { // nope, but is public bean-setter name?
-                if (!vchecker.isSetterVisible(am)) {
+                if (!autodetect) {
                     continue;
                 }
                 propName = okNameForSetter(am);
@@ -452,18 +478,9 @@ public class BasicBeanDescription extends BeanDescription
              */
             AnnotatedMethod old = results.put(propName, am);
             if (old != null) {
-            	/* [JACKSON-255] Only throw exception if they are in same class. Must
-            	 *   be careful to choose "correct" one; first one should actually
-            	 *   have priority
-            	 * 
-            	 */
-            	if (old.getDeclaringClass() == am.getDeclaringClass()) {
-	                String oldDesc = old.getFullName();
-	                String newDesc = am.getFullName();
-	                throw new IllegalArgumentException("Conflicting setter definitions for property \""+propName+"\": "+oldDesc+" vs "+newDesc);
-            	}
-            	// to put earlier one back
-            	results.put(propName, old);
+                String oldDesc = old.getFullName();
+                String newDesc = am.getFullName();
+                throw new IllegalArgumentException("Conflicting setter definitions for property \""+propName+"\": "+oldDesc+" vs "+newDesc);
             }
         }
 
@@ -513,59 +530,22 @@ public class BasicBeanDescription extends BeanDescription
         return found;
     }
 
-    /**
-     * Method for locating all back-reference properties (setters, fields) bean has
-     * 
-     * @since 1.6
-     */
-    public Map<String,AnnotatedMember> findBackReferenceProperties()
-    {
-        HashMap<String,AnnotatedMember> result = null;
-        // First, gather setter methods
-        for (AnnotatedMethod am : _classInfo.memberMethods()) {
-            if (am.getParameterCount() == 1) {
-                AnnotationIntrospector.ReferenceProperty prop = _annotationIntrospector.findReferenceType(am);
-                if (prop != null && prop.isBackReference()) {
-                    if (result == null) {
-                        result = new HashMap<String,AnnotatedMember>();
-                    }
-                    if (result.put(prop.getName(), am) != null) {
-                        throw new IllegalArgumentException("Multiple back-reference properties with name '"+prop.getName()+"'");
-                    }
-                }
-            }
-        }
-        // then settable fields
-        for (AnnotatedField af : _classInfo.fields()) {
-            AnnotationIntrospector.ReferenceProperty prop = _annotationIntrospector.findReferenceType(af);
-            if (prop != null && prop.isBackReference()) {
-                if (result == null) {
-                    result = new HashMap<String,AnnotatedMember>();
-                }
-                if (result.put(prop.getName(), af) != null) {
-                    throw new IllegalArgumentException("Multiple back-reference properties with name '"+prop.getName()+"'");
-                }
-            }
-        }
-        return result;
-    }
-    
     /*
-    /**********************************************************
-    /* Introspection for deserialization, fields:
-    /**********************************************************
+    ///////////////////////////////////////////////////////
+    // Introspection for deserialization, fields:
+    ///////////////////////////////////////////////////////
      */
 
-    public LinkedHashMap<String,AnnotatedField> findDeserializableFields(VisibilityChecker<?> vchecker,
+    public LinkedHashMap<String,AnnotatedField> findDeserializableFields(boolean autodetect,
                                                                        Collection<String> ignoredProperties)
     {
-        return _findPropertyFields(vchecker, ignoredProperties, false);
+        return _findPropertyFields(autodetect, ignoredProperties, false);
     }
 
     /*
-    /**********************************************************
-    /* Helper methods for getters
-    /**********************************************************
+    ///////////////////////////////////////////////////////
+    // Helper methods for getters
+    ///////////////////////////////////////////////////////
      */
 
     public String okNameForAnyGetter(AnnotatedMethod am, String name)
@@ -608,7 +588,7 @@ public class BasicBeanDescription extends BeanDescription
     {
         if (name.startsWith("is")) {
             // plus, must return boolean...
-            Class<?> rt = am.getRawType();
+            Class<?> rt = am.getReturnType();
             if (rt != Boolean.class && rt != Boolean.TYPE) {
                 return null;
             }
@@ -640,7 +620,7 @@ public class BasicBeanDescription extends BeanDescription
      */
     protected boolean isCglibGetCallbacks(AnnotatedMethod am)
     {
-        Class<?> rt = am.getRawType();
+        Class<?> rt = am.getReturnType();
         // Ok, first: must return an array type
         if (rt == null || !rt.isArray()) {
             return false;
@@ -682,7 +662,7 @@ public class BasicBeanDescription extends BeanDescription
      */
     protected boolean isGroovyMetaClassGetter(AnnotatedMethod am)
     {
-        Class<?> rt = am.getRawType();
+        Class<?> rt = am.getReturnType();
         if (rt == null || rt.isArray()) {
             return false;
         }
@@ -694,9 +674,9 @@ public class BasicBeanDescription extends BeanDescription
     }
  
     /*
-    /**********************************************************
-    /* Helper methods for setters
-    /**********************************************************
+    ///////////////////////////////////////////////////////
+    // Helper methods for setters
+    ///////////////////////////////////////////////////////
      */
 
     public String okNameForSetter(AnnotatedMethod am)
@@ -733,15 +713,15 @@ public class BasicBeanDescription extends BeanDescription
     }
 
     /*
-    /**********************************************************
-    /* Helper methods for field introspection
-    /**********************************************************
+    ///////////////////////////////////////////////////////
+    // Helper methods for field introspection
+    ///////////////////////////////////////////////////////
      */
 
     /**
-     * @param vchecker (optional) Object that determines whether specific fields
-     *   have enough visibility to be considered for inclusion; if null,
-     *   auto-detection is disabled
+     * @param autodetect Whether to automatically detect public fields
+     *  as properties; if true will do that, if false will require
+     *   explicit annotations.
      * @param ignoredProperties (optional) names of properties to ignore;
      *   any fields that would be recognized as one of these properties
      *   is ignored.
@@ -751,16 +731,19 @@ public class BasicBeanDescription extends BeanDescription
      * @return Ordered Map with logical property name as key, and
      *    matching field as value.
      */
-    public LinkedHashMap<String,AnnotatedField> _findPropertyFields(VisibilityChecker<?> vchecker,
+    public LinkedHashMap<String,AnnotatedField> _findPropertyFields(boolean autodetect,
                                                                    Collection<String> ignoredProperties,
                                                                    boolean forSerialization)
     {
+        Boolean classAD = _annotationIntrospector.findFieldAutoDetection(_classInfo);
+        if (classAD != null) {
+            autodetect = classAD.booleanValue();
+        }
+
         LinkedHashMap<String,AnnotatedField> results = new LinkedHashMap<String,AnnotatedField>();
         for (AnnotatedField af : _classInfo.fields()) {
-            /* note: some pre-filtering has been; no static or transient fields 
-             * included; nor anything marked as ignorable (@JsonIgnore).
-             * Field masking has also been resolved, but it is still possible
-             * to get conflicts due to logical name overwrites.
+            /* note: some prefiltering has been; no static or transient fields 
+             * included; nor anything marked as ignorable (@JsonIgnore)
              */
 
             /* So far so good: final check, then; has to either
@@ -771,12 +754,12 @@ public class BasicBeanDescription extends BeanDescription
                 ? _annotationIntrospector.findSerializablePropertyName(af)
                 : _annotationIntrospector.findDeserializablePropertyName(af)
                 ;
-            if (propName != null) { // is annotated
+            if (propName != null) {
                 if (propName.length() == 0) { 
                     propName = af.getName();
                 }
-            } else { // nope, but may be visible (usually, public, can be recofingured)
-                if (!vchecker.isFieldVisible(af)) {
+            } else { // nope, but is a public field?
+                if (!autodetect || !af.isPublic()) {
                     continue;
                 }
                 propName = af.getName();
@@ -794,29 +777,18 @@ public class BasicBeanDescription extends BeanDescription
              */
             AnnotatedField old = results.put(propName, af);
             if (old != null) {
-                /* 21-Feb-2010, tatus: Not necessarily a conflict, still; only
-                 *    conflict if these are declared in same class (in future, might
-                 *    not even be conflict then, if types are different? That would
-                 *    allow "union" types. But for now, let's consider that illegale
-                 *    to keep things simple.
-                 */
-                /* Note: we assume that fields are ordered from "oldest" (super-class) to
-                 * "newest" (sub-classes); this should guarantee proper ordering
-                 */
-                if (old.getDeclaringClass() == af.getDeclaringClass()) {
-                    String oldDesc = old.getFullName();
-                    String newDesc = af.getFullName();
-                    throw new IllegalArgumentException("Multiple fields representing property \""+propName+"\": "+oldDesc+" vs "+newDesc);
-                }
+                String oldDesc = old.getFullName();
+                String newDesc = af.getFullName();
+                throw new IllegalArgumentException("Multiple fields representing property \""+propName+"\": "+oldDesc+" vs "+newDesc);
             }
         }
         return results;
     }
 
     /*
-    /**********************************************************
-    /* Property name mangling (getFoo -> foo)
-    /**********************************************************
+    //////////////////////////////////////////////////////////
+    // Property name mangling (getFoo -> foo)
+    //////////////////////////////////////////////////////////
      */
 
     /**
@@ -856,14 +828,14 @@ public class BasicBeanDescription extends BeanDescription
      */
     public static String descFor(AnnotatedElement elem)
     {
-        if (elem instanceof Class<?>) {
+        if (elem instanceof Class) {
             return "class "+((Class<?>) elem).getName();
         }
         if (elem instanceof Method) {
             Method m = (Method) elem;
             return "method "+m.getName()+" (from class "+m.getDeclaringClass().getName()+")";
         }
-        if (elem instanceof Constructor<?>) {
+        if (elem instanceof Constructor) {
             Constructor<?> ctor = (Constructor<?>) elem;
             // should indicate number of args?
             return "constructor() (from class "+ctor.getDeclaringClass().getName()+")";

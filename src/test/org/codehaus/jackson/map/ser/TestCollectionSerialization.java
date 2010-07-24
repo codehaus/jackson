@@ -59,7 +59,6 @@ public class TestCollectionSerialization
     /**
      * Class needed for testing [JACKSON-220]
      */
-    @SuppressWarnings("serial")
     @JsonSerialize(using=ListSerializer.class)    
     static class PseudoList extends ArrayList<String>
     {
@@ -149,8 +148,9 @@ public class TestCollectionSerialization
             switch (mode) {
             case 0:
                 {
-                    byte[] data = mapper.writeValueAsBytes(value);
-                    jp = new JsonFactory().createJsonParser(data);
+                    ByteArrayOutputStream out = new ByteArrayOutputStream(value.size());
+                    mapper.writeValue(out, value);
+                    jp = new JsonFactory().createJsonParser(out.toByteArray());
                 }
                 break;
             case 1:

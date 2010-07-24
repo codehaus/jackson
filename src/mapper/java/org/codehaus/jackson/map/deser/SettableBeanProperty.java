@@ -2,7 +2,6 @@ package org.codehaus.jackson.map.deser;
 
 import java.io.IOException;
 import java.lang.reflect.*;
-import java.util.*;
 
 import org.codehaus.jackson.*;
 import org.codehaus.jackson.map.*;
@@ -21,19 +20,12 @@ public abstract class SettableBeanProperty
      * Logical name of the property (often but not always derived
      * from the setter method name)
      */
-    protected final String _propName;
+    final String _propName;
 
-    protected final JavaType _type;
+    final JavaType _type;
 
     protected JsonDeserializer<Object> _valueDeserializer;
 
-    /**
-     * If value will contain type information (to support
-     * polymorphic handling), this is the type deserializer
-     * used to handle type resolution.
-     */
-    protected TypeDeserializer _valueTypeDeserializer;
-    
     /**
      * Value to be used when 'null' literal is encountered in Json.
      * For most types simply Java null, but for primitive types must
@@ -41,21 +33,13 @@ public abstract class SettableBeanProperty
      */
     protected Object _nullValue;
 
-    /**
-     * If property represents a managed (forward) reference
-     * (see [JACKSON-235]), we will need name of reference for
-     * later linking.
-     */
-    protected String _managedReferenceName;
-    
     /*
-    /**********************************************************
-    /* Life-cycle (construct & configure)
-    /**********************************************************
+    ////////////////////////////////////////////////////////
+    // Life-cycle (construct & configure)
+    ////////////////////////////////////////////////////////
      */
 
-    protected SettableBeanProperty(String propName, JavaType type,
-            TypeDeserializer typeDeser)
+    public SettableBeanProperty(String propName, JavaType type)
     {
         /* 09-Jan-2009, tatu: Intern()ing makes sense since Jackson parsed
          *   field names are (usually) interned too, hence lookups will be faster.
@@ -67,7 +51,6 @@ public abstract class SettableBeanProperty
             _propName = InternCache.instance.intern(propName);
         }
         _type = type;
-        _valueTypeDeserializer = typeDeser;
     }
 
     public void setValueDeserializer(JsonDeserializer<Object> deser)
@@ -79,23 +62,17 @@ public abstract class SettableBeanProperty
         _nullValue = _valueDeserializer.getNullValue();
     }
 
-    public void setManagedReferenceName(String n) {
-        _managedReferenceName = n;
-    }
-    
     protected abstract Class<?> getDeclaringClass();
 
     /*
-    /**********************************************************
-    /* Accessors
-    /**********************************************************
+    ////////////////////////////////////////////////////////
+    // Accessors
+    ////////////////////////////////////////////////////////
      */
 
     public String getPropertyName() { return _propName; }
     public JavaType getType() { return _type; }
 
-    public String getManagedReferenceName() { return _managedReferenceName; }
-    
     public boolean hasValueDeserializer() { return (_valueDeserializer != null); }
 
     /**
@@ -109,17 +86,14 @@ public abstract class SettableBeanProperty
     public int getCreatorIndex() { return -1; }
 
     /*
-    /**********************************************************
-    /* Public API
-    /**********************************************************
+    ////////////////////////////////////////////////////////
+    // Public API
+    ////////////////////////////////////////////////////////
      */
 
     /**
      * Method called to deserialize appropriate value, given parser (and
-     * context), and set it using appropriate mechanism.
-     * Pre-condition is that passed parser must point to the first token
-     * that should be consumed to produce the value (the only value for
-     * scalars, multiple for Objects and Arrays).
+     * context), and set it using appropriate mechanism
      */
     public abstract void deserializeAndSet(JsonParser jp, DeserializationContext ctxt,
                                            Object instance)
@@ -131,28 +105,21 @@ public abstract class SettableBeanProperty
     /**
      * This method is needed by some specialized bean deserializers,
      * and also called by some {@link #deserializeAndSet} implementations.
-     *<p>
-     * Pre-condition is that passed parser must point to the first token
-     * that should be consumed to produce the value (the only value for
-     * scalars, multiple for Objects and Arrays).
      */
     public final Object deserialize(JsonParser jp, DeserializationContext ctxt)
         throws IOException, JsonProcessingException
     {
-        JsonToken t = jp.getCurrentToken();
+        JsonToken t = jp.nextToken();
         if (t == JsonToken.VALUE_NULL) {
             return _nullValue;
-        }
-        if (_valueTypeDeserializer != null) {
-            return _valueDeserializer.deserializeWithType(jp, ctxt, _valueTypeDeserializer);
         }
         return _valueDeserializer.deserialize(jp, ctxt);
     }
 
     /*
-    /**********************************************************
-    /* Helper methods
-    /**********************************************************
+    ////////////////////////////////////////////////////////
+    // Helper methods
+    ////////////////////////////////////////////////////////
      */
 
     /**
@@ -198,9 +165,9 @@ public abstract class SettableBeanProperty
     @Override public String toString() { return "[property '"+_propName+"']"; }
 
     /*
-    /**********************************************************
-    /* Impl classes
-    /**********************************************************
+    ////////////////////////////////////////////////////////
+    // Impl classes
+    ////////////////////////////////////////////////////////
      */
 
     /**
@@ -216,10 +183,10 @@ public abstract class SettableBeanProperty
          */
         protected final Method _setter;
 
-        public MethodProperty(String propName, JavaType type, TypeDeserializer typeDeser,
-                Method setter)
+        public MethodProperty(String propName, JavaType type,
+                              Method setter)
         {
-            super(propName, type, typeDeser);
+            super(propName, type);
             _setter = setter;
         }
 
@@ -259,10 +226,10 @@ public abstract class SettableBeanProperty
          */
         protected final Method _getter;
 
-        public SetterlessProperty(String propName, JavaType type, TypeDeserializer typeDeser,
+        public SetterlessProperty(String propName, JavaType type,
                                   Method getter)
         {
-            super(propName, type, typeDeser);
+            super(propName, type);
             _getter = getter;
         }
 
@@ -275,7 +242,7 @@ public abstract class SettableBeanProperty
                                             Object instance)
             throws IOException, JsonProcessingException
         {
-            JsonToken t = jp.getCurrentToken();
+            JsonToken t = jp.nextToken();
             if (t == JsonToken.VALUE_NULL) {
                 /* Hmmh. Is this a problem? We won't be setting anything, so it's
                  * equivalent of empty Collection/Map in this case
@@ -293,7 +260,7 @@ public abstract class SettableBeanProperty
             }
             /* Note: null won't work, since we can't then inject anything
              * in. At least that's not good in common case. However,
-             * theoretically the case where we get JSON null might
+             * theoretically the case where we get Json null might
              * be compatible. If so, implementation could be changed.
              */
             if (toModify == null) {
@@ -305,7 +272,7 @@ public abstract class SettableBeanProperty
         public final void set(Object instance, Object value)
             throws IOException
         {
-            throw new UnsupportedOperationException("Should never call 'set' on setterless property");
+            throw new UnsupportedOperationException("Should never call 'set' onn setterless property");
         }
     }
 
@@ -321,10 +288,10 @@ public abstract class SettableBeanProperty
          */
         protected final Field _field;
 
-        public FieldProperty(String propName, JavaType type, TypeDeserializer typeDeser,
+        public FieldProperty(String propName, JavaType type,
                              Field f)
         {
-            super(propName, type, typeDeser);
+            super(propName, type);
             _field = f;
         }
 
@@ -366,10 +333,9 @@ public abstract class SettableBeanProperty
         final int _index;
 
         public CreatorProperty(String propName, JavaType type,
-                               TypeDeserializer typeDeser,
                                Class<?> declaringClass, int index)
         {
-            super(propName, type, typeDeser);
+            super(propName, type);
             _declaringClass = declaringClass;
             _index = index;
         }
@@ -403,89 +369,6 @@ public abstract class SettableBeanProperty
              * For now, let's just bail out without fuss.
              */
             //throw new IllegalStateException("Method should never be called on a "+getClass().getName());
-        }
-    }
-
-    /**
-     * Wrapper property that is used to handle managed (forward) properties
-     * (see [JACKSON-235] for more information). Basically just need to
-     * delegate first to actual forward property, and 
-     * 
-     * @author tatu
-     */
-    public final static class ManagedReferenceProperty
-        extends SettableBeanProperty
-    {
-        protected final String _referenceName;
-        
-        /**
-         * Flag that indicates whether property to handle is a container type
-         * (array, Collection, Map) or not.
-         */
-        protected final boolean _isContainer;
-        
-        protected final SettableBeanProperty _managedProperty;
-
-        protected final SettableBeanProperty _backProperty;
-        
-        public ManagedReferenceProperty(String refName,
-                SettableBeanProperty forward,
-                SettableBeanProperty backward, boolean isContainer)
-        {
-            super(forward.getPropertyName(), forward.getType(), forward._valueTypeDeserializer);
-            _referenceName = refName;
-            _managedProperty = forward;
-            _backProperty = backward;
-            _isContainer = isContainer;
-        }
-
-        protected Class<?> getDeclaringClass()
-        {
-            return _managedProperty.getDeclaringClass();
-        }
-    
-        public void deserializeAndSet(JsonParser jp, DeserializationContext ctxt,
-                                      Object instance)
-            throws IOException, JsonProcessingException
-        {
-            set(instance, _managedProperty.deserialize(jp, ctxt));
-        }
-    
-        public final void set(Object instance, Object value)
-            throws IOException
-        {
-            _managedProperty.set(instance, value);
-            /* And then back reference, if (and only if!) we actually have a non-null
-             * reference
-             */
-            if (value != null) {
-                if (_isContainer) { // ok, this gets ugly... but has to do for now
-                    if (value instanceof Object[]) {
-                        for (Object ob : (Object[]) value) {
-                            if (ob != null) {
-                                _backProperty.set(ob, instance);                            
-                            }
-                        }
-                    } else if (value instanceof Collection<?>) {
-                        for (Object ob : (Collection<?>) value) {
-                            if (ob != null) {
-                                _backProperty.set(ob, instance);                            
-                            }
-                        }
-                    } else if (value instanceof Map<?,?>) {
-                        for (Object ob : ((Map<?,?>) value).values()) {
-                            if (ob != null) {
-                                _backProperty.set(ob, instance);                            
-                            }
-                        }
-                    } else {
-                        throw new IllegalStateException("Unsupported container type ("+value.getClass().getName()
-                                +") when resolving reference '"+_referenceName+"'");
-                    }
-                } else {
-                    _backProperty.set(value, instance);
-                }
-            }
         }
     }
 }

@@ -63,7 +63,7 @@ public final class SettableAnyProperty
     public final Object deserialize(JsonParser jp, DeserializationContext ctxt)
         throws IOException, JsonProcessingException
     {
-        JsonToken t = jp.getCurrentToken();
+        JsonToken t = jp.nextToken();
         if (t == JsonToken.VALUE_NULL) {
             return null;
         }

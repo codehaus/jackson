@@ -2,7 +2,7 @@
  * Main public API classes of the core streaming JSON
  * processor: most importantly {@link org.codehaus.jackson.JsonFactory}
  * used for constructing
- * JSON parser ({@link org.codehaus.jackson.JsonParser})
+ *  Json parser ({@link org.codehaus.jackson.JsonParser})
  * and generator
  * ({@link org.codehaus.jackson.JsonParser})
  * instances.

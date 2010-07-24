@@ -1,86 +1,24 @@
 package org.codehaus.jackson.map;
 
 import java.lang.annotation.Annotation;
-import java.util.*;
 
-import org.codehaus.jackson.type.JavaType;
 import org.codehaus.jackson.map.JsonDeserializer;
 import org.codehaus.jackson.map.JsonSerializer;
 import org.codehaus.jackson.map.annotate.JsonSerialize;
 import org.codehaus.jackson.map.introspect.*;
-import org.codehaus.jackson.map.jsontype.NamedType;
-import org.codehaus.jackson.map.jsontype.TypeResolverBuilder;
 
 /**
  * Abstract class that defines API used for introspecting annotation-based
  * configuration for serialization and deserialization. Separated
  * so that different sets of annotations can be supported, and support
  * plugged-in dynamically.
- *<p>
- * NOTE: due to rapid addition of new methods (and changes to existing methods),
- * it is <b>strongly</b> recommended that custom implementations not directly
- * extends this class, but rather {@link NopAnnotationIntrospector}. This way
- * added methods will not break backwards compatibility of custom annotation
- * introspectors.
  */
 public abstract class AnnotationIntrospector
 {    
     /*
-    /**********************************************************
-    /* Enumeration types
-    /**********************************************************
-     */
-
-    /**
-     * Value type used with managed and back references; contains type and
-     * logic name, used to link related references
-     * 
-     * @since 1.6
-     */
-    public static class ReferenceProperty
-    {
-        public enum Type {
-            /**
-             * Reference property that Jackson manages and that is serialized normally (by serializing
-             * reference object), but is used for resolving back references during
-             * deserialization.
-             * Usually this can be defined by using
-             * {@link org.codehaus.jackson.annotate.JsonManagedReference}
-             */
-            MANAGED_REFERENCE
-    
-            /**
-             * Reference property that Jackson manages by suppressing it during serialization,
-             * and reconstructing during deserialization.
-             * Usually this can be defined by using
-             * {@link org.codehaus.jackson.annotate.JsonBackReference}
-             */
-            ,BACK_REFERENCE
-            ;
-        }
-
-        private final Type _type;
-        private final String _name;
-
-        public ReferenceProperty(Type t, String n) {
-            _type = t;
-            _name = n;
-        }
-
-        public static ReferenceProperty managed(String name) { return new ReferenceProperty(Type.MANAGED_REFERENCE, name); }
-        public static ReferenceProperty back(String name) { return new ReferenceProperty(Type.BACK_REFERENCE, name); }
-        
-        public Type getType() { return _type; }
-        public String getName() { return _name; }
-
-        public boolean isManagedReference() { return _type == Type.MANAGED_REFERENCE; }
-        public boolean isBackReference() { return _type == Type.BACK_REFERENCE; }
-    }
-    
-    /*
-    /**********************************************************
-    /* Factory methods
-    /**********************************************************
+    ///////////////////////////////////////////////////////
+    // Factory methods
+    ///////////////////////////////////////////////////////
      */
     
     /**
@@ -99,9 +37,9 @@ public abstract class AnnotationIntrospector
     }
     
     /*
-    /**********************************************************
-    /* Generic annotation properties, lookup
-    /**********************************************************
+    ///////////////////////////////////////////////////////
+    // Generic annotation properties, lookup
+    ///////////////////////////////////////////////////////
     */
 
     /**
@@ -111,9 +49,9 @@ public abstract class AnnotationIntrospector
     public abstract boolean isHandled(Annotation ann);
 
     /*
-    /**********************************************************
-    /* General annotations for serialization+deserialization
-    /**********************************************************
+    ///////////////////////////////////////////////////////
+    // General annotations for serialization+deserialization
+    ///////////////////////////////////////////////////////
     */
 
     /**
@@ -130,9 +68,9 @@ public abstract class AnnotationIntrospector
     public abstract String findNamespace(Annotated ann);
 
     /*
-    /**********************************************************
-    /* General class annotations
-    /**********************************************************
+    ///////////////////////////////////////////////////////
+    // General class annotations
+    ///////////////////////////////////////////////////////
     */
 
     /**
@@ -151,6 +89,15 @@ public abstract class AnnotationIntrospector
      *   way.
      */
     public abstract Boolean findCachability(AnnotatedClass ac);
+
+    /**
+     * Method for checking whether there is a class annotation that
+     * indicates whether field auto detection should be enabled.
+     *
+     * @return null if no relevant annotation is located; Boolean.TRUE
+     *   if enabling annotation found, Boolean.FALSE if disabling annotation
+     */
+    public abstract Boolean findFieldAutoDetection(AnnotatedClass ac);
 
     /**
      * Method for locating name used as "root name" (for use by
@@ -180,139 +127,12 @@ public abstract class AnnotationIntrospector
      * @since 1.4
      */
     public abstract Boolean findIgnoreUnknownProperties(AnnotatedClass ac);
-
-    /*
-    /**********************************************************
-    /* Property auto-detection
-    /**********************************************************
-     */
-
-    /**
-     * Method for checking if annotations indicate changes to minimum visibility levels
-     * needed for auto-detecting property elements (fields, methods, constructors).
-     * A baseline checker is given, and introspector is to either return it as is (if
-     * no annotations are found), or build and return a derived instance (using checker's build
-     * methods).
-     *
-     *  @since 1.5
-     */
-    public abstract VisibilityChecker<?> findAutoDetectVisibility(AnnotatedClass ac,
-            VisibilityChecker<?> baseChecker);
     
     /*
-    /**********************************************************
-    /* Class annotations for PM type handling (1.5+)
-    /**********************************************************
+    ///////////////////////////////////////////////////////
+    // General method annotations
+    ///////////////////////////////////////////////////////
     */
-    
-    /**
-     * Method for checking if given class has annotations that indicate
-     * that specific type resolver is to be used for handling instances.
-     * This includes not only
-     * instantiating resolver builder, but also configuring it based on
-     * relevant annotations (not including ones checked with a call to
-     * {@link #findSubtypes}
-     * 
-     * @param ac Annotated class to check for annotations
-     * @param baseType Base java type of value for which resolver is to be found
-     * 
-     * @return Type resolver builder for given type, if one found; null if none
-     * 
-     * @since 1.5
-     */
-    public TypeResolverBuilder<?> findTypeResolver(AnnotatedClass ac, JavaType baseType) {
-        return null;
-    }
-
-    /**
-     * Method for checking if given property entity (field or method) has annotations
-     * that indicate that specific type resolver is to be used for handling instances.
-     * This includes not only
-     * instantiating resolver builder, but also configuring it based on
-     * relevant annotations (not including ones checked with a call to
-     * {@link #findSubtypes}
-     * 
-     * @param am Annotated member (field or method) to check for annotations
-     * @param baseType Base java type of property for which resolver is to be found
-     * 
-     * @return Type resolver builder for properties of given entity, if one found;
-     *    null if none
-     * 
-     * @since 1.5
-     */
-    public TypeResolverBuilder<?> findPropertyTypeResolver(AnnotatedMember am, JavaType baseType) {
-        return null;
-    }
-
-    /**
-     * Method for checking if given structured property entity (field or method that
-     * has nominal value of Map, Collection or array type) has annotations
-     * that indicate that specific type resolver is to be used for handling type
-     * information of contained values.
-     * This includes not only
-     * instantiating resolver builder, but also configuring it based on
-     * relevant annotations (not including ones checked with a call to
-     * {@link #findSubtypes}
-     * 
-     * @param am Annotated member (field or method) to check for annotations
-     * @param containerType Type of property for which resolver is to be found (must be a container type)
-     * 
-     * @return Type resolver builder for values contained in properties of given entity,
-     *    if one found; null if none
-     * 
-     * @since 1.5
-     */    
-    public TypeResolverBuilder<?> findPropertyContentTypeResolver(AnnotatedMember am, JavaType containerType) {
-        return null;
-    }
-
-    /**
-     * Method for locating annotation-specified subtypes related to annotated
-     * entity (class, method, field). Note that this is only guaranteed to be
-     * a list of directly
-     * declared subtypes, no recursive processing is guarantees (i.e. caller
-     * has to do it if/as necessary)
-     * 
-     * @param a Annotated entity (class, field/method) to check for annotations
-     * 
-     * @since 1.5
-     */
-    public List<NamedType> findSubtypes(Annotated a) {
-        return null;
-    }
-
-    /**
-     * Method for checking if specified type has explicit name.
-     * 
-     * @param ac Class to check for type name annotations
-     * 
-     * @since 1.5
-     */
-    public String findTypeName(AnnotatedClass ac) {
-        return null;
-    }
-
-    /*
-    /**********************************************************
-    /* General member (field, method/constructor) annotations
-    /**********************************************************
-     */
-
-    /**
-     * Note: defined as non-abstract to reduce fragility between
-     * versions.
-     * 
-     * @since 1.6
-     */
-    public ReferenceProperty findReferenceType(AnnotatedMember member) {
-        return null;
-    }
-    
-    /*
-    /**********************************************************
-    /* General method annotations
-    /**********************************************************
-     */
 
     /**
      * Method for checking whether there is an annotation that
@@ -334,9 +154,9 @@ public abstract class AnnotationIntrospector
     public abstract boolean isIgnorableConstructor(AnnotatedConstructor c);
 
     /*
-    /**********************************************************
-    /* General field annotations
-    /**********************************************************
+    ////////////////////////////////////////////////////
+    // General field annotations
+    ////////////////////////////////////////////////////
      */
 
     /**
@@ -350,10 +170,10 @@ public abstract class AnnotationIntrospector
     public abstract boolean isIgnorableField(AnnotatedField f);
 
     /*
-    /**********************************************************
-    /* Serialization: general annotations
-    /**********************************************************
-     */
+    ///////////////////////////////////////////////////////
+    // Serialization: general annotations
+    ///////////////////////////////////////////////////////
+    */
 
     /**
      * Method for getting a serializer definition on specified method
@@ -414,10 +234,38 @@ public abstract class AnnotationIntrospector
     public abstract Class<?>[] findSerializationViews(Annotated a);
     
     /*
-    /**********************************************************
-    /* Serialization: class annotations
-    /**********************************************************
+    ///////////////////////////////////////////////////////
+    // Serialization: class annotations
+    ///////////////////////////////////////////////////////
+    */
+
+    /**
+     * Method for checking whether there is a class annotation that
+     * indicates whether (regular) getter-method auto detection
+     * should be enabled.
+     * Getter methods are methods with name "getXxx()" (for property "xxx");
+     * "isXxx()" are not included (instead those are considered
+     * "is getters")
+     *
+     * @return null if no relevant annotation is located; Boolean.TRUE
+     *   if enabling annotation found, Boolean.FALSE if disabling annotation
      */
+    public abstract Boolean findGetterAutoDetection(AnnotatedClass ac);
+
+    /**
+     * Method for checking whether there is a class annotation that
+     * indicates whether (regular) getter-method auto detection
+     * should be enabled.
+     * Getter methods are methods with name "getXxx()" (for property "xxx");
+     * "isXxx()" are not included (instead those are considered
+     * "is getters")
+     *
+     * @since 1.3
+     *
+     * @return null if no relevant annotation is located; Boolean.TRUE
+     *   if enabling annotation found, Boolean.FALSE if disabling annotation
+     */
+    public abstract Boolean findIsGetterAutoDetection(AnnotatedClass ac);
 
     /**
      * Method for accessing defined property serialization order (which may be
@@ -437,10 +285,10 @@ public abstract class AnnotationIntrospector
     public abstract Boolean findSerializationSortAlphabetically(AnnotatedClass ac);
     
     /*
-    /**********************************************************
-    /* Serialization: method annotations
-    /**********************************************************
-     */
+    ///////////////////////////////////////////////////////
+    // Serialization: method annotations
+    ///////////////////////////////////////////////////////
+    */
 
     /**
      * Method for checking whether given method has an annotation
@@ -475,10 +323,10 @@ public abstract class AnnotationIntrospector
     public abstract String findEnumValue(Enum<?> value);
 
     /*
-    /**********************************************************
-    /* Serialization: field annotations
-    /**********************************************************
-     */
+    ///////////////////////////////////////////////////////
+    // Serialization: field annotations
+    ///////////////////////////////////////////////////////
+    */
 
     /**
      * Method for checking whether given member field represent
@@ -493,10 +341,10 @@ public abstract class AnnotationIntrospector
     public abstract String findSerializablePropertyName(AnnotatedField af);
 
     /*
-    /**********************************************************
-    /* Deserialization: general annotations
-    /**********************************************************
-     */
+    ///////////////////////////////////////////////////////
+    // Deserialization: general annotations
+    ///////////////////////////////////////////////////////
+    */
 
     /**
      * Method for getting a deserializer definition on specified method
@@ -541,57 +389,60 @@ public abstract class AnnotationIntrospector
      * (i.e.subtype of declared type).
      * Declared return type of the method is also considered acceptable.
      *
-     * @param baseType Assumed type before considering annotations
-     * @param propName Logical property name of the property that uses
-     *    type, if known; null for types not associated with property
-     *
      * @return Class to use for deserialization instead of declared type
      */
-    public abstract Class<?> findDeserializationType(Annotated am, JavaType baseType,
-            String propName);
+    public abstract Class<?> findDeserializationType(Annotated am);
 
     /**
      * Method for accessing additional narrowing type definition that a
      * method can have, to define more specific key type to use.
      * It should be only be used with {@link java.util.Map} types.
-     * 
-     * @param baseKeyType Assumed key type before considering annotations
-     * @param propName Logical property name of the property that uses
-     *    type, if known; null for types not associated with property
      *
      * @return Class specifying more specific type to use instead of
      *   declared type, if annotation found; null if not
      */
-    public abstract Class<?> findDeserializationKeyType(Annotated am, JavaType baseKeyType,
-            String propName);
+    public abstract Class<?> findDeserializationKeyType(Annotated am);
 
     /**
      * Method for accessing additional narrowing type definition that a
      * method can have, to define more specific content type to use;
      * content refers to Map values and Collection/array elements.
      * It should be only be used with Map, Collection and array types.
-     * 
-     * @param baseContentType Assumed content (value) type before considering annotations
-     * @param propName Logical property name of the property that uses
-     *    type, if known; null for types not associated with property
      *
      * @return Class specifying more specific type to use instead of
      *   declared type, if annotation found; null if not
      */
-    public abstract Class<?> findDeserializationContentType(Annotated am, JavaType baseContentType,
-            String propName);
+    public abstract Class<?> findDeserializationContentType(Annotated am);
 
     /*
-    /**********************************************************
-    /* Deserialization: class annotations
-    /**********************************************************
+    ///////////////////////////////////////////////////////
+    // Deserialization: class annotations
+    ///////////////////////////////////////////////////////
     */
 
-    /*
-    /**********************************************************
-    /* Deserialization: method annotations
-    /**********************************************************
+    /**
+     * Method for checking whether there is a class annotation that
+     * indicates whether creator-method auto detection should be enabled.
+     *
+     * @return null if no relevant annotation is located; Boolean.TRUE
+     *   if enabling annotation found, Boolean.FALSE if disabling annotation
      */
+    public abstract Boolean findCreatorAutoDetection(AnnotatedClass ac);
+
+    /**
+     * Method for checking whether there is a class annotation that
+     * indicates whether setter-method auto detection should be enabled.
+     *
+     * @return null if no relevant annotation is located; Boolean.TRUE
+     *   if enabling annotation found, Boolean.FALSE if disabling annotation
+     */
+    public abstract Boolean findSetterAutoDetection(AnnotatedClass ac);
+
+    /*
+    ///////////////////////////////////////////////////////
+    // Deserialization: method annotations
+    ///////////////////////////////////////////////////////
+    */
 
     /**
      * Method for checking whether given method has an annotation
@@ -629,10 +480,10 @@ public abstract class AnnotationIntrospector
     public abstract boolean hasCreatorAnnotation(Annotated a);
 
     /*
-    /**********************************************************
-    /* Deserialization: field annotations
-    /**********************************************************
-     */
+    ///////////////////////////////////////////////////////
+    // Deserialization: field annotations
+    ///////////////////////////////////////////////////////
+    */
 
     /**
      * Method for checking whether given member field represent
@@ -647,11 +498,11 @@ public abstract class AnnotationIntrospector
     public abstract String findDeserializablePropertyName(AnnotatedField af);
 
     /*
-    /**********************************************************
-    /* Deserialization: parameter annotations (for
-    /* creator method parameters)
-    /**********************************************************
-     */
+    ///////////////////////////////////////////////////////
+    // Deserialization: parameter annotations (for
+    // creator method parameters)
+    ///////////////////////////////////////////////////////
+    */
 
     /**
      * Method for checking whether given set of annotations indicates
@@ -662,10 +513,10 @@ public abstract class AnnotationIntrospector
     public abstract String findPropertyNameForParam(AnnotatedParameter param);
 
     /*
-    /**********************************************************
-    /* Helper classes
-    /**********************************************************
-     */
+    ///////////////////////////////////////////////////////
+    // Helper classes
+    ///////////////////////////////////////////////////////
+    */
 
     /**
      * Helper class that allows using 2 introspectors such that one
@@ -735,6 +586,16 @@ public abstract class AnnotationIntrospector
             }
             return result;
         }
+        
+        @Override
+        public Boolean findFieldAutoDetection(AnnotatedClass ac)
+        {
+            Boolean result = _primary.findFieldAutoDetection(ac);
+            if (result == null) {
+                result = _secondary.findFieldAutoDetection(ac);
+            }
+            return result;
+        }
 
         @Override
         public String findRootName(AnnotatedClass ac)
@@ -769,95 +630,6 @@ public abstract class AnnotationIntrospector
             }
             return result;
         }        
-
-        /*
-        /******************************************************
-        /* Property auto-detection
-        /******************************************************
-        */
-        
-        @Override
-        public VisibilityChecker<?> findAutoDetectVisibility(AnnotatedClass ac,
-            VisibilityChecker<?> checker)
-        {
-            /* Note: to have proper priorities, we must actually call delegatees
-             * in reverse order:
-             */
-            checker = _secondary.findAutoDetectVisibility(ac, checker);
-            return _primary.findAutoDetectVisibility(ac, checker);
-        }
-
-        /*
-        /******************************************************
-        /* Type handling
-        /******************************************************
-        */
-        
-        @Override
-        public TypeResolverBuilder<?> findTypeResolver(AnnotatedClass ac, JavaType baseType)
-        {
-            TypeResolverBuilder<?> b = _primary.findTypeResolver(ac, baseType);
-            if (b == null) {
-                b = _secondary.findTypeResolver(ac, baseType);
-            }
-            return b;
-        }
-
-        @Override
-        public TypeResolverBuilder<?> findPropertyTypeResolver(AnnotatedMember am, JavaType baseType)
-        {
-            TypeResolverBuilder<?> b = _primary.findPropertyTypeResolver(am, baseType);
-            if (b == null) {
-                b = _secondary.findPropertyTypeResolver(am, baseType);
-            }
-            return b;
-        }
-
-        @Override
-        public TypeResolverBuilder<?> findPropertyContentTypeResolver(AnnotatedMember am, JavaType baseType)
-        {
-            TypeResolverBuilder<?> b = _primary.findPropertyContentTypeResolver(am, baseType);
-            if (b == null) {
-                b = _secondary.findPropertyContentTypeResolver(am, baseType);
-            }
-            return b;
-        }
-        
-        @Override
-        public List<NamedType> findSubtypes(Annotated a)
-        {
-            List<NamedType> types1 = _primary.findSubtypes(a);
-            List<NamedType> types2 = _secondary.findSubtypes(a);
-            if (types1 == null || types1.isEmpty()) return types2;
-            if (types2 == null || types2.isEmpty()) return types1;
-            ArrayList<NamedType> result = new ArrayList<NamedType>(types1.size() + types2.size());
-            result.addAll(types1);
-            result.addAll(types2);
-            return result;
-        }
-
-        @Override        
-        public String findTypeName(AnnotatedClass ac)
-        {
-            String name = _primary.findTypeName(ac);
-            if (name == null || name.length() == 0) {
-                name = _secondary.findTypeName(ac);                
-            }
-            return name;
-        }
-
-        // // // General member (field, method/constructor) annotations
-        
-        @Override        
-        public ReferenceProperty findReferenceType(AnnotatedMember member)
-        {
-            ReferenceProperty ref = _primary.findReferenceType(member);
-            if (ref == null) {
-                ref = _secondary.findReferenceType(member);
-            }
-            return ref; 
-        }
-        
         // // // General method annotations
 
         @Override
@@ -905,13 +677,15 @@ public abstract class AnnotationIntrospector
              * works: largest value is the last one, which is the most
              * restrictive value as well.
              */
-            /* 09-Mar-2010, tatu: Actually, as per [JACKSON-256], it is probably better to just
-             *    use strict overriding. Simpler, easier to understand.
-             */
-            // note: call secondary first, to give lower priority
-            defValue = _secondary.findSerializationInclusion(a, defValue);
-            defValue = _primary.findSerializationInclusion(a, defValue);
-            return defValue;
+            JsonSerialize.Inclusion v1 = _primary.findSerializationInclusion(a, defValue);
+            JsonSerialize.Inclusion v2 = _secondary.findSerializationInclusion(a, defValue);
+            if (v1 == null) {
+                return v2;
+            }
+            if (v2 == null) {
+                return v1;
+            }
+            return (v1.compareTo(v2) < 0) ? v2 : v1;
         }
         
         @Override
@@ -950,6 +724,25 @@ public abstract class AnnotationIntrospector
         
         // // // Serialization: class annotations
 
+        @Override
+        public Boolean findGetterAutoDetection(AnnotatedClass ac)
+        {
+            Boolean result = _primary.findGetterAutoDetection(ac);
+            if (result == null) {
+                result = _secondary.findGetterAutoDetection(ac);
+            }
+            return result;
+        }
+
+        @Override
+        public Boolean findIsGetterAutoDetection(AnnotatedClass ac)
+        {
+            Boolean result = _primary.findIsGetterAutoDetection(ac);
+            if (result == null) {
+                result = _secondary.findIsGetterAutoDetection(ac);
+            }
+            return result;
+        }
 
         public String[] findSerializationPropertyOrder(AnnotatedClass ac) {
             String[] result = _primary.findSerializationPropertyOrder(ac);
@@ -1061,38 +854,56 @@ public abstract class AnnotationIntrospector
         }
         
         @Override
-        public Class<?> findDeserializationType(Annotated am, JavaType baseType,
-                String propName)
+        public Class<?> findDeserializationType(Annotated am)
         {
-            Class<?> result = _primary.findDeserializationType(am, baseType, propName);
+            Class<?> result = _primary.findDeserializationType(am);
             if (result == null) {
-                result = _secondary.findDeserializationType(am, baseType, propName);
+                result = _secondary.findDeserializationType(am);
             }
             return result;
         }
 
         @Override
-        public Class<?> findDeserializationKeyType(Annotated am, JavaType baseKeyType,
-                String propName)
+        public Class<?> findDeserializationKeyType(Annotated am)
         {
-            Class<?> result = _primary.findDeserializationKeyType(am, baseKeyType, propName);
+            Class<?> result = _primary.findDeserializationKeyType(am);
             if (result == null) {
-                result = _secondary.findDeserializationKeyType(am, baseKeyType, propName);
+                result = _secondary.findDeserializationKeyType(am);
             }
             return result;
         }
 
         @Override
-        public Class<?> findDeserializationContentType(Annotated am, JavaType baseContentType,
-                String propName)
+        public Class<?> findDeserializationContentType(Annotated am)
         {
-            Class<?> result = _primary.findDeserializationContentType(am, baseContentType, propName);
+            Class<?> result = _primary.findDeserializationContentType(am);
             if (result == null) {
-                result = _secondary.findDeserializationContentType(am, baseContentType, propName);
+                result = _secondary.findDeserializationContentType(am);
             }
             return result;
         }
         
+        // // // Deserialization: class annotations
+        
+        @Override
+        public Boolean findCreatorAutoDetection(AnnotatedClass ac)
+        {
+            Boolean result = _primary.findCreatorAutoDetection(ac);
+            if (result == null) {
+                result = _secondary.findCreatorAutoDetection(ac);
+            }
+            return result;
+        }
+
+        @Override
+        public Boolean findSetterAutoDetection(AnnotatedClass ac)
+        {
+            Boolean result = _primary.findSetterAutoDetection(ac);
+            if (result == null) {
+                result = _secondary.findSetterAutoDetection(ac);
+            }
+            return result;
+        }
 
         // // // Deserialization: method annotations
 

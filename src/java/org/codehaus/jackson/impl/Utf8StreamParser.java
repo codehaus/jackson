@@ -17,10 +17,10 @@ public final class Utf8StreamParser
     final static byte BYTE_LF = (byte) '\n';
 
     /*
-    /**********************************************************
-    /* Configuration, state
-    /**********************************************************
-     */
+    ////////////////////////////////////////////////////
+    // Configuration, state
+    ////////////////////////////////////////////////////
+    */
 
     /**
      * Codec used for data binding when (if) requested.
@@ -38,9 +38,9 @@ public final class Utf8StreamParser
     protected int[] _quadBuffer = new int[32];
 
     /*
-    /**********************************************************
-    /* Life-cycle
-    /**********************************************************
+    ////////////////////////////////////////////////////
+    // Life-cycle
+    ////////////////////////////////////////////////////
      */
 
     public Utf8StreamParser(IOContext ctxt, int features, InputStream in,
@@ -52,11 +52,6 @@ public final class Utf8StreamParser
         super(ctxt, features, in, inputBuffer, start, end, bufferRecyclable);
         _objectCodec = codec;
         _symbols = sym;
-        // 12-Mar-2010, tatus: Sanity check, related to [JACKSON-259]:
-        if (!JsonParser.Feature.CANONICALIZE_FIELD_NAMES.enabledIn(features)) {
-            // should never construct non-canonical utf8/byte parser (instead, use Reader)
-            _throwInternal();
-        }
     }
 
     public ObjectCodec getCodec() {
@@ -68,9 +63,9 @@ public final class Utf8StreamParser
     }
 
     /*
-    /**********************************************************
-    /* Public API, traversal
-    /**********************************************************
+    ////////////////////////////////////////////////////
+    // Public API, traversal
+    ////////////////////////////////////////////////////
      */
 
     /**
@@ -233,7 +228,7 @@ public final class Utf8StreamParser
         }
         return (_currToken = t);
     }
-    
+
     @Override
     public void close() throws IOException
     {
@@ -243,9 +238,9 @@ public final class Utf8StreamParser
     }
 
     /*
-    /**********************************************************
-    /* Internal methods, secondary parsing
-    /**********************************************************
+    ////////////////////////////////////////////////////
+    // Internal methods, secondary parsing
+    ////////////////////////////////////////////////////
      */
 
     protected final Name _parseFieldName(int i)
@@ -734,9 +729,9 @@ public final class Utf8StreamParser
     }
 
     /*
-    /**********************************************************
-    /* Internal methods, symbol (name) handling
-    /**********************************************************
+    ////////////////////////////////////////////////////
+    // Internal methods, symbol (name) handling
+    ////////////////////////////////////////////////////
      */
 
     private final Name findName(int q1, int lastQuadBytes)
@@ -899,9 +894,9 @@ public final class Utf8StreamParser
     }
 
     /*
-    /**********************************************************
-    /* Internal methods, String value parsing
-    /**********************************************************
+    ////////////////////////////////////////////////////
+    // Internal methods, String value parsing
+    ////////////////////////////////////////////////////
      */
 
     @Override
@@ -1166,9 +1161,9 @@ public final class Utf8StreamParser
     }
 
     /*
-    /**********************************************************
-    /* Internal methods, other parsing helper methods
-    /**********************************************************
+    ////////////////////////////////////////////////////
+    // Internal methods, other parsing helper methods
+    ////////////////////////////////////////////////////
      */
 
     protected void _matchToken(JsonToken token)
@@ -1219,9 +1214,9 @@ public final class Utf8StreamParser
     }
 
     /*
-    /**********************************************************
-    /* Internal methods, ws skipping, escape/unescape
-    /**********************************************************
+    ////////////////////////////////////////////////////
+    // Internal methods, ws skipping, escape/unescape
+    ////////////////////////////////////////////////////
      */
 
     private final int _skipWS()
@@ -1384,7 +1379,7 @@ public final class Utf8StreamParser
             break;
 
         default:
-            return _handleUnrecognizedCharacterEscape((char) _decodeCharForError(c));
+            _reportError("Unrecognized character escape (\\ followed by "+_getCharDesc(_decodeCharForError(c))+")");
         }
 
         // Ok, a hex escape. Need 4 characters
@@ -1453,9 +1448,9 @@ public final class Utf8StreamParser
     }
 
     /*
-    /**********************************************************
-    /* Internal methods,UTF8 decoding
-    /**********************************************************
+    ////////////////////////////////////////////////////
+    // Internal methods,UTF8 decoding
+    ////////////////////////////////////////////////////
      */
 
     private final int _decodeUtf8_2(int c)
@@ -1610,9 +1605,9 @@ public final class Utf8StreamParser
     }
 
     /*
-    /**********************************************************
-    /* Internal methods, input loading
-    /**********************************************************
+    ////////////////////////////////////////////////////
+    // Internal methods, input loading
+    ////////////////////////////////////////////////////
      */
 
     /**
@@ -1646,9 +1641,9 @@ public final class Utf8StreamParser
     }
 
     /*
-    /**********************************************************
-    /* Internal methods, error reporting
-    /**********************************************************
+    ////////////////////////////////////////////////////
+    // Internal methods, error reporting
+    ////////////////////////////////////////////////////
      */
 
     protected void _reportInvalidChar(int c)
@@ -1693,9 +1688,9 @@ public final class Utf8StreamParser
     }
 
     /*
-    /**********************************************************
-    /* Binary access
-    /**********************************************************
+    ////////////////////////////////////////////////////
+    // Binary access
+    ////////////////////////////////////////////////////
      */
 
     @Override

@@ -12,11 +12,10 @@ import org.codehaus.jackson.*;
  * of references (during serialization/deserialization) to help in
  * troubleshooting.
  */
+@SuppressWarnings("serial")
 public class JsonMappingException
     extends JsonProcessingException
 {
-    private static final long serialVersionUID = 1L;
-
     /**
      * Let's limit length of reference chain, to limit damage in cases
      * of infinite recursion.
@@ -24,9 +23,9 @@ public class JsonMappingException
     final static int MAX_REFS_TO_LIST = 1000;
 
     /*
-    /**********************************************************
-    /* Helper classes
-    /**********************************************************
+    ////////////////////////////////////////////////////////
+    // Helper classes
+    ////////////////////////////////////////////////////////
      */
 
     /**
@@ -90,7 +89,7 @@ public class JsonMappingException
 
         @Override public String toString() {
             StringBuilder sb = new StringBuilder();
-            Class<?> cls = (_from instanceof Class<?>) ?
+            Class<?> cls = (_from instanceof Class) ?
                 ((Class<?>)_from) : _from.getClass();
             /* Hmmh. Although Class.getName() is mostly ok, it does look
              * butt-ugly for arrays. So let's use getSimpleName() instead;
@@ -118,9 +117,9 @@ public class JsonMappingException
     }
 
     /*
-    /**********************************************************
-    /* State/configuration
-    /**********************************************************
+    ////////////////////////////////////////////////////////
+    // State/configuration
+    ////////////////////////////////////////////////////////
      */
 
     /**
@@ -130,9 +129,9 @@ public class JsonMappingException
     protected LinkedList<Reference> _path;
 
     /*
-    /**********************************************************
-    /* Life-cycle
-    /**********************************************************
+    ////////////////////////////////////////////////////////
+    // Life-cycle
+    ////////////////////////////////////////////////////////
      */
 
     public JsonMappingException(String msg)
@@ -219,9 +218,9 @@ public class JsonMappingException
     }
 
     /*
-    /**********************************************************
-    /* Accessors/mutators
-    /**********************************************************
+    ////////////////////////////////////////////////////////
+    // Accessors/mutators
+    ////////////////////////////////////////////////////////
      */
 
     public List<Reference> getPath()
@@ -266,9 +265,9 @@ public class JsonMappingException
     }
 
     /*
-    /**********************************************************
-    /* Overridden methods
-    /**********************************************************
+    ////////////////////////////////////////////////////////
+    // Overridden methods
+    ////////////////////////////////////////////////////////
      */
 
     /**
@@ -307,9 +306,9 @@ public class JsonMappingException
     }
 
     /*
-    /**********************************************************
-    /* Internal methods
-    /**********************************************************
+    ////////////////////////////////////////////////////////
+    // Internal methods
+    ////////////////////////////////////////////////////////
      */
 
     protected void _appendPathDesc(StringBuilder sb)

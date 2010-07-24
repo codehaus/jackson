@@ -1,7 +1,6 @@
 package org.codehaus.jackson.map.util;
 
 import java.lang.reflect.Array;
-import java.util.List;
 
 /**
  * Helper class to use for constructing Object arrays by appending entries
@@ -32,15 +31,15 @@ public final class ObjectBuffer
 
     // // // Data storage
 
-    private Node _bufferHead;
+    Node _bufferHead;
 
-    private Node _bufferTail;
+    Node _bufferTail;
 
     /**
      * Number of total buffered entries in this buffer, counting all instances
      * within linked list formed by following {@link #_bufferHead}.
      */
-    private int _bufferedEntryCount;
+    int _bufferedEntryCount;
 
     // // // Simple reuse
 
@@ -48,20 +47,20 @@ public final class ObjectBuffer
      * Reusable Object array, stored here after buffer has been released having
      * been used previously.
      */
-    private Object[] _freeBuffer;
+    Object[] _freeBuffer;
 
     /*
-    /**********************************************************
-    /* Construction
-    /**********************************************************
+    ////////////////////////////////////////////////////////////////////////
+    // Construction
+    ////////////////////////////////////////////////////////////////////////
      */
 
     public ObjectBuffer() { }
 
     /*
-    /**********************************************************
-    /* Public API
-    /**********************************************************
+    ////////////////////////////////////////////////////////////////////////
+    // Public API
+    ////////////////////////////////////////////////////////////////////////
      */
 
     /**
@@ -148,25 +147,6 @@ public final class ObjectBuffer
     }
 
     /**
-     * Another
-     * 
-     * @since 1.6
-     */
-    public void completeAndClearBuffer(Object[] lastChunk, int lastChunkEntries, List<Object> resultList)
-    {
-        for (Node n = _bufferHead; n != null; n = n.next()) {
-            Object[] curr = n.getData();
-            for (int i = 0, len = curr.length; i < len; ++i) {
-                resultList.add(curr[i]);
-            }
-        }
-        // and then the last one
-        for (int i = 0; i < lastChunkEntries; ++i) {
-            resultList.add(lastChunk[i]);
-        }
-    }
-    
-    /**
      * Helper method that can be used to check how much free capacity
      * will this instance start with. Can be used to choose the best
      * instance to reuse, based on size of reusable object chunk
@@ -184,9 +164,9 @@ public final class ObjectBuffer
     public int bufferedSize() { return _bufferedEntryCount; }
 
     /*
-    /**********************************************************
-    /* Internal methods
-    /**********************************************************
+    ////////////////////////////////////////////////////////////////////////
+    // Internal methods
+    ////////////////////////////////////////////////////////////////////////
      */
 
     protected void _reset()
@@ -221,9 +201,9 @@ public final class ObjectBuffer
     }
 
     /*
-    /**********************************************************
-    /* Helper classes
-    /**********************************************************
+    ////////////////////////////////////////////////////////////////////////
+    // Helper classes
+    ////////////////////////////////////////////////////////////////////////
      */
 
     /**

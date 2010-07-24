@@ -1,14 +1,10 @@
 package org.codehaus.jackson.map.deser;
 
-import java.io.IOException;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
 import org.codehaus.jackson.JsonNode;
-import org.codehaus.jackson.JsonParser;
-import org.codehaus.jackson.JsonProcessingException;
 import org.codehaus.jackson.map.*;
-import org.codehaus.jackson.map.deser.BeanDeserializer;
 import org.codehaus.jackson.map.introspect.AnnotatedClass;
 import org.codehaus.jackson.map.type.*;
 import org.codehaus.jackson.map.util.ClassUtil;
@@ -23,10 +19,13 @@ import org.codehaus.jackson.type.JavaType;
 public class StdDeserializerProvider
     extends DeserializerProvider
 {
+    private final static JavaType _typeObject = TypeFactory.type(Object.class);
+    private final static JavaType _typeString = TypeFactory.type(String.class);
+
     /*
-    /**********************************************************
-    /* Caching
-    /**********************************************************
+    ////////////////////////////////////////////////////
+    // Caching
+    ////////////////////////////////////////////////////
      */
 
     /**
@@ -58,9 +57,9 @@ public class StdDeserializerProvider
         = new HashMap<JavaType, JsonDeserializer<Object>>(8);
     
     /*
-    /**********************************************************
-    /* Configuration
-    /**********************************************************
+    ////////////////////////////////////////////////////
+    // Configuration
+    ////////////////////////////////////////////////////
      */
 
     /**
@@ -70,9 +69,9 @@ public class StdDeserializerProvider
     protected DeserializerFactory _factory;
 
     /*
-    /**********************************************************
-    /* Life-cycle
-    /**********************************************************
+    ////////////////////////////////////////////////////
+    // Life-cycle
+    ////////////////////////////////////////////////////
      */
 
     /**
@@ -89,9 +88,9 @@ public class StdDeserializerProvider
     }
 
     /*
-    /**********************************************************
-    /* Abstract methods impls
-    /**********************************************************
+    ////////////////////////////////////////////////////
+    // Abstract methods impls
+    ////////////////////////////////////////////////////
      */
 
     @Override
@@ -120,27 +119,12 @@ public class StdDeserializerProvider
     }
 
     @Override
-    public JsonDeserializer<Object> findTypedValueDeserializer(DeserializationConfig config,
-            JavaType type)
-        throws JsonMappingException
-    {
-        JsonDeserializer<Object> deser = findValueDeserializer(config, type, null, null);
-        TypeDeserializer typeDeser = _factory.findTypeDeserializer(config, type);
-        if (typeDeser != null) {
-            return new WrappedDeserializer(typeDeser, deser);
-        }
-        return deser;
-    }
-    
-    
-    @Override
     public KeyDeserializer findKeyDeserializer(DeserializationConfig config,
                                                JavaType type)
         throws JsonMappingException
     {
         // No serializer needed if it's plain old String, or Object/untyped
-        Class<?> raw = type.getRawClass();
-        if (raw == String.class || raw == Object.class) {
+        if (_typeString.equals(type) || _typeObject.equals(type)) {
             return null;
         }
         // Most other keys are of limited number of static types
@@ -201,9 +185,9 @@ public class StdDeserializerProvider
     }
 
     /*
-    /**********************************************************
-    /* Overridable helper methods
-    /**********************************************************
+    ////////////////////////////////////////////////////////////////
+    // Overridable helper methods
+    ////////////////////////////////////////////////////////////////
      */
 
     protected JsonDeserializer<Object> _findCachedDeserializer(JavaType type)
@@ -269,12 +253,9 @@ public class StdDeserializerProvider
         if (deser == null) {
             return null;
         }
-        /* cache resulting deserializer? always true for "plain" BeanDeserializer
-         * (but can be re-defined for sub-classes by using @JsonCachable!)
-         */
-        // 08-Jun-2010, tatu: Related to [JACKSON-296], need to avoid caching MapSerializers... so:
         boolean isResolvable = (deser instanceof ResolvableDeserializer);
-        boolean addToCache = (deser.getClass() == BeanDeserializer.class);
+        // cache resulting deserializer? always true for resolvables (beans)
+        boolean addToCache = isResolvable;
         if (!addToCache) {
             AnnotationIntrospector aintr = config.getAnnotationIntrospector();
             // note: pass 'null' to prevent mix-ins from being used
@@ -288,18 +269,12 @@ public class StdDeserializerProvider
          * handle cyclic references, and possibly reuse non-cached
          * deserializers (list, map))
          */
-        /* 07-Jun-2010, tatu: Danger: [JACKSON-296] was caused by accidental
-         *   resolution of a reference -- couple of ways to prevent this;
-         *   either not add Lists or Maps, or clear references eagerly.
-         *   Let's actually do both; since both seem reasonable.
-         */
+        _incompleteDeserializers.put(type, deser);
         /* Need to resolve? Mostly done for bean deserializers; required for
          * resolving cyclic references.
          */
         if (isResolvable) {
-            _incompleteDeserializers.put(type, deser);
             _resolveDeserializer(config, (ResolvableDeserializer)deser);
-            _incompleteDeserializers.remove(type);
         }
         if (addToCache) {
             _cachedDeserializers.put(type, deser);
@@ -347,9 +322,9 @@ public class StdDeserializerProvider
     }
 
     /*
-    /**********************************************************
-    /* Overridable error reporting methods
-    /**********************************************************
+    ////////////////////////////////////////////////////////////////
+    // Overridable error reporting methods
+    ////////////////////////////////////////////////////////////////
      */
 
     protected JsonDeserializer<Object> _handleUnknownValueDeserializer(JavaType type)
@@ -370,46 +345,4 @@ public class StdDeserializerProvider
     {
         throw new JsonMappingException("Can not find a (Map) Key deserializer for type "+type);
     }
-
-    /*
-    /**********************************************************
-    /*  Helper classes
-    /**********************************************************
-     */
-
-    /**
-     * Simple deserializer that will call configured type deserializer, passing
-     * in configured data deserializer, and exposing it all as a simple
-     * deserializer.
-     */
-    protected final static class WrappedDeserializer
-        extends JsonDeserializer<Object>
-    {
-        final TypeDeserializer _typeDeserializer;
-        final JsonDeserializer<Object> _deserializer;
-
-        public WrappedDeserializer(TypeDeserializer typeDeser, JsonDeserializer<Object> deser)
-        {
-            super();
-            _typeDeserializer = typeDeser;
-            _deserializer = deser;
-        }
-
-        @Override
-        public Object deserialize(JsonParser jp, DeserializationContext ctxt)
-                throws IOException, JsonProcessingException
-        {
-            return _deserializer.deserializeWithType(jp, ctxt, _typeDeserializer);
-        }
-
-        @Override
-        public Object deserializeWithType(JsonParser jp, DeserializationContext ctxt,
-            TypeDeserializer typeDeserializer)
-                throws IOException, JsonProcessingException
-        {
-            // should never happen? (if it can, could call on that object)
-            throw new IllegalStateException("Type-wrapped deserializer's deserializeWithType should never get called");
-        }
-    }
-
 }

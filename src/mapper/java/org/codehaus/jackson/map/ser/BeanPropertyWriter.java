@@ -4,8 +4,6 @@ import org.codehaus.jackson.JsonGenerator;
 import org.codehaus.jackson.map.JsonMappingException;
 import org.codehaus.jackson.map.JsonSerializer;
 import org.codehaus.jackson.map.SerializerProvider;
-import org.codehaus.jackson.map.TypeSerializer;
-import org.codehaus.jackson.type.JavaType;
 
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
@@ -19,9 +17,9 @@ import java.lang.reflect.Type;
 public class BeanPropertyWriter
 {
     /*
-    /**********************************************************
-    /* Settings for accessing property value to serialize
-    /**********************************************************
+    //////////////////////////////////////////////////////
+    // Settings for accessing property value to serialize
+    //////////////////////////////////////////////////////
      */
 
     /**
@@ -39,9 +37,9 @@ public class BeanPropertyWriter
     protected final Field _field;
 
     /*
-    /**********************************************************
-    /* Serialization settings
-    /**********************************************************
+    //////////////////////////////////////////////////////
+    // Serialization settings
+    //////////////////////////////////////////////////////
      */
 
     /**
@@ -54,7 +52,7 @@ public class BeanPropertyWriter
      * Type to use for locating serializer; normally same as return
      * type of the accessor method, but may be overridden by annotations.
      */
-    protected final JavaType _cfgSerializationType;
+    protected final Class<?> _cfgSerializationType;
 
     /**
      * Serializer to use for writing out the value: null if it can not
@@ -69,10 +67,6 @@ public class BeanPropertyWriter
      */
     protected final boolean _suppressNulls;
 
-    /**
-     * Value that is considered default value of the property; used for
-     * default-value-suppression if enabled.
-     */
     protected final Object _suppressableValue;
 
     /**
@@ -82,46 +76,25 @@ public class BeanPropertyWriter
      * @since 1.4
      */
     protected Class<?>[] _includeInViews;
-
-    /**
-     * If property being serialized needs type information to be
-     * included this is the type serializer to use.
-     * Declared type (possibly augmented with annotations) of property
-     * is used for determining exact mechanism to use (compared to
-     * actual runtime type used for serializing actual state).
-     */
-    protected TypeSerializer _typeSerializer;
     
-    /**
-     * Base type of the property, if the declared type is "non-trivial";
-     * meaning it is either a structured type (collection, map, array),
-     * or parametrized. Used to retain type information about contained
-     * type, which is mostly necessary if type metadata is to be
-     * included.
-     *
-     * @since 1.5
-     */
-    protected JavaType _nonTrivialBaseType;
-
     /*
-    /**********************************************************
-    /* Construction, configuration
-    /**********************************************************
+    //////////////////////////////////////////////////////
+    // Construction, configuration
+    //////////////////////////////////////////////////////
      */
 
     /**
      *
      * @param suppressableValue Value to suppress
      */
-    public BeanPropertyWriter(String name, JsonSerializer<Object> ser, TypeSerializer typeSer,
-                              JavaType serType,
+    public BeanPropertyWriter(String name, JsonSerializer<Object> ser,
+                              Class<?> serType,
                               Method acc, Field f,
                               boolean suppressNulls,
                               Object suppressableValue)
     {
         _name = name;
         _serializer = ser;
-        _typeSerializer = typeSer;
         _cfgSerializationType = serType;
         _accessorMethod = acc;
         _field = f;
@@ -136,7 +109,6 @@ public class BeanPropertyWriter
     {
         _name = base._name;
         _serializer = base._serializer;
-        _typeSerializer = base._typeSerializer;
         _cfgSerializationType = base._cfgSerializationType;
         _accessorMethod = base._accessorMethod;
         _field = base._field;
@@ -151,7 +123,7 @@ public class BeanPropertyWriter
      */
     public BeanPropertyWriter withSerializer(JsonSerializer<Object> ser)
     {
-        return new BeanPropertyWriter(_name, ser, _typeSerializer, _cfgSerializationType,
+        return new BeanPropertyWriter(_name, ser, _cfgSerializationType,
                                       _accessorMethod, _field,
                                       _suppressNulls, _suppressableValue);
     }
@@ -165,25 +137,12 @@ public class BeanPropertyWriter
      * by class/sub-class relationship).
      */
     public void setViews(Class<?>[] views) { _includeInViews = views; }
-
-    /**
-     * Method called to define type to consider as "non-trivial" basetype,
-     * needed for dynamic serialization resolution for complex (usually container)
-     * types
-     *
-     * @since 1.5
-     */
-    public void setNonTrivialBaseType(JavaType t) {
-        _nonTrivialBaseType = t;
-    }
     
     /*
-    /**********************************************************
-    /* Accessors
-    /**********************************************************
+    //////////////////////////////////////////////////////
+    // Accessors
+    //////////////////////////////////////////////////////
      */
-
-    public final String getName() { return _name; }
 
     public boolean hasSerializer() { return _serializer != null; }
     
@@ -192,21 +151,19 @@ public class BeanPropertyWriter
         return _serializer;
     }
 
-    public JavaType getSerializationType() {
+    public Class<?> getSerializationType() {
         return _cfgSerializationType;
     }
 
-    public Class<?> getRawSerializationType() {
-        return (_cfgSerializationType == null) ? null : _cfgSerializationType.getRawClass();
-    }
-    
-    public Class<?> getPropertyType() 
+    public Class<?> getReturnType() 
     {
         if (_accessorMethod != null) {
             return _accessorMethod.getReturnType();
         }
         return _field.getType();
     }
+
+    public final String getName() { return _name; }
 
     /**
      * Get the generic property type of this property writer.
@@ -224,14 +181,14 @@ public class BeanPropertyWriter
     public Class<?>[] getViews() { return _includeInViews; }
 
     /*
-    /**********************************************************
-    /* Serialization functionality
-    /**********************************************************
+    //////////////////////////////////////////////////////
+    // Serialization functionality
+    //////////////////////////////////////////////////////
      */
 
     /**
      * Method called to access property that this bean stands for, from
-     * within given bean, and to serialize it as a JSON Object field
+     * within given bean, and to serialize it as a Json Object field
      * using appropriate serializer.
      */
     public void serializeAsField(Object bean, JsonGenerator jgen, SerializerProvider prov)
@@ -255,20 +212,10 @@ public class BeanPropertyWriter
         }
         JsonSerializer<Object> ser = _serializer;
         if (ser == null) {
-            Class<?> cls = value.getClass();
-            if (_nonTrivialBaseType != null) {
-                JavaType t = _nonTrivialBaseType.forcedNarrowBy(cls);
-                ser = prov.findValueSerializer(t);
-            } else {
-                ser = prov.findValueSerializer(cls);
-            }
+            ser = prov.findValueSerializer(value.getClass());
         }
         jgen.writeFieldName(_name);
-        if (_typeSerializer == null) {
-            ser.serialize(value, jgen, prov);
-        } else {
-            ser.serializeWithType(value, jgen, prov, _typeSerializer);
-        }
+        ser.serialize(value, jgen, prov);
     }
 
     /**
@@ -307,3 +254,4 @@ public class BeanPropertyWriter
         throw new JsonMappingException("Direct self-reference leading to cycle");
     }
 }
+

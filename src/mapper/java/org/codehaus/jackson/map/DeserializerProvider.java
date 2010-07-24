@@ -12,9 +12,9 @@ public abstract class DeserializerProvider
     protected DeserializerProvider() { }
 
     /*
-    /**********************************************************
-    /* General deserializer locating method
-    /**********************************************************
+    //////////////////////////////////////////////////////
+    // General deserializer locating method
+    //////////////////////////////////////////////////////
      */
 
     /**
@@ -45,21 +45,6 @@ public abstract class DeserializerProvider
         throws JsonMappingException;
 
     /**
-     * Method called to locate deserializer for given type, as well as matching
-     * type deserializer (if one is needed); and if type deserializer is needed,
-     * construct a "wrapped" deserializer that can extract and use type information
-     * for calling actual deserializer.
-     *<p>
-     * Since this method is only called for root elements, no referral information
-     * is taken.
-     *    
-     * @since 1.5
-     */
-    public abstract JsonDeserializer<Object> findTypedValueDeserializer(DeserializationConfig config,
-            JavaType type)
-        throws JsonMappingException;
-
-    /**
      * Method called to get hold of a deserializer to use for deserializing
      * keys for {@link java.util.Map}.
      *
@@ -78,9 +63,9 @@ public abstract class DeserializerProvider
     public abstract boolean hasValueDeserializerFor(DeserializationConfig config, JavaType type);
 
     /*
-    /**********************************************************
-    /* Access to caching aspects
-    /**********************************************************
+    //////////////////////////////////////////////////////
+    // Access to caching aspects
+    //////////////////////////////////////////////////////
      */
 
     /**

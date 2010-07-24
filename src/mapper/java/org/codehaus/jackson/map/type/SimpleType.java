@@ -1,11 +1,5 @@
 package org.codehaus.jackson.map.type;
 
-/*
-import java.lang.reflect.ParameterizedType;
-import java.lang.reflect.Type;
-import java.lang.reflect.TypeVariable;
-*/
-
 import java.util.*;
 
 import org.codehaus.jackson.type.JavaType;
@@ -17,45 +11,32 @@ import org.codehaus.jackson.type.JavaType;
  * with generic types other than Collections and Maps.
  */
 public final class SimpleType
-    extends TypeBase
+    extends JavaType
 {
     /**
-     * Generic type arguments for this type.
+     * For generic types we need to keep track of mapping from formal
+     * into actual types, to be able to resolve generic signatures.
      */
-    protected final JavaType[] _typeParameters;
-
-    /**
-     * Names of generic type arguments for this type; will
-     * match values in {@link #_typeParameters}
-     */
-    protected final String[] _typeNames;
+    protected final LinkedHashMap<String,JavaType> _typeParameters;
     
     /*
-    /**********************************************************
-    /* Life-cycle
-    /**********************************************************
+    //////////////////////////////////////////////////////////
+    // Life-cycle
+    //////////////////////////////////////////////////////////
      */
 
-    protected SimpleType(Class<?> cls) {
-        this(cls, null, null);
+    private SimpleType(Class<?> cls) { this(cls, null); }
+
+    protected SimpleType(Class<?> cls, Map<String,JavaType> typeParams)
+    {
+        super(cls);
+        _typeParameters = (typeParams == null || typeParams.size() == 0) ?
+            null : new LinkedHashMap<String,JavaType>(typeParams);
     }
 
-    protected SimpleType(Class<?> cls,
-                         String[] typeNames, JavaType[] typeParams) {
-        super(cls);
-        if (typeNames == null || typeNames.length == 0) {
-            _typeNames = null;
-            _typeParameters = null;
-        } else {
-            _typeNames = typeNames;
-            _typeParameters = typeParams;
-        }
-    }
-    
     protected JavaType _narrow(Class<?> subclass)
     {
-        // Should we check that there is a sub-class relationship?
-        return new SimpleType(subclass, _typeNames, _typeParameters);
+        return new SimpleType(subclass);
     }
 
     public JavaType narrowContentsBy(Class<?> subclass)
@@ -64,7 +45,7 @@ public final class SimpleType
         throw new IllegalArgumentException("Internal error: SimpleType.narrowContentsBy() should never be called");
     }
 
-    public static SimpleType construct(Class<?> cls)
+    public static SimpleType construct(Class<?> cls, Map<String,JavaType> typeParams)
     {
         /* Let's add sanity checks, just to ensure no
          * Map/Collection entries are constructed
@@ -79,95 +60,37 @@ public final class SimpleType
         if (cls.isArray()) {
             throw new IllegalArgumentException("Can not construct SimpleType for an array (class: "+cls.getName()+")");
         }
-        return new SimpleType(cls);
+        return new SimpleType(cls, typeParams);
     }
 
-    protected String buildCanonicalName()
-    {
-        StringBuilder sb = new StringBuilder();
-        sb.append(_class.getName());
-        if (_typeParameters != null && _typeParameters.length > 0) {
-            sb.append('<');
-            boolean first = true;
-            for (JavaType t : _typeParameters) {
-                if (first) {
-                    first = false;
-                } else {
-                    sb.append(',');
-                }
-                sb.append(t.toCanonical());
-            }
-            sb.append('>');
-        }
-        return sb.toString();
-    }
-    
     /*
-    /**********************************************************
-    /* Public API
-    /**********************************************************
+    //////////////////////////////////////////////////////////
+    // Public API
+    //////////////////////////////////////////////////////////
      */
 
     @Override
     public boolean isContainerType() { return false; }
 
     @Override
-    public boolean mayBeGeneric() {
-        return containedTypeCount() > 0;
-    }
-    
-    @Override
-    public int containedTypeCount() {
-        return (_typeParameters == null) ? 0 : _typeParameters.length;
-    }
-
-    @Override
-    public JavaType containedType(int index)
+    public JavaType findVariableType(String name)
     {
-        if (index < 0 || _typeParameters == null || index >= _typeParameters.length) {
-            return null;
-        }
-        return _typeParameters[index];
-    }
-
-    public String containedTypeName(int index)
-    {
-        if (index < 0 || _typeNames == null || index >= _typeNames.length) {
-            return null;
-        }
-        return _typeNames[index];
-    }
-    
-    public StringBuilder getErasedSignature(StringBuilder sb) {
-        return _classSignature(_class, sb, true);
-    }
-    
-    public StringBuilder getGenericSignature(StringBuilder sb)
-    {
-        _classSignature(_class, sb, false);
         if (_typeParameters != null) {
-            sb.append('<');
-            for (JavaType param : _typeParameters) {
-                sb = param.getGenericSignature(sb);
-            }
-            sb.append('>');
+            return _typeParameters.get(name);
         }
-        sb.append(';');
-        return sb;
+        return null;
     }
-    
+
     /*
-    /**********************************************************
-    /* Standard methods
-    /**********************************************************
+    //////////////////////////////////////////////////////////
+    // Standard methods
+    //////////////////////////////////////////////////////////
      */
 
     @Override
     public String toString()
     {
-        StringBuilder sb = new StringBuilder(40);
-        sb.append("[simple type, class ").append(buildCanonicalName()).append(']');
-        return sb.toString();
+        return "[simple type, class "+_class.getName()+"]";
     }
 
     @Override
@@ -181,21 +104,11 @@ public final class SimpleType
 
         // Classes must be identical... 
         if (other._class != this._class) return false;
-
         // And finally, generic bindings, if any
-        JavaType[] p1 = _typeParameters;
-        JavaType[] p2 = other._typeParameters;
-        if (p1 == null) {
-            return (p2 == null) || p2.length == 0;
-        }
-        if (p2 == null) return false;
 
-        if (p1.length != p2.length) return false;
-        for (int i = 0, len = p1.length; i < len; ++i) {
-            if (!p1[i].equals(p2[i])) {
-                return false;
-            }
+        if (_typeParameters == null) {
+            return (other._typeParameters == null);
         }
-        return true;
+        return _typeParameters.equals(other._typeParameters);
     }
 }

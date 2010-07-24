@@ -1,7 +1,6 @@
 package main;
 
 import java.io.*;
-import java.util.Arrays;
 
 import junit.framework.TestCase;
 
@@ -9,13 +8,13 @@ import org.codehaus.jackson.*;
 
 //import static org.junit.Assert.*;
 
-public abstract class BaseTest
+public class BaseTest
     extends TestCase
 {
     /*
-    /**********************************************************
-    /* Some sample documents:
-    /**********************************************************
+    ////////////////////////////////////////////////////////
+    // Some sample documents:
+    ////////////////////////////////////////////////////////
      */
 
     protected final static int SAMPLE_SPEC_VALUE_WIDTH = 800;
@@ -46,9 +45,9 @@ public abstract class BaseTest
         ;
 
     /*
-    /**********************************************************
-    /* High-level helpers
-    /**********************************************************
+    ////////////////////////////////////////////////////////
+    // High-level helpers
+    ////////////////////////////////////////////////////////
      */
 
     protected void verifyJsonSpecSampleDoc(JsonParser jp, boolean verifyContents)
@@ -115,29 +114,20 @@ public abstract class BaseTest
         }
         // Width value is actually a String in the example
         assertToken(JsonToken.VALUE_STRING, jp.nextToken());
-        if (verifyContents) {
-            assertEquals(SAMPLE_SPEC_VALUE_TN_WIDTH, getAndVerifyText(jp));
-        }
+        assertEquals(SAMPLE_SPEC_VALUE_TN_WIDTH, getAndVerifyText(jp));
 
         assertToken(JsonToken.END_OBJECT, jp.nextToken()); // 'thumbnail' object
+
         assertToken(JsonToken.FIELD_NAME, jp.nextToken()); // 'IDs'
         assertToken(JsonToken.START_ARRAY, jp.nextToken()); // 'ids' array
         assertToken(JsonToken.VALUE_NUMBER_INT, jp.nextToken()); // ids[0]
-        if (verifyContents) {
-            verifyIntValue(jp, SAMPLE_SPEC_VALUE_TN_ID1);
-        }
+        verifyIntValue(jp, SAMPLE_SPEC_VALUE_TN_ID1);
         assertToken(JsonToken.VALUE_NUMBER_INT, jp.nextToken()); // ids[1]
-        if (verifyContents) {
-            verifyIntValue(jp, SAMPLE_SPEC_VALUE_TN_ID2);
-        }
+        verifyIntValue(jp, SAMPLE_SPEC_VALUE_TN_ID2);
         assertToken(JsonToken.VALUE_NUMBER_INT, jp.nextToken()); // ids[2]
-        if (verifyContents) {
-            verifyIntValue(jp, SAMPLE_SPEC_VALUE_TN_ID3);
-        }
+        verifyIntValue(jp, SAMPLE_SPEC_VALUE_TN_ID3);
         assertToken(JsonToken.VALUE_NUMBER_INT, jp.nextToken()); // ids[3]
-        if (verifyContents) {
-            verifyIntValue(jp, SAMPLE_SPEC_VALUE_TN_ID4);
-        }
+        verifyIntValue(jp, SAMPLE_SPEC_VALUE_TN_ID4);
         assertToken(JsonToken.END_ARRAY, jp.nextToken()); // 'ids' array
 
         assertToken(JsonToken.END_OBJECT, jp.nextToken()); // 'image' object
@@ -160,9 +150,9 @@ public abstract class BaseTest
     }
 
     /*
-    /**********************************************************
-    /* Parser/generator construction
-    /**********************************************************
+    ////////////////////////////////////////////////////////
+    // Parser/generator construction
+    ////////////////////////////////////////////////////////
      */
 
     protected JsonParser createParserUsingReader(String input)
@@ -204,9 +194,9 @@ public abstract class BaseTest
     }
 
     /*
-    /**********************************************************
-    /* Additional assertion methods
-    /**********************************************************
+    ////////////////////////////////////////////////////////
+    // Additional assertion methods
+    ////////////////////////////////////////////////////////
      */
 
     protected void assertToken(JsonToken expToken, JsonToken actToken)
@@ -232,17 +222,14 @@ public abstract class BaseTest
         }
     }
 
-    protected void verifyException(Throwable e, String... matches)
+    protected void verifyException(Throwable e, String match)
     {
         String msg = e.getMessage();
-        String lmsg = (msg == null) ? "" : msg.toLowerCase();
-        for (String match : matches) {
-            String lmatch = match.toLowerCase();
-            if (lmsg.indexOf(lmatch) >= 0) {
-                return;
-            }
+        String lmsg = msg.toLowerCase();
+        String lmatch = match.toLowerCase();
+        if (lmsg.indexOf(lmatch) < 0) {
+            fail("Expected an exception with sub-string \""+match+"\": got one with message \""+msg+"\"");
         }
-        fail("Expected an exception with one of substrings ("+Arrays.asList(matches)+"): got one with message \""+msg+"\"");
     }
 
     /**
@@ -268,9 +255,9 @@ public abstract class BaseTest
     }
 
     /*
-    /**********************************************************
-    /* And other helpers
-    /**********************************************************
+    ////////////////////////////////////////////////////////
+    // And other helpers
+    ////////////////////////////////////////////////////////
      */
 
     protected byte[] encodeInUTF32BE(String input)

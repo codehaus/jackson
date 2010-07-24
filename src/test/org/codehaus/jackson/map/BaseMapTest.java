@@ -12,12 +12,12 @@ import main.BaseTest;
 public abstract class BaseMapTest
     extends BaseTest
 {
-    private final static Object SINGLETON_OBJECT = new Object();
+    final static Object SINGLETON_OBJECT = new Object();
 
     /*
-    /**********************************************************
-    /* Shared helper classes
-    /**********************************************************
+    //////////////////////////////////////////////
+    // Shared helper classes
+    //////////////////////////////////////////////
      */
 
     /**
@@ -67,9 +67,9 @@ public abstract class BaseMapTest
     protected BaseMapTest() { super(); }
 
     /*
-    /**********************************************************
-    /* Additional assert methods
-    /**********************************************************
+    //////////////////////////////////////////////
+    // Additional assert methods
+    //////////////////////////////////////////////
      */
 
     protected void assertEquals(int[] exp, int[] act)
@@ -92,17 +92,17 @@ public abstract class BaseMapTest
     }
 
     /*
-    /**********************************************************
-    /* Helper methods
-    /**********************************************************
+    //////////////////////////////////////////////
+    // Helper methods
+    //////////////////////////////////////////////
      */
 
     @SuppressWarnings("unchecked")
     protected Map<String,Object> writeAndMap(ObjectMapper m, Object value)
         throws IOException
     {
-        String str = m.writeValueAsString(value);
-        return (Map<String,Object>) m.readValue(str, Map.class);
+        String str = serializeAsString(m, value);
+        return (Map<String,Object>) m.readValue(str, Object.class);
     }
 
     protected Map<String,Object> writeAndMap(Object value)
@@ -127,21 +127,5 @@ public abstract class BaseMapTest
         throws IOException
     {
         return serializeAsString(new ObjectMapper(), value);
-    }
-
-    protected String asJSONObjectValueString(Object... args)
-        throws IOException
-    {
-        return asJSONObjectValueString(new ObjectMapper(), args);
-    }
-
-    protected String asJSONObjectValueString(ObjectMapper m, Object... args)
-        throws IOException
-    {
-        LinkedHashMap<Object,Object> map = new LinkedHashMap<Object,Object>();
-        for (int i = 0, len = args.length; i < len; i += 2) {
-            map.put(args[i], args[i+1]);
-        }
-        return m.writeValueAsString(map);
     }
 }

@@ -5,10 +5,11 @@ import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.util.*;
 
+
 /**
  * Base class for all JSON nodes, which form the basis of JSON
  * Tree Model that Jackson implements.
- * One way to think of these nodes is to consider them
+ * One way to think of these nodes is to considere them
  * similar to DOM nodes in XML DOM trees.
  *<p>
  * As a general design rule, most accessors ("getters") are included
@@ -17,12 +18,10 @@ import java.util.*;
  * specific sub-classes. This seems sensible because proper type
  * information is generally available when building or modifying
  * trees, but less often when reading a tree (newly built from
- * parsed JSON content).
+ * parsed Json content).
  *<p>
  * Actual concrete sub-classes can be found from package
- * {@link org.codehaus.jackson.node}, which is in 'mapper' jar
- * (whereas this class is in 'core' jar, since it is declared as
- * nominal type for operations in {@link ObjectCodec}
+ * {@link org.codehaus.jackson.node}.
  */
 public abstract class JsonNode
     implements Iterable<JsonNode>
@@ -33,9 +32,9 @@ public abstract class JsonNode
     protected JsonNode() { }
 
     /*
-    /**********************************************************
-    /* Public API, type introspection
-    /**********************************************************
+    ////////////////////////////////////////////////////
+    // Public API, type introspection
+    ////////////////////////////////////////////////////
      */
 
     // // First high-level division between values, containers and "missing"
@@ -173,9 +172,9 @@ public abstract class JsonNode
     public abstract JsonParser.NumberType getNumberType();
 
     /*
-    /**********************************************************
-    /* Public API, value access
-    /**********************************************************
+    ////////////////////////////////////////////////////
+    // Public API, value access
+    ////////////////////////////////////////////////////
      */
 
     /**
@@ -205,14 +204,6 @@ public abstract class JsonNode
         return null;
     }
 
-    /**
-     * Method to use for accessing JSON boolean values (value
-     * literals 'true' and 'false').
-     * For other types, always returns false.
-     *
-     * @return Textual value this node contains, iff it is a textual
-     *   json node (comes from Json String value entry)
-     */
     public boolean getBooleanValue() { return false; }
 
     /**
@@ -225,18 +216,7 @@ public abstract class JsonNode
      */
     public Number getNumberValue() { return null; }
 
-    /**
-     * Returns integer value for this node, <b>if and only if</b>
-     * this node is numeric ({@link #isNumber} returns true). For other
-     * types returns 0.
-     * For floating-point numbers, value is truncated using default
-     * Java coercion, similar to how cast from double to int operates.
-     *
-     * @return Integer value this node contains, if any; 0 for non-number
-     *   nodes.
-     */
     public int getIntValue() { return 0; }
-
     public long getLongValue() { return 0L; }
     public double getDoubleValue() { return 0.0; }
     public BigDecimal getDecimalValue() { return BigDecimal.ZERO; }
@@ -273,6 +253,23 @@ public abstract class JsonNode
     public JsonNode get(String fieldName) { return null; }
 
     /**
+     * Alias for {@link #get(String)}.
+     *
+     * @deprecated Use {@link #get(String)} instead.
+     */
+    @Deprecated
+	public final JsonNode getFieldValue(String fieldName) { return get(fieldName); }
+
+    /**
+     * Alias for {@link #get(int)}.
+     *
+     * @deprecated Use {@link #get(int)} instead.
+     */
+    @Deprecated
+	public final JsonNode getElementValue(int index) { return get(index); }
+
+
+    /**
      * Method that will return valid String representation of
      * the container value, if the node is a value node
      * (method {@link #isValueNode} returns true), otherwise null.
@@ -282,80 +279,10 @@ public abstract class JsonNode
      */
     public abstract String getValueAsText();
 
-    /**
-     * Method that allows checking whether this node is JSON Object node
-     * and contains value for specified property. If this is the case
-     * (including properties with explicit null values), returns true;
-     * otherwise returns false.
-     *<p>
-     * This method is equivalent to:
-     *<pre>
-     *   node.get(fieldName) != null
-     *</pre>
-     * (since return value of get() is node, not value node contains)
-     *
-     * @param fieldName Name of element to check
-     * 
-     * @return True if this node is a JSON Object node, and has a property
-     *   entry with specified name (with any value, including null value)
-     *   
-     * @since 1.6
-     */
-    public boolean has(String fieldName) {
-        return get(fieldName) != null;
-    }
-
-    /**
-     * Method that allows checking whether this node is JSON Array node
-     * and contains a value for specified index
-     * If this is the case
-     * (including case of specified indexing having null as value), returns true;
-     * otherwise returns false.
-     *<p>
-     * Note: array element indexes are 0-based.
-     *<p>
-     * This method is equivalent to:
-     *<pre>
-     *   node.get(index) != null
-     *</pre>
-     *
-     * @param index Index to check
-     * 
-     * @return True if this node is a JSON Object node, and has a property
-     *   entry with specified name (with any value, including null value)
-     *   
-     * @since 1.6
-     */
-    public boolean has(int index) {
-        return get(index) != null;
-    }
-
     /*
-    /**********************************************************
-    /* Public API, deprecated accessor
-    /**********************************************************
-     */
-    
-    /**
-     * Alias for {@link #get(String)}.
-     *
-     * @deprecated Use {@link #get(String)} instead.
-     */
-    @Deprecated
-    public final JsonNode getFieldValue(String fieldName) { return get(fieldName); }
-
-    /**
-     * Alias for {@link #get(int)}.
-     *
-     * @deprecated Use {@link #get(int)} instead.
-     */
-    @Deprecated
-    public final JsonNode getElementValue(int index) { return get(index); }
-
-    /*
-    /**********************************************************
-    /* Public API, container access
-    /**********************************************************
+    ////////////////////////////////////////////////////
+    // Public API, container access
+    ////////////////////////////////////////////////////
      */
 
     /**
@@ -371,13 +298,13 @@ public abstract class JsonNode
     /**
      * Same as calling {@link #getElements}; implemented so that
      * convenience "for-each" loop can be used for looping over elements
-     * of JSON Array constructs.
+     * of Json Array constructs.
      */
     public final Iterator<JsonNode> iterator() { return getElements(); }
 
     /**
      * Method for accessing all value nodes of this Node, iff
-     * this node is a JSON Array or Object node. In case of Object node,
+     * this node is a Json Array or Object node. In case of Object node,
      * field names (keys) are not included, only values.
      * For other types of nodes, returns empty iterator.
      */
@@ -385,14 +312,14 @@ public abstract class JsonNode
 
     /**
      * Method for accessing names of all fields for this Node, iff
-     * this node is a JSON Object node.
+     * this node is a Json Object node.
      */
     public Iterator<String> getFieldNames() { return NO_STRINGS.iterator(); }
 
     /*
-    /**********************************************************
-    /* Public API, path handling
-    /**********************************************************
+    ////////////////////////////////////////////////////
+    // Public API, path handling
+    ////////////////////////////////////////////////////
      */
 
     /**
@@ -433,9 +360,9 @@ public abstract class JsonNode
     public final JsonNode getPath(int index) { return path(index); }
 
     /*
-    /**********************************************************
-    /* Public API, serialization
-    /**********************************************************
+    ////////////////////////////////////////////////////
+    // Public API, serialization
+    ////////////////////////////////////////////////////
      */
 
     /**
@@ -450,9 +377,9 @@ public abstract class JsonNode
         throws IOException, JsonGenerationException;
 
     /*
-    /**********************************************************
-    /* Public API: converting to/from Streaming API
-    /**********************************************************
+    ////////////////////////////////////////////////////
+    // Public API: converting to/from Streaming API
+    ////////////////////////////////////////////////////
      */
 
 
@@ -466,10 +393,25 @@ public abstract class JsonNode
      */
     public abstract JsonParser traverse();
 
+    /**
+     * Method for constructing a {@link JsonGenerator} instance that
+     * allows modifying contents of this JSON node by appending
+     * JSON content using streaming API.
+     * Note that this only works for container nodes: calling method
+     * on non-container nodes will throw an {@link IllegalStateException}
+     *
+     * @deprecated Method was never properly implemented, will be removed
+     *   in version 1.5
+     */
+    public JsonGenerator append() {
+        // to be overridden by container classes
+        throw new IllegalStateException("Method not implemented");
+    }
+
     /*
-    /**********************************************************
-    /* Overridden standard methods
-    /**********************************************************
+    ////////////////////////////////////////////////////
+    // Overridden standard methods
+    ////////////////////////////////////////////////////
      */
     
     /**
@@ -481,13 +423,9 @@ public abstract class JsonNode
     public abstract String toString();
 
     /**
-     * Equality for node objects is defined as full (deep) value
-     * equality. This means that it is possible to compare complete
-     * JSON trees for equality by comparing equality of root nodes.
      *<p>
      * Note: marked as abstract to ensure all implementation
-     * classes define it properly and not rely on definition
-     * from {@link java.lang.Object}.
+     * classes define it properly.
      */
     @Override
     public abstract boolean equals(Object o);

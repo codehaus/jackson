@@ -14,14 +14,11 @@ public class TestCustomFactory
     extends BaseMapTest
 {
     static class DummyDeserializer<T>
-        extends StdDeserializer<T>
+        extends JsonDeserializer<T>
     {
         final T value;
 
-        public DummyDeserializer(T v, Class<T> cls) {
-            super(cls);
-            value = v;
-        }
+        public DummyDeserializer(T v) { value = v; }
 
         public T deserialize(JsonParser jp, DeserializationContext ctxt)
             throws IOException, JsonProcessingException
@@ -37,7 +34,7 @@ public class TestCustomFactory
         Date expResult = new Date(3L);
         ObjectMapper mapper = new ObjectMapper();
         CustomDeserializerFactory sf = new CustomDeserializerFactory();
-        sf.addSpecificMapping(Date.class, new DummyDeserializer<Date>(expResult, Date.class));
+        sf.addSpecificMapping(Date.class, new DummyDeserializer<Date>(expResult));
         mapper.setDeserializerProvider(new StdDeserializerProvider(sf));
 
         Date result = mapper.readValue("123", Date.class);

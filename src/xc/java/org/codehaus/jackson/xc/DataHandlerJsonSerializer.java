@@ -19,8 +19,6 @@ import org.codehaus.jackson.node.ObjectNode;
  */
 public class DataHandlerJsonSerializer extends SerializerBase<DataHandler>
 {
-    public DataHandlerJsonSerializer() { super(DataHandler.class); }
-    
     public void serialize(DataHandler value, JsonGenerator jgen, SerializerProvider provider)
         throws IOException, JsonProcessingException
     {

@@ -116,34 +116,21 @@ public abstract class JsonParser
         /**
          * Feature that determines whether parser will allow
          * JSON Strings to contain unquoted control characters
-         * (ASCII characters with value less than 32, including
+         * (ascii characters with value less than 32, including
          * tab and line feed characters) or not.
          * If feature is set false, an exception is thrown if such a
          * character is encountered.
          *<p>
-         * Since JSON specification requires quoting for all control characters,
-         * this is a non-standard feature, and as such disabled by default.
+         * Since JSON specification requires quoting for all
+         * control characters,
+         * this is a non-standard feature, and as such disabled by
+         * default.
          *<p>
          * This feature can be changed for parser instances.
          *
          * @since 1.4
          */
         ,ALLOW_UNQUOTED_CONTROL_CHARS(false)
-
-        /**
-         * Feature that can be enabled to accept quoting of all character
-         * using backslash qooting mechanism: if not enabled, only characters
-         * that are explicitly listed by JSON specification can be thus
-         * escaped (see JSON spec for small list of these characters)
-         *<p>
-         * Since JSON specification requires quoting for all control characters,
-         * this is a non-standard feature, and as such disabled by default.
-         *<p>
-         * This feature can be changed for parser instances.
-         * 
-         * @since 1.6
-         */
-        ,ALLOW_BACKSLASH_ESCAPING_ANY_CHARACTER(false)
 
         /**
          * Feature that determines whether JSON object field names are
@@ -153,24 +140,10 @@ public abstract class JsonParser
          * no intern()ing is done. There may still be basic
          * canonicalization (that is, same String will be used to represent
          * all identical object property names for a single document).
-         *<p>
-         * Note: this setting only has effect if
-         * {@link #CANONICALIZE_FIELD_NAMES} is true -- otherwise no
-         * canonicalization of any sort is done.
          *
          * @since 1.3
          */
          ,INTERN_FIELD_NAMES(true)
-
-        /**
-         * Feature that determines whether JSON object field names are
-         * to be canonicalized (details of how canonicalization is done
-         * then further specified by
-         * {@link #INTERN_FIELD_NAMES}).
-         *
-         * @since 1.5
-         */
-         ,CANONICALIZE_FIELD_NAMES(true)
 
             // 14-Sep-2009, Tatu: This would be [JACKSON-142] implementation:
         /*
@@ -222,9 +195,9 @@ public abstract class JsonParser
     };
 
     /*
-    /**********************************************************
-    /* Minimal configuration state
-    /**********************************************************
+    ////////////////////////////////////////////////////
+    // Minimal configuration state
+    ////////////////////////////////////////////////////
      */
 
     /**
@@ -235,9 +208,9 @@ public abstract class JsonParser
     protected int _features;
 
     /*
-    /**********************************************************
-    /* Minimal generic state
-    /**********************************************************
+    ////////////////////////////////////////////////////
+    // Minimal generic state
+    ////////////////////////////////////////////////////
      */
 
     /**
@@ -255,9 +228,9 @@ public abstract class JsonParser
     protected JsonToken _lastClearedToken;
 
     /*
-    /**********************************************************
-    /* Construction, init
-    /**********************************************************
+    ////////////////////////////////////////////////////
+    // Construction, init
+    ////////////////////////////////////////////////////
      */
 
     protected JsonParser() { }
@@ -281,9 +254,9 @@ public abstract class JsonParser
     public abstract void setCodec(ObjectCodec c);
 
     /*
-    /**********************************************************
-    /* Closeable implementation
-    /**********************************************************
+    ////////////////////////////////////////////////////
+    // Closeable implementation
+    ////////////////////////////////////////////////////
      */
 
     /**
@@ -304,9 +277,9 @@ public abstract class JsonParser
     public abstract void close() throws IOException;
 
     /*
-    /***************************************************
-    /* Public API, configuration
-    /***************************************************
+    ////////////////////////////////////////////////////
+    // Public API, configuration
+    ////////////////////////////////////////////////////
      */
 
     /**
@@ -377,9 +350,9 @@ public abstract class JsonParser
 
 
     /*
-    /**********************************************************
-    /* Public API, traversal
-    /**********************************************************
+    ////////////////////////////////////////////////////
+    // Public API, traversal
+    ////////////////////////////////////////////////////
      */
 
     /**
@@ -397,12 +370,12 @@ public abstract class JsonParser
     /**
      * Iteration method that will advance stream enough
      * to determine type of the next token that is a value type
-     * (including JSON Array and Object start/end markers).
+     * (including Json Array and Object start/end markers).
      * Or put another way, nextToken() will be called once,
      * and if {@link JsonToken#FIELD_NAME} is returned, another
      * time to get the value for the field.
      * Method is most useful for iterating over value entries
-     * of JSON objects; field name will still be available
+     * of Json objects; field name will still be available
      * by calling {@link #getCurrentName} when parser points to
      * the value.
      *
@@ -453,11 +426,11 @@ public abstract class JsonParser
      * end of input.
      */
     public abstract boolean isClosed();
-    
+
     /*
-    /**********************************************************
-    /* Public API, token accessors
-    /**********************************************************
+    ////////////////////////////////////////////////////
+    // Public API, token accessors
+    ////////////////////////////////////////////////////
      */
 
     /**
@@ -557,9 +530,9 @@ public abstract class JsonParser
     }
 
     /*
-    /**********************************************************
-    /* Public API, access to token information, text
-    /**********************************************************
+    ////////////////////////////////////////////////////
+    // Public API, access to token information, text
+    ////////////////////////////////////////////////////
      */
 
     /**
@@ -621,39 +594,16 @@ public abstract class JsonParser
     public abstract int getTextOffset()
         throws IOException, JsonParseException;
 
-    /**
-     * Method that can be used to determine whether calling of
-     * {@link #getTextCharacters} would be the most efficient
-     * way to access textual content for the event parser currently
-     * points to.
-     *<p> 
-     * Default implementation simply returns false since only actual
-     * implementation class has knowledge of its internal buffering
-     * state.
-     * Implementations are strongly encouraged to properly override
-     * this method, to allow efficient copying of content by other
-     * code.
-     * 
-     * @return True if parser currently has character array that can
-     *   be efficiently returned via {@link #getTextCharacters}; false
-     *   means that it may or may not exist
-     * 
-     * @since 1.6
-     */
-    public boolean hasTextCharacters() {
-        return false;
-    }
-    
     /*
-    /**********************************************************
-    /* Public API, access to token information, numeric
-    /**********************************************************
+    ////////////////////////////////////////////////////
+    // Public API, access to token information, numeric
+    ////////////////////////////////////////////////////
      */
 
     /**
      * Generic number value accessor method that will work for
      * all kinds of numeric values. It will return the optimal
-     * (simplest/smallest possible) wrapper object that can
+     * (simplest/smallest possibl) wrapper object that can
      * express the numeric value just parsed.
      */
     public abstract Number getNumberValue()
@@ -821,7 +771,7 @@ public abstract class JsonParser
     }
 
     /**
-     * Accessor that can be called if (and only if) the current token
+     * Accessor that can be called if (and onl if) the current token
      * is {@link JsonToken#VALUE_EMBEDDED_OBJECT}. For other token types,
      * null is returned.
      *<p>
@@ -839,9 +789,9 @@ public abstract class JsonParser
     }
 
     /*
-    /**********************************************************
-    /* Public API, access to token information, binary
-    /**********************************************************
+    ////////////////////////////////////////////////////
+    // Public API, access to token information, binary
+    ////////////////////////////////////////////////////
      */
 
     /**
@@ -879,9 +829,9 @@ public abstract class JsonParser
     }
 
     /*
-    /**********************************************************
-    /* Public API, optional data binding functionality
-    /**********************************************************
+    ////////////////////////////////////////////////////
+    // Public API, optional data binding functionality
+    ////////////////////////////////////////////////////
      */
 
     /**
@@ -948,9 +898,9 @@ public abstract class JsonParser
     }
 
     /**
-     * Method to deserialize JSON content into equivalent "tree model",
+     * Method to deserialize Json content into equivalent "tree model",
      * represented by root {@link JsonNode} of resulting model.
-     * For JSON Arrays it will an array node (with child nodes),
+     * For Json Arrays it will an array node (with child nodes),
      * for objects object node (with child nodes), and for other types
      * matching leaf node type
      */
@@ -965,9 +915,9 @@ public abstract class JsonParser
     }
 
     /*
-    /**********************************************************
-    /* Internal methods
-    /**********************************************************
+    ////////////////////////////////////////////////////
+    // Internal methods
+    ////////////////////////////////////////////////////
      */
 
     /**

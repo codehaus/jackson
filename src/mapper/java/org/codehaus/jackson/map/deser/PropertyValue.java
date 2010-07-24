@@ -10,10 +10,6 @@ import org.codehaus.jackson.JsonProcessingException;
 abstract class PropertyValue
 {
     public final PropertyValue next;
-
-    /**
-     * Value to assign when POJO has been instantiated.
-     */
     public final Object value;
     
     protected PropertyValue(PropertyValue next, Object value)
@@ -35,10 +31,6 @@ abstract class PropertyValue
     /////////////////////////////////////////////////////
     */
 
-    /**
-     * Property value that used when assigning value to property using
-     * a setter method or direct field access.
-     */
     final static class Regular
         extends PropertyValue
     {
@@ -60,9 +52,7 @@ abstract class PropertyValue
     
     /**
      * Property value type used when storing entries to be added
-     * to a POJO using "any setter" (method that takes name and
-     * value arguments, allowing setting multiple different
-     * properties using single method).
+     * to a POJO using "any setter".
      */
     final static class Any
         extends PropertyValue

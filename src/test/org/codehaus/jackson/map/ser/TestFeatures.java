@@ -2,7 +2,6 @@ package org.codehaus.jackson.map.ser;
 
 import org.codehaus.jackson.map.BaseMapTest;
 
-import java.io.Closeable;
 import java.io.IOException;
 import java.util.*;
 
@@ -17,9 +16,9 @@ public class TestFeatures
     extends BaseMapTest
 {
     /*
-    /********************************************************
-    /* Helper classes
-    /*********************************************************
+    *********************************************************
+    * Helper classes
+    *********************************************************
      */
 
     /**
@@ -68,22 +67,10 @@ public class TestFeatures
         public boolean isOk() { return true; }
     }
 
-    static class CloseableBean implements Closeable
-    {
-        public int a = 3;
-
-        protected boolean wasClosed = false;
-        
-        @Override
-        public void close() throws IOException {
-            wasClosed = true;
-        }
-    }
-    
     /*
-    /*********************************************************
-    /* Test methods
-    /*********************************************************
+    *********************************************************
+    * Test methods
+    *********************************************************
      */
 
     public void testGlobalAutoDetection() throws IOException
@@ -95,8 +82,9 @@ public class TestFeatures
         assertEquals(Integer.valueOf(-2), result.get("x"));
         assertEquals(Integer.valueOf(1), result.get("y"));
 
-        // Then auto-detection disabled. But note: we MUST create a new
-        // mapper, since old version of serializer may be cached by now
+        /* Then auto-detection disabled. But note: we MUST create a new
+         * mapper, since old version of serializer may be cached by now
+         */
         m = new ObjectMapper();
         m.configure(SerializationConfig.Feature.AUTO_DETECT_GETTERS, false);
         result = writeAndMap(m, new GetterClass());
@@ -141,39 +129,5 @@ public class TestFeatures
         m.configure(DeserializationConfig.Feature.AUTO_DETECT_SETTERS, false).configure(SerializationConfig.Feature.AUTO_DETECT_GETTERS, false);
         assertFalse(m.getDeserializationConfig().isEnabled(DeserializationConfig.Feature.AUTO_DETECT_SETTERS));
         assertFalse(m.getSerializationConfig().isEnabled(SerializationConfig.Feature.AUTO_DETECT_GETTERS));
-    }
-
-    // Test for [JACKSON-282]
-    public void testCloseCloseable() throws IOException
-    {
-        ObjectMapper m = new ObjectMapper();
-        // default should be disabled:
-        CloseableBean bean = new CloseableBean();
-        m.writeValueAsString(bean);
-        assertFalse(bean.wasClosed);
-
-        // but can enable it:
-        m.configure(SerializationConfig.Feature.CLOSE_CLOSEABLE, true);
-        bean = new CloseableBean();
-        m.writeValueAsString(bean);
-        assertTrue(bean.wasClosed);
-
-        // also: let's ensure that ObjectWriter won't interfere with it
-        bean = new CloseableBean();
-        m.typedWriter(CloseableBean.class).writeValueAsString(bean);
-        assertTrue(bean.wasClosed);
-    }
-
-    // Test for [JACKSON-289]
-    public void testCharArrays() throws IOException
-    {
-        char[] chars = new char[] { 'a','b','c' };
-        ObjectMapper m = new ObjectMapper();
-        // default: serialize as Strings
-        assertEquals(quote("abc"), m.writeValueAsString(chars));
-        
-        // new feature: serialize as JSON array:
-        m.configure(SerializationConfig.Feature.WRITE_CHAR_ARRAYS_AS_JSON_ARRAYS, true);
-        assertEquals("[\"a\",\"b\",\"c\"]", m.writeValueAsString(chars));
     }
 }

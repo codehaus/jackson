@@ -12,10 +12,11 @@ import org.codehaus.jackson.map.util.ClassUtil;
 public final class AnnotatedClass
     extends Annotated
 {
+
     /*
-    /**********************************************************
-    /* Configuration
-    /**********************************************************
+    ///////////////////////////////////////////////////////
+    // Configuration
+    ///////////////////////////////////////////////////////
      */
 
     /**
@@ -51,9 +52,9 @@ public final class AnnotatedClass
     final Class<?> _primaryMixIn;
 
     /*
-    /**********************************************************
-    /* Gathered information
-    /**********************************************************
+    ///////////////////////////////////////////////////////
+    // Gathered information
+    ///////////////////////////////////////////////////////
      */
 
     /**
@@ -105,9 +106,9 @@ public final class AnnotatedClass
     List<AnnotatedField> _ignoredFields;
     
     /*
-    /**********************************************************
-    /* Life-cycle
-    /**********************************************************
+    ///////////////////////////////////////////////////////
+    // Life-cycle
+    ///////////////////////////////////////////////////////
      */
 
     /**
@@ -141,25 +142,10 @@ public final class AnnotatedClass
         return ac;
     }
 
-    /**
-     * Method similar to {@link #construct}, but that will NOT include
-     * information from supertypes; only class itself and any direct
-     * mix-ins it may have.
-     */
-    public static AnnotatedClass constructWithoutSuperTypes(Class<?> cls,
-            AnnotationIntrospector aintr,
-            MixInResolver mir)
-    {
-        List<Class<?>> empty = Collections.emptyList();
-        AnnotatedClass ac = new AnnotatedClass(cls, empty, aintr, mir);
-        ac.resolveClassAnnotations();
-        return ac;
-    }
-    
     /*
-    /**********************************************************
-    /* Annotated impl 
-    /**********************************************************
+    ///////////////////////////////////////////////////////
+    // Annotated impl 
+    ///////////////////////////////////////////////////////
      */
 
     public Class<?> getAnnotated() { return _class; }
@@ -176,18 +162,14 @@ public final class AnnotatedClass
         return _classAnnotations.get(acls);
     }
 
-    public Type getGenericType() {
+    public Class<?> getType() {
         return _class;
     }
 
-    public Class<?> getRawType() {
-        return _class;
-    }
-    
     /*
-    /**********************************************************
-    /* Public API, generic accessors
-    /**********************************************************
+    ///////////////////////////////////////////////////////
+    // Public API, generic accessors
+    ///////////////////////////////////////////////////////
      */
 
     public boolean hasAnnotations() { return _classAnnotations.size() > 0; }
@@ -257,11 +239,11 @@ public final class AnnotatedClass
     }
     
     /*
-    /**********************************************************
-    /* Methods for resolving class annotations
-    /* (resolution consisting of inheritance, overrides,
-    /* and injection of mix-ins as necessary)
-    /**********************************************************
+    ///////////////////////////////////////////////////////
+    // Methods for resolving class annotations
+    // (resolution consisting of inheritance, overrides,
+    // and injection of mix-ins as necessary)
+    ///////////////////////////////////////////////////////
      */
 
     /**
@@ -348,9 +330,9 @@ public final class AnnotatedClass
     }
 
     /*
-    /**********************************************************
-    /* Methods for populating creator (ctor, factory) information
-    /**********************************************************
+    /////////////////////////////////////////////////////////////
+    // Methods for populating creator (ctor, factory) information
+    /////////////////////////////////////////////////////////////
      */
 
     /**
@@ -504,9 +486,9 @@ public final class AnnotatedClass
     }
 
     /*
-    /**********************************************************
-    /* Methods for populating method information
-    /**********************************************************
+    ///////////////////////////////////////////////////////
+    // Methods for populating method information
+    ///////////////////////////////////////////////////////
      */
 
     /**
@@ -630,9 +612,9 @@ public final class AnnotatedClass
     }
 
     /*
-    /**********************************************************
-    /* Methods for populating field information
-    /**********************************************************
+    ///////////////////////////////////////////////////////
+    // Methods for populating field information
+    ///////////////////////////////////////////////////////
      */
 
     /**
@@ -644,34 +626,26 @@ public final class AnnotatedClass
      */
     public void resolveFields(boolean collectIgnored)
     {
-        LinkedHashMap<String,AnnotatedField> foundFields = new LinkedHashMap<String,AnnotatedField>();
-        _addFields(foundFields, _class);
+        _fields = new ArrayList<AnnotatedField>();
+        _addFields(_fields, _class);
 
         /* And last but not least: let's remove all fields that are
          * deemed to be ignorable after all annotations have been
          * properly collapsed.
          */
-        Iterator<Map.Entry<String,AnnotatedField>> it = foundFields.entrySet().iterator();
+        Iterator<AnnotatedField> it = _fields.iterator();
         while (it.hasNext()) {
-            AnnotatedField f = it.next().getValue();
+            AnnotatedField f = it.next();
             if (_annotationIntrospector.isIgnorableField(f)) {
                 it.remove();
                 if (collectIgnored) {
                     _ignoredFields = ArrayBuilders.addToList(_ignoredFields, f);
                 }
-            } else {
-                
             }
-        }
-        if (foundFields.isEmpty()) {
-            _fields = Collections.emptyList();
-        } else {
-            _fields = new ArrayList<AnnotatedField>(foundFields.size());
-            _fields.addAll(foundFields.values());
         }
     }
 
-    protected void _addFields(Map<String,AnnotatedField> fields, Class<?> c)
+    protected void _addFields(List<AnnotatedField> fields, Class<?> c)
     {
         /* First, a quick test: we only care for regular classes (not
          * interfaces, primitive types etc), except for Object.class.
@@ -680,9 +654,10 @@ public final class AnnotatedClass
          */
         Class<?> parent = c.getSuperclass();
         if (parent != null) {
-            // Let's add super-class' fields first, then ours.
-            /* 21-Feb-2010, tatu: Need to handle masking: as per [JACKSON-226]
-             *    we otherwise get into trouble...
+            /* Let's add super-class' fields first, then ours.
+             * Also: we won't be checking for masking (by name); it
+             * can happen, if very rarely, but will be handled later
+             * (being handled meaning an exception gets
              */
             _addFields(fields, parent);
             for (Field f : c.getDeclaredFields()) {
@@ -695,7 +670,7 @@ public final class AnnotatedClass
                  * added, and partly because logic can be done when
                  * determining get/settability of the field.
                  */
-                fields.put(f.getName(), _constructField(f));
+                fields.add(_constructField(f));
             }
             // And then... any mix-in overrides?
             if (_mixInResolver != null) {
@@ -707,37 +682,34 @@ public final class AnnotatedClass
         }
     }
 
-    /**
-     * Method called to add field mix-ins from given mix-in class (and its fields)
-     * into already collected actual fields (from introspected classes and their
-     * super-classes)
-     */
-    protected void _addFieldMixIns(Class<?> mixin, Map<String,AnnotatedField> fields)
+    protected void _addFieldMixIns(Class<?> mixin, List<AnnotatedField> fields)
     {
-        for (Field mixinField : mixin.getDeclaredFields()) {
+        for (Field f : mixin.getDeclaredFields()) {
             /* there are some dummy things (static, synthetic); better
              * ignore
              */
-            if (!_isIncludableField(mixinField)) {
+            if (!_isIncludableField(f)) {
                 continue;
             }
-            String name = mixinField.getName();
-            // anything to mask? (if not, quietly ignore)
-            AnnotatedField maskedField = fields.get(name);
-            if (maskedField != null) {
-                for (Annotation a : mixinField.getDeclaredAnnotations()) {
-                    if (_annotationIntrospector.isHandled(a)) {
-                        maskedField.addOrOverride(a);
+            String name = f.getName();
+            for (AnnotatedField af : fields) {
+                // anything to mask? (if not, quietly ignore)
+                if (name.equals(af.getName())) {
+                    for (Annotation a : f.getDeclaredAnnotations()) {
+                        if (_annotationIntrospector.isHandled(a)) {
+                            af.addOrOverride(a);
+                        }
                     }
+                    break;
                 }
             }
         }
     }
 
     /*
-    /**********************************************************
-    /* Helper methods, constructing value types
-    /**********************************************************
+    ///////////////////////////////////////////////////////
+    // Helper methods, constructing value types
+    ///////////////////////////////////////////////////////
      */
 
     protected AnnotatedMethod _constructMethod(Method m)
@@ -789,9 +761,9 @@ public final class AnnotatedClass
     }
  
     /*
-    /**********************************************************
-    /* Helper methods, inclusion filtering
-    /**********************************************************
+    ///////////////////////////////////////////////////////
+    // Helper methods, inclusion filtering
+    ///////////////////////////////////////////////////////
      */
 
     protected boolean _isIncludableMethod(Method m, MethodFilter filter)
@@ -826,9 +798,9 @@ public final class AnnotatedClass
     }
 
     /*
-    /**********************************************************
-    /* Helper methods, attaching annotations
-    /**********************************************************
+    ///////////////////////////////////////////////////////
+    // Helper methods, attaching annotations
+    ///////////////////////////////////////////////////////
      */
 
     /**
@@ -885,9 +857,9 @@ public final class AnnotatedClass
     }
 
     /*
-    /**********************************************************
-    /* Other methods
-    /**********************************************************
+    ///////////////////////////////////////////////////////
+    // Other methods
+    ///////////////////////////////////////////////////////
      */
 
     @Override

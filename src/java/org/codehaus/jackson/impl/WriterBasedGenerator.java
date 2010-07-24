@@ -8,10 +8,6 @@ import org.codehaus.jackson.*;
 import org.codehaus.jackson.io.*;
 import org.codehaus.jackson.util.CharTypes;
 
-/**
- * {@link JsonGenerator} that outputs JSON content using a {@link java.io.Writer}
- * which handles character encoding.
- */
 public final class WriterBasedGenerator
     extends JsonGeneratorBase
 {
@@ -20,9 +16,9 @@ public final class WriterBasedGenerator
     final static char[] HEX_CHARS = "0123456789ABCDEF".toCharArray();
 
     /*
-    /**********************************************************
-    /* Configuration
-    /**********************************************************
+    ////////////////////////////////////////////////////
+    // Configuration
+    ////////////////////////////////////////////////////
      */
 
     final protected IOContext _ioContext;
@@ -30,9 +26,9 @@ public final class WriterBasedGenerator
     final protected Writer _writer;
     
     /*
-    /**********************************************************
-    /* Output buffering
-    /**********************************************************
+    ////////////////////////////////////////////////////
+    // Output buffering
+    ////////////////////////////////////////////////////
      */
 
     /**
@@ -65,9 +61,9 @@ public final class WriterBasedGenerator
     protected char[] _entityBuffer;
 
     /*
-    /**********************************************************
-    /* Life-cycle
-    /**********************************************************
+    ////////////////////////////////////////////////////
+    // Life-cycle
+    ////////////////////////////////////////////////////
      */
 
     public WriterBasedGenerator(IOContext ctxt, int features, ObjectCodec codec,
@@ -81,9 +77,9 @@ public final class WriterBasedGenerator
     }
 
     /*
-    /**********************************************************
-    /* Output method implementations, structural
-    /**********************************************************
+    ////////////////////////////////////////////////////
+    // Output method implementations, structural
+    ////////////////////////////////////////////////////
      */
 
     @Override
@@ -190,9 +186,9 @@ public final class WriterBasedGenerator
     }
 
     /*
-    /**********************************************************
-    /* Output method implementations, textual
-    /**********************************************************
+    ////////////////////////////////////////////////////
+    // Output method implementations, textual
+    ////////////////////////////////////////////////////
      */
 
     @Override
@@ -234,9 +230,9 @@ public final class WriterBasedGenerator
     }
 
     /*
-    /**********************************************************
-    /* Output method implementations, unprocessed ("raw")
-    /**********************************************************
+    ////////////////////////////////////////////////////
+    // Output method implementations, unprocessed ("raw")
+    ////////////////////////////////////////////////////
      */
 
     @Override
@@ -300,13 +296,37 @@ public final class WriterBasedGenerator
     }
 
     @Override
-    public void writeRaw(char c)
+	public void writeRaw(char c)
         throws IOException, JsonGenerationException
     {
         if (_outputTail >= _outputEnd) {
             _flushBuffer();
         }
         _outputBuffer[_outputTail++] = c;
+    }
+
+    @Override
+    public void writeRawValue(String text)
+        throws IOException, JsonGenerationException
+    {
+        _verifyValueWrite("write raw value");
+        writeRaw(text);
+    }
+
+    @Override
+    public void writeRawValue(String text, int offset, int len)
+        throws IOException, JsonGenerationException
+    {
+        _verifyValueWrite("write raw value");
+        writeRaw(text, offset, len);
+    }
+
+    @Override
+    public void writeRawValue(char[] text, int offset, int len)
+        throws IOException, JsonGenerationException
+    {
+        _verifyValueWrite("write raw value");
+        writeRaw(text, offset, len);
     }
 
     private void writeRawLong(String text)
@@ -336,9 +356,9 @@ public final class WriterBasedGenerator
     }
 
     /*
-    /**********************************************************
-    /* Output method implementations, base64-encoded binary
-    /**********************************************************
+    ////////////////////////////////////////////////////
+    // Output method implementations, base64-encoded binary
+    ////////////////////////////////////////////////////
      */
 
     @Override
@@ -360,9 +380,9 @@ public final class WriterBasedGenerator
     }
 
     /*
-    /**********************************************************
-    /* Output method implementations, primitive
-    /**********************************************************
+    ////////////////////////////////////////////////////
+    // Output method implementations, primitive
+    ////////////////////////////////////////////////////
      */
 
     @Override
@@ -537,10 +557,44 @@ public final class WriterBasedGenerator
         _writeNull();
     }
 
+    public final void writeObject(Object value)
+        throws IOException, JsonProcessingException
+    {
+        if (value == null) {
+            // important: call method that does check value write:
+            writeNull();
+            return;
+        }
+
+        /* 02-Mar-2009, tatu: we are NOT to call _verifyValueWrite here,
+         *   because that will be done when codec actually serializes
+         *   contained POJO. If we did call it it would advance state
+         *   causing exception later on
+         */
+        if (_objectCodec == null) {
+            throw new IllegalStateException("No ObjectCodec defined for the generator, can not serialize regular Java objects");
+        }
+        _objectCodec.writeValue(this, value);
+    }
+
+    public final void writeTree(JsonNode rootNode)
+        throws IOException, JsonProcessingException
+    {
+        // As with 'writeObject()', we are not check if write would work
+        if (rootNode == null) {
+            writeNull();
+            return;
+        }
+        if (_objectCodec == null) {
+            throw new IllegalStateException("No ObjectCodec defined for the generator, can not serialize JsonNode-based trees");
+        }
+        _objectCodec.writeTree(this, rootNode);
+    }
+
     /*
-    /**********************************************************
-    /* Implementations for other methods
-    /**********************************************************
+    ////////////////////////////////////////////////////
+    // Implementations for other methods
+    ////////////////////////////////////////////////////
      */
 
     @Override
@@ -607,9 +661,9 @@ public final class WriterBasedGenerator
     }
 
     /*
-    /**********************************************************
-    /* Low-level output handling
-    /**********************************************************
+    ////////////////////////////////////////////////////
+    // Low-level output handling
+    ////////////////////////////////////////////////////
      */
 
     @Override
@@ -617,9 +671,7 @@ public final class WriterBasedGenerator
         throws IOException
     {
         _flushBuffer();
-        if (_writer != null) {
-            _writer.flush();
-        }
+        _writer.flush();
     }
 
     @Override
@@ -674,9 +726,9 @@ public final class WriterBasedGenerator
     }
 
     /*
-    /**********************************************************
-    /* Internal methods, low-level writing
-    /**********************************************************
+    ////////////////////////////////////////////////////
+    // Internal methods, low-level writing
+    ////////////////////////////////////////////////////
      */
 
     private void _writeString(String text)

@@ -4,22 +4,16 @@ import java.lang.reflect.Constructor;
 import java.lang.reflect.Type;
 import java.util.*;
 import java.util.concurrent.*;
-import java.util.concurrent.atomic.AtomicReference;
 
 import org.codehaus.jackson.JsonNode;
 import org.codehaus.jackson.map.*;
 import org.codehaus.jackson.map.introspect.Annotated;
-import org.codehaus.jackson.map.introspect.AnnotatedClass;
 import org.codehaus.jackson.map.introspect.AnnotatedConstructor;
-import org.codehaus.jackson.map.introspect.AnnotatedMember;
 import org.codehaus.jackson.map.introspect.AnnotatedMethod;
 import org.codehaus.jackson.map.introspect.AnnotatedParameter;
 import org.codehaus.jackson.map.introspect.BasicBeanDescription;
-import org.codehaus.jackson.map.jsontype.NamedType;
-import org.codehaus.jackson.map.jsontype.TypeResolverBuilder;
 import org.codehaus.jackson.map.type.*;
 import org.codehaus.jackson.map.util.ClassUtil;
-import org.codehaus.jackson.map.util.SubTypeHelper;
 import org.codehaus.jackson.type.JavaType;
 
 /**
@@ -106,17 +100,17 @@ public abstract class BasicDeserializerFactory
     final static HashMap<JavaType,JsonDeserializer<Object>> _arrayDeserializers = ArrayDeserializers.getAll();
 
     /*
-    /**********************************************************
-    /* Life cycle
-    /**********************************************************
+    ////////////////////////////////////////////////////////////
+    // Life cycle
+    ////////////////////////////////////////////////////////////
      */
 
     protected BasicDeserializerFactory() { }
 
     /*
-    /**********************************************************
-    /* JsonDeserializerFactory impl
-    /**********************************************************
+    ////////////////////////////////////////////////////////////
+    // JsonDeserializerFactory impl
+    ////////////////////////////////////////////////////////////
      */
 
     @Override
@@ -124,9 +118,9 @@ public abstract class BasicDeserializerFactory
         throws JsonMappingException
     {
         JavaType elemType = type.getContentType();
-        
         // Very first thing: is deserializer hard-coded for elements?
-        JsonDeserializer<Object> contentDeser = elemType.getValueHandler();
+        @SuppressWarnings("unchecked")
+        JsonDeserializer<Object> contentDeser = (JsonDeserializer<Object>) elemType.getHandler();
         if (contentDeser == null) {
             // Maybe special array type, such as "primitive" arrays (int[] etc)
             JsonDeserializer<Object> deser = _arrayDeserializers.get(elemType);
@@ -140,21 +134,15 @@ public abstract class BasicDeserializerFactory
             // 'null' -> arrays have no referring fields
             contentDeser = p.findValueDeserializer(config, elemType, type, null);
         }
-        // Then optional type info (1.5): if type has been resolved, we may already know type deserializer:
-        TypeDeserializer elemTypeDeser = elemType.getTypeHandler();
-        // but if not, may still be possible to find:
-        if (elemTypeDeser == null) {
-            elemTypeDeser = findTypeDeserializer(config, elemType);
-        }
-        return new ArrayDeserializer(type, contentDeser, elemTypeDeser);
+        return new ArrayDeserializer(type, contentDeser);
     }
 
     @Override
-    public JsonDeserializer<?> createCollectionDeserializer(DeserializationConfig config,
-    	    CollectionType type, DeserializerProvider p)
+    public JsonDeserializer<?> createCollectionDeserializer(DeserializationConfig config, CollectionType type, DeserializerProvider p)
         throws JsonMappingException
     {
         Class<?> collectionClass = type.getRawClass();
+
         BasicBeanDescription beanDesc = config.introspectClassAnnotations(collectionClass);
         // Explicit deserializer to use? (@JsonDeserialize.using)
         JsonDeserializer<Object> deser = findDeserializerFromAnnotation(config, beanDesc.getClassInfo());
@@ -162,22 +150,23 @@ public abstract class BasicDeserializerFactory
             return deser;
         }
         // If not, any type modifiers? (@JsonDeserialize.as)
-        type = modifyTypeByAnnotation(config, beanDesc.getClassInfo(), type, null);
+        type = modifyTypeByAnnotation(config, beanDesc.getClassInfo(), type);
 
         JavaType contentType = type.getContentType();
         // Very first thing: is deserializer hard-coded for elements?
-        JsonDeserializer<Object> contentDeser = contentType.getValueHandler();
+        @SuppressWarnings("unchecked")
+        JsonDeserializer<Object> contentDeser = (JsonDeserializer<Object>) contentType.getHandler();
 
         if (contentDeser == null) { // not defined by annotation
             // One special type: EnumSet:
             if (EnumSet.class.isAssignableFrom(collectionClass)) {
-                return new EnumSetDeserializer(constructEnumResolver(contentType.getRawClass(), config));
+                return new EnumSetDeserializer(EnumResolver.constructUnsafe(contentType.getRawClass(), config.getAnnotationIntrospector()));
             }
             // But otherwise we can just use a generic value deserializer:
             // 'null' -> collections have no referring fields
-            contentDeser = p.findValueDeserializer(config, contentType, type, null);            
+            contentDeser = p.findValueDeserializer(config, contentType, type, null);
         }
-        
+
         /* One twist: if we are being asked to instantiate an interface or
          * abstract Collection, we need to either find something that implements
          * the thing, or give up.
@@ -195,22 +184,11 @@ public abstract class BasicDeserializerFactory
             }
             collectionClass = fallback;
         }
-        // Then optional type info (1.5): if type has been resolved, we may already know type deserializer:
-        
-        TypeDeserializer contentTypeDeser = contentType.getTypeHandler();
-        // but if not, may still be possible to find:
-        if (contentTypeDeser == null) {
-            contentTypeDeser = findTypeDeserializer(config, contentType);
-        }
-
-        boolean fixAccess = config.isEnabled(DeserializationConfig.Feature.CAN_OVERRIDE_ACCESS_MODIFIERS);
-        @SuppressWarnings("unchecked")
-        Constructor<Collection<Object>> ctor = ClassUtil.findConstructor((Class<Collection<Object>>)collectionClass, fixAccess);
-        return new CollectionDeserializer(type, contentDeser, contentTypeDeser, ctor);
+        return new CollectionDeserializer(collectionClass, contentDeser);
     }
 
     @Override
-    public JsonDeserializer<?> createMapDeserializer(DeserializationConfig config, MapType type, DeserializerProvider p)
+   public JsonDeserializer<?> createMapDeserializer(DeserializationConfig config, MapType type, DeserializerProvider p)
         throws JsonMappingException
     {
         Class<?> mapClass = type.getRawClass();
@@ -222,14 +200,14 @@ public abstract class BasicDeserializerFactory
             return deser;
         }
         // If not, any type modifiers? (@JsonDeserialize.as)
-        type = modifyTypeByAnnotation(config, beanDesc.getClassInfo(), type, null);
+        type = modifyTypeByAnnotation(config, beanDesc.getClassInfo(), type);
         
         JavaType keyType = type.getKeyType();
         JavaType contentType = type.getContentType();
 
         // First: is there annotation-specified deserializer for values?
         @SuppressWarnings("unchecked")
-        JsonDeserializer<Object> contentDeser = (JsonDeserializer<Object>) contentType.getValueHandler();
+        JsonDeserializer<Object> contentDeser = (JsonDeserializer<Object>) contentType.getHandler();
         if (contentDeser == null) { // nope...
             // 'null' -> maps have no referring fields
             contentDeser = p.findValueDeserializer(config, contentType, type, null);
@@ -238,16 +216,12 @@ public abstract class BasicDeserializerFactory
          * but EnumMap requires special handling for keys
          */
         if (EnumMap.class.isAssignableFrom(mapClass)) {
-            Class<?> kt = keyType.getRawClass();
-            if (kt == null || !kt.isEnum()) {
-                throw new IllegalArgumentException("Can not construct EnumMap; generic (key) type not available");
-            }
-            return new EnumMapDeserializer(constructEnumResolver(kt, config), contentDeser);
+            return new EnumMapDeserializer(EnumResolver.constructUnsafe(keyType.getRawClass(), config.getAnnotationIntrospector()), contentDeser);
         }
 
         // Otherwise, generic handler works ok.
         // Ok: need a key deserializer (null indicates 'default' here)
-        KeyDeserializer keyDes = (KeyDeserializer) keyType.getValueHandler();
+        KeyDeserializer keyDes = (KeyDeserializer) keyType.getHandler();
         if (keyDes == null) {
             keyDes = (TYPE_STRING.equals(keyType)) ? null : p.findKeyDeserializer(config, keyType);
         }
@@ -282,15 +256,10 @@ public abstract class BasicDeserializerFactory
                 ClassUtil.checkAndFixAccess(defaultCtor);
             }
         }
-        // Then optional type info (1.5); either attached to type, or resolve separately:
-        TypeDeserializer contentTypeDeser = contentType.getTypeHandler();
-        // but if not, may still be possible to find:
-        if (contentTypeDeser == null) {
-        	contentTypeDeser = findTypeDeserializer(config, contentType);
-        }
-        MapDeserializer md = new MapDeserializer(type, defaultCtor, keyDes, contentDeser, contentTypeDeser);
+        MapDeserializer md = new MapDeserializer(type, defaultCtor, keyDes, contentDeser);
         md.setIgnorableProperties(config.getAnnotationIntrospector().findPropertiesToIgnore(beanDesc.getClassInfo()));
         md.setCreators(findMapCreators(config, beanDesc));
+        md.validateCreators();
         return md;
     }
 
@@ -298,33 +267,20 @@ public abstract class BasicDeserializerFactory
      * Factory method for constructing serializers of {@link Enum} types.
      */
     @Override
+    @SuppressWarnings("unchecked")
     public JsonDeserializer<?> createEnumDeserializer(DeserializationConfig config, Class<?> enumClass, DeserializerProvider p)
         throws JsonMappingException
     {
         /* 18-Feb-2009, tatu: Must first check if we have a class annotation
          *    that should override default deserializer
          */
-        BasicBeanDescription beanDesc = config.introspectForCreation(enumClass);
-        JsonDeserializer<?> des = findDeserializerFromAnnotation(config, beanDesc.getClassInfo());
+        BasicBeanDescription beanDesc = config.introspectClassAnnotations(enumClass);
+        JsonDeserializer<Object> des = findDeserializerFromAnnotation(config, beanDesc.getClassInfo());
         if (des != null) {
             return des;
         }
-        // [JACKSON-193] May have @JsonCreator for static factory method:
-        for (AnnotatedMethod factory : beanDesc.getFactoryMethods()) {
-            if (config.getAnnotationIntrospector().hasCreatorAnnotation(factory)) {
-                int argCount = factory.getParameterCount();
-                if (argCount == 1) {
-                    Class<?> returnType = factory.getRawType();
-                    // usually should be class, but may be just plain Enum<?> (for Enum.valueOf()?)
-                    if (returnType.isAssignableFrom(enumClass)) {
-                        return EnumDeserializer.deserializerForCreator(config, enumClass, factory);
-                    }
-                }
-                throw new IllegalArgumentException("Unsuitable method ("+factory+") decorated with @JsonCreator (for Enum type "
-                        +enumClass.getName()+")");
-            }
-        }
-        return new EnumDeserializer(constructEnumResolver(enumClass, config));
+        JsonDeserializer<?> d2 = new EnumDeserializer(EnumResolver.constructUnsafe(enumClass, config.getAnnotationIntrospector()));
+        return (JsonDeserializer<Object>) d2;
     }
 
     @Override
@@ -334,112 +290,17 @@ public abstract class BasicDeserializerFactory
         return JsonNodeDeserializer.getDeserializer(nodeClass);
     }
 
-    @SuppressWarnings("unchecked")
     @Override
     public JsonDeserializer<Object> createBeanDeserializer(DeserializationConfig config, JavaType type, DeserializerProvider p)
         throws JsonMappingException
     {
-        JsonDeserializer<Object> deser = _simpleDeserializers.get(type);
-        if (deser != null) {
-            return deser;
-        }
-        // [JACKSON-283]: AtomicReference is a rather special type...
-        Class<?> cls = type.getRawClass();
-        if (AtomicReference.class.isAssignableFrom(cls)) {
-            JsonDeserializer<?> d2 = new StdDeserializer.AtomicReferenceDeserializer(type);
-            return (JsonDeserializer<Object>)d2;
-        }
-        return null;
+        return _simpleDeserializers.get(type);
     }
-
-    @Override
-    public TypeDeserializer findTypeDeserializer(DeserializationConfig config, JavaType baseType)
-    {
-        Class<?> cls = baseType.getRawClass();
-        BasicBeanDescription bean = config.introspectClassAnnotations(cls);
-        AnnotatedClass ac = bean.getClassInfo();
-        AnnotationIntrospector ai = config.getAnnotationIntrospector();
-        TypeResolverBuilder<?> b = ai.findTypeResolver(ac, baseType);
-        /* Ok: if there is no explicit type info handler, we may want to
-         * use a default. If so, config object knows what to use.
-         */
-        Collection<NamedType> subtypes = null;
-        if (b == null) {
-            b = config.getDefaultTyper(baseType);
-        } else {
-            subtypes = SubTypeHelper.collectAndResolveSubtypes(ac, config, ai);
-        }
-        return (b == null) ? null : b.buildTypeDeserializer(baseType, subtypes);
-    }    
 
     /*
-    /**********************************************************
-    /* Extended API
-    /**********************************************************
-     */
-
-    /**
-     * Method called to create a type information deserializer for values of
-     * given non-container property, if one is needed.
-     * If not needed (no polymorphic handling configured for property), should return null.
-     *<p>
-     * Note that this method is only called for non-container bean properties,
-     * and not for values in container types or root values (or container properties)
-     *
-     * @param baseType Declared base type of the value to deserializer (actual
-     *    deserializer type will be this type or its subtype)
-     * 
-     * @return Type deserializer to use for given base type, if one is needed; null if not.
-     * 
-     * @since 1.5
-     */
-    public TypeDeserializer findPropertyTypeDeserializer(DeserializationConfig config, JavaType baseType,
-            AnnotatedMember propertyEntity)
-    {
-        AnnotationIntrospector ai = config.getAnnotationIntrospector();
-        TypeResolverBuilder<?> b = ai.findPropertyTypeResolver(propertyEntity, baseType);        
-
-        // Defaulting: if no annotations on member, check value class
-        if (b == null) {
-            return findTypeDeserializer(config, baseType);
-        }
-        // but if annotations found, may need to resolve subtypes:
-        Collection<NamedType> subtypes = SubTypeHelper.collectAndResolveSubtypes(propertyEntity, config, ai);
-        return b.buildTypeDeserializer(baseType, subtypes);
-    }
-    
-    /**
-     * Method called to find and create a type information deserializer for values of
-     * given container (list, array, map) property, if one is needed.
-     * If not needed (no polymorphic handling configured for property), should return null.
-     *<p>
-     * Note that this method is only called for container bean properties,
-     * and not for values in container types or root values (or non-container properties)
-     * 
-     * @param containerType Type of property; must be a container type
-     * @param propertyEntity Field or method that contains container property
-     * 
-     * @since 1.5
-     */    
-    public TypeDeserializer findPropertyContentTypeDeserializer(DeserializationConfig config, JavaType containerType,
-            AnnotatedMember propertyEntity)
-    {
-        AnnotationIntrospector ai = config.getAnnotationIntrospector();
-        TypeResolverBuilder<?> b = ai.findPropertyContentTypeResolver(propertyEntity, containerType);        
-        JavaType contentType = containerType.getContentType();
-        // Defaulting: if no annotations on member, check class
-        if (b == null) {
-            return findTypeDeserializer(config, contentType);
-        }
-        // but if annotations found, may need to resolve subtypes:
-        Collection<NamedType> subtypes = SubTypeHelper.collectAndResolveSubtypes(propertyEntity, config, ai);
-        return b.buildTypeDeserializer(contentType, subtypes);
-    }
-    
-    /*
-    /**********************************************************
-    /* Helper methods, value/content/key type introspection
-    /**********************************************************
+    ////////////////////////////////////////////////////////////
+    // Helper methods, value/content/key type introspection
+    ////////////////////////////////////////////////////////////
      */
 
     /**
@@ -485,9 +346,6 @@ public abstract class BasicDeserializerFactory
      *
      * @param a Method or field that the type is associated with
      * @param type Type derived from the setter argument
-     * @param propName Name of property that refers to type, if any; null
-     *   if no property information available (when modify type declaration
-     *   of a class, for example)
      *
      * @return Original type if no annotations are present; or a more
      *   specific type derived from it if type annotation(s) was found
@@ -496,13 +354,12 @@ public abstract class BasicDeserializerFactory
      */
     @SuppressWarnings("unchecked")
     protected <T extends JavaType> T modifyTypeByAnnotation(DeserializationConfig config,
-                                                            Annotated a, T type,
-                                                            String propName)
+                                              Annotated a, T type)
         throws JsonMappingException
     {
         // first: let's check class for the instance itself:
         AnnotationIntrospector intr = config.getAnnotationIntrospector();
-        Class<?> subclass = intr.findDeserializationType(a, type, propName);
+        Class<?> subclass = intr.findDeserializationType(a);
         if (subclass != null) {
             try {
                 type = (T) type.narrowBy(subclass);
@@ -513,7 +370,7 @@ public abstract class BasicDeserializerFactory
 
         // then key class
         if (type.isContainerType()) {
-            Class<?> keyClass = intr.findDeserializationKeyType(a, type.getKeyType(), propName);
+            Class<?> keyClass = intr.findDeserializationKeyType(a);
             if (keyClass != null) {
                 // illegal to use on non-Maps
                 if (!(type instanceof MapType)) {
@@ -527,7 +384,7 @@ public abstract class BasicDeserializerFactory
             }
             
             // and finally content class; only applicable to structured types
-            Class<?> cc = intr.findDeserializationContentType(a, type.getContentType(), propName);
+            Class<?> cc = intr.findDeserializationContentType(a);
             if (cc != null) {
                 try {
                     type = (T) type.narrowContentsBy(cc);
@@ -546,14 +403,14 @@ public abstract class BasicDeserializerFactory
      * using generic type passed as type reference), which is
      * needed in some cases.
      *<p>
-     * Starting with version 1.3, this method will also resolve instances
+     * Starting with version 1.3, this method will also instances
      * of key and content deserializers if defined by annotations.
      */
     protected JavaType resolveType(DeserializationConfig config,
                                    BasicBeanDescription beanDesc, Type rawType,
                                    Annotated a)
     {
-        JavaType type = TypeFactory.type(rawType, beanDesc.bindingsForBeanType());
+        JavaType type = TypeFactory.type(rawType, beanDesc.getType());
         // [JACKSON-154]: Also need to handle keyUsing, contentUsing
         if (type.isContainerType()) {
             AnnotationIntrospector intr = config.getAnnotationIntrospector();
@@ -563,53 +420,23 @@ public abstract class BasicDeserializerFactory
                 Class<? extends KeyDeserializer> kdClass = intr.findKeyDeserializer(a);
                 if (kdClass != null && kdClass != KeyDeserializer.None.class) {
                     KeyDeserializer kd = ClassUtil.createInstance(kdClass, canForceAccess);
-                    keyType.setValueHandler(kd);
+                    keyType.setHandler(kd);
                 }
             }
             // and all container types have content types...
             Class<? extends JsonDeserializer<?>> cdClass = intr.findContentDeserializer(a);
             if (cdClass != null && cdClass != JsonDeserializer.None.class) {
                 JsonDeserializer<?> cd = ClassUtil.createInstance(cdClass, canForceAccess);
-                type.getContentType().setValueHandler(cd);
-            }
-            /* 04-Feb-2010, tatu: Need to figure out JAXB annotations that indicate type
-             *    information to use for polymorphic members; and specifically types for
-             *    collection values (contents).
-             *    ... but only applies to members (fields, methods), not classes
-             */
-            if (a instanceof AnnotatedMember) {
-            	TypeDeserializer contentTypeDeser = findPropertyContentTypeDeserializer(config, type, (AnnotatedMember) a);            	
-            	if (contentTypeDeser != null) {
-            	    type.getContentType().setTypeHandler(contentTypeDeser);
-            	}
+                type.getContentType().setHandler(cd);
             }
         }
-    	TypeDeserializer valueTypeDeser;
-    	
-        if (a instanceof AnnotatedMember) { // JAXB allows per-property annotations
-            valueTypeDeser = findPropertyTypeDeserializer(config, type, (AnnotatedMember) a);
-        } else { // classes just have Jackson annotations
-            valueTypeDeser = findTypeDeserializer(config, type);
-        }
-    	if (valueTypeDeser != null) {
-            type.setTypeHandler(valueTypeDeser);
-    	}
         return type;
     }
 
-    protected EnumResolver<?> constructEnumResolver(Class<?> enumClass, DeserializationConfig config)
-    {
-        // [JACKSON-212]: may need to use Enum.toString()
-        if (config.isEnabled(DeserializationConfig.Feature.READ_ENUMS_USING_TO_STRING)) {
-            return EnumResolver.constructUnsafeUsingToString(enumClass);
-        }
-        return EnumResolver.constructUnsafe(enumClass, config.getAnnotationIntrospector());
-    }
-    
     /*
-    /**********************************************************
-    /* Helper methods, dealing with Creators
-    /**********************************************************
+    ////////////////////////////////////////////////////////////
+    // Helper methods, dealing with Creators
+    ////////////////////////////////////////////////////////////
      */
 
     /**
@@ -686,13 +513,13 @@ public abstract class BasicDeserializerFactory
         // Is there an annotation that specifies exact deserializer?
         JsonDeserializer<Object> deser = findDeserializerFromAnnotation(config, param);
         // If yes, we are mostly done:
-        type = modifyTypeByAnnotation(config, param, type, name);
-        TypeDeserializer typeDeser = findTypeDeserializer(config, type);
-        SettableBeanProperty prop = new SettableBeanProperty.CreatorProperty(name, type, typeDeser,
-                beanDesc.getBeanClass(), index);
         if (deser != null) {
+            SettableBeanProperty.CreatorProperty prop = new SettableBeanProperty.CreatorProperty(name, type, beanDesc.getBeanClass(), index);
             prop.setValueDeserializer(deser);
+            return prop;
         }
-       return prop;
+        // Otherwise may have other type specifying annotations
+        type = modifyTypeByAnnotation(config, param, type);
+       return new SettableBeanProperty.CreatorProperty(name, type, beanDesc.getBeanClass(), index);
     }
 }

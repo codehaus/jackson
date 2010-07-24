@@ -3,50 +3,39 @@ import java.io.*;
 import org.codehaus.jackson.*;
 import org.codehaus.jackson.io.IOContext;
 import org.codehaus.jackson.map.*;
-import org.codehaus.jackson.smile.SmileFactory;
 import org.codehaus.jackson.util.BufferRecycler;
 
 // json.org's reference implementation
 import org.json.*;
+// StringTree implementation
+import org.stringtree.json.JSONReader;
 // Jsontool implementation
 import com.sdicons.json.parser.JSONParser;
 // Noggit:
 //import org.apache.noggit.JSONParser;
 
-@SuppressWarnings("unused")
 public final class TestJsonPerf
 {
     private final int REPS;
 
     private final static int TEST_PER_GC = 15;
 
-    final JsonFactory _jsonFactory;
-    
-    final ObjectMapper _mapper;
+    final JsonFactory mJsonFactory;
 
-    final ObjectMapper _smileMapper;
-    
-    final SmileFactory _smileFactory;
-    
-    final byte[] _jsonData;
+    final byte[] mData;
 
-    final byte[] _smileData;
-    
     protected int mBatchSize;
 
-    public TestJsonPerf(File f) throws IOException
+    public TestJsonPerf(File f)
+        throws Exception
     {
-        _jsonFactory = new JsonFactory();
-        _mapper = new ObjectMapper(_jsonFactory);
-        _smileFactory = new SmileFactory();
-        _smileMapper = new ObjectMapper(_smileFactory);
-        _jsonData = readData(f);
-        _smileData = convertToSmile(_jsonData);
+        mJsonFactory = new JsonFactory();
+        mData = readData(f);
 
         // Let's try to guestimate suitable size... to get to 50 megs parsed
-        REPS = (int) ((double) (50 * 1000 * 1000) / (double) _jsonData.length);
+        REPS = (int) ((double) (50 * 1000 * 1000) / (double) mData.length);
 
-        System.out.println("Read "+_jsonData.length+" bytes (smile: "+_smileData.length+") from '"+f+"'; will do "+REPS+" reps");
+        System.out.println("Read "+mData.length+" bytes from '"+f+"'; will do "+REPS+" reps");
         System.out.println();
     }
 
@@ -59,7 +48,7 @@ public final class TestJsonPerf
         while (true) {
             try {  Thread.sleep(100L); } catch (InterruptedException ie) { }
             // Use 9 to test all...
-            int round = (i++ % 2);
+            int round = (i++ % 5);
 
             long curr = System.currentTimeMillis();
             String msg;
@@ -68,57 +57,43 @@ public final class TestJsonPerf
             switch (round) {
 
             case 0:
-                msg = "Smile/data-bind";
-                sum += testJacksonDatabind(_smileMapper, _smileData, REPS);
-                break;
-
-            case 1:
-                msg = "Jackson/data-bind";
-                sum += testJacksonDatabind(_mapper, _jsonData, REPS);
-                break;
-                
-            /*
-            case 0:
-                msg = "Jackson/smile, stream";
-                sum += testJacksonStream(REPS, _smileFactory, _smileData, true);
-                break;
-            case 1:
                 msg = "Jackson, stream/byte";
-                sum += testJacksonStream(REPS, _jsonFactory, _jsonData, true);
+                sum += testJacksonStream(REPS, true);
+                break;
+            case 1:
+                msg = "Jackson, stream/char";
+                sum += testJacksonStream(REPS, false);
                 break;
             case 2:
-                msg = "Jackson, stream/char";
-                sum += testJacksonStream(REPS, _jsonFactory, _jsonData, false);
-                break;
-
-            case 3:
-                msg = "Jackson, Java types";
-                sum += testJacksonDatabind(_mapper, REPS);
-                break;
-
-            case 4:
-                msg = "Jackson, JSON types";
-                sum += testJacksonJsonTypes(_mapper, REPS);
-                break;
-
-            case 5:
                 msg = "Noggit";
                 sum += testNoggit(REPS);
                 break;
 
-            case 6:
+            case 3:
+                msg = "Jackson, Java types";
+                sum += testJacksonJavaTypes(REPS);
+                break;
+
+            case 4:
+                msg = "Jackson, JSON types";
+                sum += testJacksonJsonTypes(REPS);
+                break;
+            case 5:
                 msg = "Json.org";
                 sum += testJsonOrg(REPS);
                 break;
-            case 7:
+            case 6:
                 msg = "Json-simple";
                 sum += testJsonSimple(REPS);
                 break;
-            case 8:
+            case 7:
                 msg = "JSONTools (berlios.de)";
                 sum += testJsonTools(REPS);
                 break;
-                */
+            case 8:
+                msg = "StringTree";
+                sum += testStringTree(REPS);
+                break;
             default:
                 throw new Error("Internal error");
             }
@@ -157,55 +132,12 @@ public final class TestJsonPerf
         return data;
     }
 
-    private byte[] convertToSmile(byte[] json) throws IOException
-    {
-    	JsonParser jp = _jsonFactory.createJsonParser(json);
-    	ByteArrayOutputStream out = new ByteArrayOutputStream(200);
-        System.out.println("Converting and verifying Smile data...");
-    	JsonGenerator jg = _smileFactory.createJsonGenerator(out);
-    	while (jp.nextToken() != null) {
-    	    jg.copyCurrentEvent(jp);
-    	}
-    	jp.close();
-    	jg.close();
-    	byte[] smileBytes = out.toByteArray();
-
-    	// One more thing: let's actually verify correctness!
-    	JsonParser sp = _smileFactory.createJsonParser(new ByteArrayInputStream(smileBytes));
-        jp = _jsonFactory.createJsonParser(json);
-        while (true) {
-            JsonToken t1 = jp.nextToken();
-            JsonToken t2;
-            try {
-                t2 = sp.nextToken();
-            } catch (IOException ioe) {
-                System.err.println("WARN: problem for token matching input token "+t1+" at "+jp.getCurrentLocation());
-                throw ioe;
-            }
-            if (t1 != t2) {
-                throw new IllegalArgumentException("Error: tokens differ (json: "+t1+", smile "+t2+") at "+jp.getCurrentLocation());
-            }
-            if (t1 == null) break;
-            if (t1.isScalarValue() || t1 == JsonToken.FIELD_NAME) {
-                String str1 = jp.getText();
-                String str2 = jp.getText();
-                if (str1 == null) {
-                    throw new IllegalArgumentException("Error: token texts differ (json: null, smile '"+str2+"') at "+jp.getCurrentLocation());                    
-                } else if (!str1.equals(str2)) {
-                    throw new IllegalArgumentException("Error: token texts differ (json: '"+str1+"', smile '"+str2+"') at "+jp.getCurrentLocation());                    
-                }
-            }
-        }
-        System.out.println("Verified Smile data ("+smileBytes.length+"): same as JSON ("+json.length+")");
-    	return smileBytes;
-    }
-    
     protected int testJsonOrg(int reps)
         throws Exception
     {
         Object ob = null;
         // Json.org's code only accepts Strings:
-        String input = new String(_jsonData, "UTF-8");
+        String input = new String(mData, "UTF-8");
         for (int i = 0; i < reps; ++i) {
             JSONTokener tok = new JSONTokener(input);
             ob = tok.nextValue();
@@ -213,13 +145,13 @@ public final class TestJsonPerf
         return ob.hashCode();
     }
 
-    private int testJsonTools(int reps)
+    protected int testJsonTools(int reps)
         throws Exception
     {
         Object ob = null;
         for (int i = 0; i < reps; ++i) {
             // Json-tools accepts streams, yay!
-            JSONParser jp = new JSONParser(new ByteArrayInputStream(_jsonData), "byte stream");
+            JSONParser jp = new JSONParser(new ByteArrayInputStream(mData), "byte stream");
             /* Hmmmh. Will we get just one object for the whole thing?
              * Or a stream? Seems like just one
              */
@@ -229,11 +161,23 @@ public final class TestJsonPerf
         return ob.hashCode();
     }
 
-    private int testJsonSimple(int reps)
+    protected int testStringTree(int reps)
+        throws Exception
+    {
+        Object ob = null;
+        String input = new String(mData, "UTF-8");
+        for (int i = 0; i < reps; ++i) {
+            // StringTree impl only accepts Strings:
+            ob = new JSONReader().read(input);
+        }
+        return ob.hashCode();
+    }
+
+    protected int testJsonSimple(int reps)
         throws Exception
     {
         // Json.org's code only accepts Strings:
-        String input = new String(_jsonData, "UTF-8");
+        String input = new String(mData, "UTF-8");
         Object ob = null;
         for (int i = 0; i < reps; ++i) {
             ob = org.json.simple.JSONValue.parse(input);
@@ -241,12 +185,12 @@ public final class TestJsonPerf
         return ob.hashCode();
     }
 
-    private int testNoggit(int reps)
+    protected int testNoggit(int reps)
         throws Exception
     {
-        ByteArrayInputStream bin = new ByteArrayInputStream(_jsonData);
+        ByteArrayInputStream bin = new ByteArrayInputStream(mData);
 
-        char[] cbuf = new char[_jsonData.length];
+        char[] cbuf = new char[mData.length];
 
         IOContext ctxt = new IOContext(new BufferRecycler(), this, false);
         int sum = 0;
@@ -276,7 +220,7 @@ public final class TestJsonPerf
         return sum;
     }
 
-    private int testJacksonStream(int reps, JsonFactory factory, byte[] data, boolean fast)
+    protected int testJacksonStream(int reps, boolean fast)
         throws Exception
     {
         int sum = 0;
@@ -285,16 +229,12 @@ public final class TestJsonPerf
             JsonParser jp;
 
             if (fast) {
-                jp = factory.createJsonParser(data, 0, data.length);
+                jp = mJsonFactory.createJsonParser(mData, 0, mData.length);
             } else {
-                jp = factory.createJsonParser(new ByteArrayInputStream(data));
+                jp = mJsonFactory.createJsonParser(new ByteArrayInputStream(mData));
             }
             JsonToken t;
             while ((t = jp.nextToken()) != null) {
-/*                
-if (t == JsonToken.FIELD_NAME) System.err.println("'"+jp.getCurrentName()+"'");               
-else System.err.println(""+t);                
-*/
                 // Field names are always constructed
                 if (t == JsonToken.VALUE_STRING
                     //|| t == JsonToken.FIELD_NAME
@@ -307,23 +247,29 @@ else System.err.println(""+t);
         return sum;
     }
 
-    private int testJacksonDatabind(ObjectMapper mapper, byte[] data, int reps)
+    protected int testJacksonJavaTypes(int reps)
         throws Exception
     {
         Object ob = null;
+        ObjectMapper mapper = new ObjectMapper();
         for (int i = 0; i < reps; ++i) {
+            JsonParser jp = mJsonFactory.createJsonParser(new ByteArrayInputStream(mData));
             // This is "untyped"... Maps, Lists etc
-            ob = mapper.readValue(data, 0, data.length, Object.class);
+            ob = mapper.readValue(jp, Object.class);
+            jp.close();
         }
         return ob.hashCode(); // just to get some non-optimizable number
     }
 
-    private int testJacksonTree(ObjectMapper mapper, byte[] data, int reps)
+    protected int testJacksonJsonTypes(int reps)
         throws Exception
     {
         Object ob = null;
+        TreeMapper mapper = new TreeMapper();
         for (int i = 0; i < reps; ++i) {
-            ob = mapper.readValue(data, 0, data.length, JsonNode.class);
+            JsonParser jp = mJsonFactory.createJsonParser(new ByteArrayInputStream(mData));
+            ob = mapper.readTree(jp);
+            jp.close();
         }
         return ob.hashCode(); // just to get some non-optimizable number
     }

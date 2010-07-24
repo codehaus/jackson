@@ -6,7 +6,7 @@ import org.codehaus.jackson.type.JavaType;
  * Type that represents Java Map types.
  */
 public final class MapType
-    extends TypeBase
+    extends JavaType
 {
     /**
      * Type of keys of Map.
@@ -19,9 +19,9 @@ public final class MapType
     final JavaType _valueType;
 
     /*
-    /**********************************************************
-    /* Life-cycle
-    /**********************************************************
+    //////////////////////////////////////////////////////////
+    // Life-cycle
+    //////////////////////////////////////////////////////////
      */
 
     private MapType(Class<?> mapType, JavaType keyT, JavaType valueT)
@@ -51,8 +51,16 @@ public final class MapType
             return this;
         }
         JavaType newValueType = _valueType.narrowBy(contentClass);
-        return new MapType(_class, _keyType, newValueType).copyHandlers(this);
+        return new MapType(_class, _keyType, newValueType);
     }
+
+    /*
+    //////////////////////////////////////////////////////////
+    // Public API
+    //////////////////////////////////////////////////////////
+     */
+
+    public boolean isContainerType() { return true; }
 
     public JavaType narrowKey(Class<?> keySubclass)
     {
@@ -61,32 +69,8 @@ public final class MapType
             return this;
         }
         JavaType newKeyType = _keyType.narrowBy(keySubclass);
-        return new MapType(_class, newKeyType, _valueType).copyHandlers(this);
+        return new MapType(_class, newKeyType, _valueType);
     }
-
-    protected String buildCanonicalName() {
-        StringBuilder sb = new StringBuilder();
-        sb.append(_class.getName());
-        if (_keyType != null) {
-            sb.append('<');
-            sb.append(_keyType.toCanonical());
-            sb.append(',');
-            sb.append(_valueType.toCanonical());
-            sb.append('>');
-        }
-        return sb.toString();
-    }
-    
-    /*
-    /**********************************************************
-    /* Public API
-    /**********************************************************
-     */
-
-    public boolean isContainerType() { return true; }
-
-    @Override
-    public boolean mayBeGeneric() { return true; }
 
     @Override
     public JavaType getKeyType() { return _keyType; }
@@ -94,45 +78,10 @@ public final class MapType
     @Override
     public JavaType getContentType() { return _valueType; }
 
-    @Override
-    public int containedTypeCount() { return 2; }
-    
-    @Override
-    public JavaType containedType(int index) {
-        if (index == 0) return _keyType;
-        if (index == 1) return _valueType;
-        return null;
-    }
-
-    /**
-     * Not sure if we should count on this, but type names
-     * for core interfaces are "K" and "V" respectively.
-     * For now let's assume this should work.
-     */
-    public String containedTypeName(int index) {
-        if (index == 0) return "K";
-        if (index == 1) return "V";
-        return null;
-    }
-
-    public StringBuilder getErasedSignature(StringBuilder sb) {
-        return _classSignature(_class, sb, true);
-    }
-    
-    public StringBuilder getGenericSignature(StringBuilder sb)
-    {
-        _classSignature(_class, sb, false);
-        sb.append('<');
-        _keyType.getGenericSignature(sb);
-        _valueType.getGenericSignature(sb);
-        sb.append(">;");
-        return sb;
-    }
-    
     /*
-    /**********************************************************
-    /* Standard methods
-    /**********************************************************
+    //////////////////////////////////////////////////////////
+    // Standard methods
+    //////////////////////////////////////////////////////////
      */
 
     @Override

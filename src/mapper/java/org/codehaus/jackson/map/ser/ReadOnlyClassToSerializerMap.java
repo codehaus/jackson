@@ -2,42 +2,34 @@ package org.codehaus.jackson.map.ser;
 
 import java.util.*;
 
-import org.codehaus.jackson.type.JavaType;
 import org.codehaus.jackson.map.JsonSerializer;
-import org.codehaus.jackson.map.ser.SerializerCache.*;
+import org.codehaus.jackson.map.type.ClassKey;
 
 /**
- * Optimized lookup table for accessing two types of serializers; typed
- * and non-typed.
+ * Optimized lookup table for accessing {@link JsonSerializer} instances
+ * keyed by {@link Class}. Initially this just uses a regular
+ * {@link HashMap} but can be optimize later on if necessary.
  */
 public final class ReadOnlyClassToSerializerMap
 {
-    /**
-     *<p>
-     * NOTE: keys are {@link ClassPairKey}s (for "typed" serializers) and
-     *    {@link JavaType}s (untyped)
-     */
-    final HashMap<Object, JsonSerializer<Object>> _map;
+    final HashMap<ClassKey, JsonSerializer<Object>> _map;
 
     /**
      * We'll reuse key class to avoid unnecessary instantiations; since
      * this is not shared between threads, we can just reuse single
      * instance.
      */
-    final TypedKeyRaw _typedKeyRaw = new TypedKeyRaw(getClass());
+    final ClassKey _key;
 
-    final TypedKeyFull _typedKeyFull = new TypedKeyFull(null);
-
-    final UntypedKeyRaw _untypedKeyRaw = new UntypedKeyRaw(getClass());
-    
-    private ReadOnlyClassToSerializerMap(HashMap<Object, JsonSerializer<Object>> map)
+    private ReadOnlyClassToSerializerMap(HashMap<ClassKey, JsonSerializer<Object>> map, ClassKey key)
     {
         _map = map;
+        _key = key;
     }
 
     public ReadOnlyClassToSerializerMap instance()
     {
-        return new ReadOnlyClassToSerializerMap(_map);
+        return new ReadOnlyClassToSerializerMap(_map, new ClassKey());
     }
 
     /**
@@ -46,34 +38,15 @@ public final class ReadOnlyClassToSerializerMap
      * instance, {@link #instance} has to be called first.
      */
     @SuppressWarnings("unchecked")
-    public static ReadOnlyClassToSerializerMap from(HashMap<Object, JsonSerializer<Object>> src)
+    public static ReadOnlyClassToSerializerMap from(HashMap<ClassKey, JsonSerializer<Object>> src)
     {
-        return new ReadOnlyClassToSerializerMap((HashMap<Object, JsonSerializer<Object>>)src.clone());
+        return new ReadOnlyClassToSerializerMap((HashMap<ClassKey, JsonSerializer<Object>>)src.clone(), null);
     }
 
-    public JsonSerializer<Object> typedValueSerializer(JavaType type)
-    { 
-        _typedKeyFull.reset(type);
-        return _map.get(_typedKeyFull);
-    }
-
-    public JsonSerializer<Object> typedValueSerializer(Class<?> cls)
-    { 
-        _typedKeyRaw.reset(cls);
-        return _map.get(_typedKeyRaw);
-    }
-    
-    public JsonSerializer<Object> untypedValueSerializer(Class<?> cls)
-    { 
-        _untypedKeyRaw.reset(cls);
-        return _map.get(_untypedKeyRaw);
-    }
-
-    /**
-     * @since 1.5
-     */
-    public JsonSerializer<Object> untypedValueSerializer(JavaType type)
-    { 
-        return _map.get(type);
+    public JsonSerializer<Object> get(Class<?> clz)
+    {
+        _key.reset(clz);
+        return _map.get(_key);
     }
 }
+

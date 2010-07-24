@@ -18,9 +18,9 @@ public class ObjectNode
     public ObjectNode(JsonNodeFactory nc) { super(nc); }
 
     /*
-    /**********************************************************
-    /* Implementation of core JsonNode API
-    /**********************************************************
+    ///////////////////////////////////////////////////////////
+    // Implementation of core JsonNode API
+    ///////////////////////////////////////////////////////////
      */
 
     @Override public JsonToken asToken() { return JsonToken.START_OBJECT; }
@@ -76,9 +76,9 @@ public class ObjectNode
     }
 
     /*
-    /**********************************************************
-    /* Public API, serialization
-    /**********************************************************
+    ////////////////////////////////////////////////////
+    // Public API, serialization
+    ////////////////////////////////////////////////////
      */
 
     /**
@@ -105,9 +105,9 @@ public class ObjectNode
     }
 
     /*
-    /**********************************************************
-    /* Extended ObjectNode API, accessors
-    /**********************************************************
+    ///////////////////////////////////////////////////////////
+    // Extended ObjectNode API, accessors
+    ///////////////////////////////////////////////////////////
      */
 
     /**
@@ -123,9 +123,9 @@ public class ObjectNode
     }
 
     /*
-    /**********************************************************
-    /* Extended ObjectNode API, mutators, generic
-    /**********************************************************
+    ///////////////////////////////////////////////////////////
+    // Extended ObjectNode API, mutators, generic
+    ///////////////////////////////////////////////////////////
      */
 
     /**
@@ -178,16 +178,16 @@ public class ObjectNode
      */
     public JsonNode putAll(Map<String,JsonNode> properties)
     {
-        if (_children == null) {
-            _children = new LinkedHashMap<String, JsonNode>(properties);
-        } else {
-            for (Map.Entry<String, JsonNode> en : properties.entrySet()) {
-                JsonNode n = en.getValue();
-                if (n == null) {
-                    n = nullNode();
-                }
-                _children.put(en.getKey(), n);
-            }
+	if (_children == null) {
+	    _children = new LinkedHashMap<String,JsonNode>(properties);
+	} else {
+	    for (Map.Entry<String, JsonNode> en : properties.entrySet()) {
+		JsonNode n = en.getValue();
+		if (n == null) {
+		    n = nullNode();
+		}
+		_children.put(en.getKey(), n);
+	    }
         }
         return this;
     }
@@ -204,20 +204,21 @@ public class ObjectNode
      */
     public JsonNode putAll(ObjectNode other)
     {
-        int len = other.size();
-        if (len > 0) {
-            if (_children == null) {
-                _children = new LinkedHashMap<String, JsonNode>(len);
-            }
-            other.putContentsTo(_children);
+	if (_children == null) {
+	    _children = new LinkedHashMap<String,JsonNode>();
+	}
+        Iterator<Map.Entry<String,JsonNode>> it = other.getFields();
+        while (it.hasNext()) {
+            Map.Entry<String,JsonNode> en = it.next();
+            _children.put(en.getKey(), en.getValue());
         }
         return this;
     }
     
     /*
-    /**********************************************************
-    /* Extended ObjectNode API, mutators, typed
-    /**********************************************************
+    ///////////////////////////////////////////////////////////
+    // Extended ObjectNode API, mutators, typed
+    ///////////////////////////////////////////////////////////
      */
 
     /**
@@ -281,24 +282,12 @@ public class ObjectNode
     /**
      * Method for setting value of a field to specified numeric value.
      */
-    public void put(String fieldName, BigDecimal v) {
-        if (v == null) {
-            putNull(fieldName);
-        } else {
-            _put(fieldName, numberNode(v));
-        }
-    }
+    public void put(String fieldName, BigDecimal v) { _put(fieldName, numberNode(v)); }
 
     /**
      * Method for setting value of a field to specified String value.
      */
-    public void put(String fieldName, String v) {
-        if (v == null) {
-            putNull(fieldName);
-        } else {
-            _put(fieldName, textNode(v));
-        }
-    }
+    public void put(String fieldName, String v) { _put(fieldName, textNode(v)); }
 
     /**
      * Method for setting value of a field to specified String value.
@@ -308,36 +297,12 @@ public class ObjectNode
     /**
      * Method for setting value of a field to specified binary value
      */
-    public void put(String fieldName, byte[] v) {
-        if (v == null) {
-            putNull(fieldName);
-        } else {
-            _put(fieldName, binaryNode(v));
-        }
-    }
+    public void put(String fieldName, byte[] v) { _put(fieldName, binaryNode(v)); }
 
     /*
-    /**********************************************************
-    /* Package methods (for other node classes to use)
-    /**********************************************************
-     */
-
-    /**
-     * @since 1.6
-     */
-    protected void putContentsTo(Map<String,JsonNode> dst)
-    {
-        if (_children != null) {
-            for (Map.Entry<String,JsonNode> en : _children.entrySet()) {
-                dst.put(en.getKey(), en.getValue());
-            }
-        }
-    }
-
-    /*
-    /**********************************************************
-    /* Standard methods
-    /**********************************************************
+    ////////////////////////////////////////////////////////
+    // Standard methods
+    ////////////////////////////////////////////////////////
      */
 
     @Override
@@ -395,9 +360,9 @@ public class ObjectNode
     }
 
     /*
-    /**********************************************************
-    /* Internal methods
-    /**********************************************************
+    ////////////////////////////////////////////////////////
+    // Internal methods
+    ////////////////////////////////////////////////////////
      */
 
     private final JsonNode _put(String fieldName, JsonNode value)
@@ -409,9 +374,9 @@ public class ObjectNode
     }
 
     /*
-    /**********************************************************
-    /* Helper classes
-    /**********************************************************
+    ////////////////////////////////////////////////////////
+    // Helper classes
+    ////////////////////////////////////////////////////////
      */
 
     /**

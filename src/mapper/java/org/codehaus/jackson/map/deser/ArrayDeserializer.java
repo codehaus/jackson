@@ -6,21 +6,18 @@ import org.codehaus.jackson.JsonProcessingException;
 import org.codehaus.jackson.JsonParser;
 import org.codehaus.jackson.JsonToken;
 import org.codehaus.jackson.map.*;
-import org.codehaus.jackson.map.annotate.JacksonStdImpl;
 import org.codehaus.jackson.map.type.ArrayType;
 import org.codehaus.jackson.map.util.ObjectBuffer;
-import org.codehaus.jackson.type.JavaType;
 
 /**
  * Basic serializer that can serialize non-primitive arrays.
  */
-@JacksonStdImpl
 public class ArrayDeserializer
-    extends ContainerDeserializer<Object[]>
+    extends StdDeserializer<Object>
 {
     // // Configuration
 
-    final JavaType _arrayType;
+    final Class<?> _arrayClass;
 
     /**
      * Flag that indicates whether the component type is Object or not.
@@ -39,50 +36,16 @@ public class ArrayDeserializer
      */
     final JsonDeserializer<Object> _elementDeserializer;
 
-    /**
-     * If element instances have polymorphic type information, this
-     * is the type deserializer that can handle it
-     */
-    final TypeDeserializer _elementTypeDeserializer;
-    
-    @Deprecated
     public ArrayDeserializer(ArrayType arrayType, JsonDeserializer<Object> elemDeser)
     {
-        this(arrayType, elemDeser, null);
-    }
-
-    public ArrayDeserializer(ArrayType arrayType, JsonDeserializer<Object> elemDeser,
-            TypeDeserializer elemTypeDeser)
-    {
         super(Object[].class);
-        _arrayType = arrayType;
+        _arrayClass = arrayType.getRawClass();
         _elementClass = arrayType.getContentType().getRawClass();
         _untyped = (_elementClass == Object.class);
         _elementDeserializer = elemDeser;
-        _elementTypeDeserializer = elemTypeDeser;
     }
 
-    /*
-    /**********************************************************
-    /* ContainerDeserializer API
-    /**********************************************************
-     */
-
-    public JavaType getContentType() {
-        return _arrayType.getContentType();
-    }
-
-    public JsonDeserializer<Object> getContentDeserializer() {
-        return _elementDeserializer;
-    }
-    
-    /*
-    /**********************************************************
-    /* JsonDeserializer API
-    /**********************************************************
-     */
-    
-    public Object[] deserialize(JsonParser jp, DeserializationContext ctxt)
+    public Object deserialize(JsonParser jp, DeserializationContext ctxt)
         throws IOException, JsonProcessingException
     {
         // Ok: must point to START_ARRAY
@@ -94,26 +57,17 @@ public class ArrayDeserializer
                 && _elementClass == Byte.class) {
                 return deserializeFromBase64(jp, ctxt);
             }
-            throw ctxt.mappingException(_arrayType.getRawClass());
+            throw ctxt.mappingException(_arrayClass);
         }
 
         final ObjectBuffer buffer = ctxt.leaseObjectBuffer();
         Object[] chunk = buffer.resetAndStart();
         int ix = 0;
         JsonToken t;
-        final TypeDeserializer typeDeser = _elementTypeDeserializer;
 
         while ((t = jp.nextToken()) != JsonToken.END_ARRAY) {
             // Note: must handle null explicitly here; value deserializers won't
-            Object value;
-            
-            if (t == JsonToken.VALUE_NULL) {
-                value = null;
-            } else if (typeDeser == null) {
-                value = _elementDeserializer.deserialize(jp, ctxt);
-            } else {
-                value = _elementDeserializer.deserializeWithType(jp, ctxt, typeDeser);
-            }
+            Object value = (t == JsonToken.VALUE_NULL) ? null : _elementDeserializer.deserialize(jp, ctxt);
             if (ix >= chunk.length) {
                 chunk = buffer.appendCompletedChunk(chunk);
                 ix = 0;
@@ -132,22 +86,6 @@ public class ArrayDeserializer
         return result;
     }
 
-    public Object[] deserializeWithType(JsonParser jp, DeserializationContext ctxt,
-            TypeDeserializer typeDeserializer)
-        throws IOException, JsonProcessingException
-    {
-        /* Should there be separate handling for base64 stuff?
-         * for now this should be enough:
-         */
-        return (Object[]) typeDeserializer.deserializeTypedFromArray(jp, ctxt);
-    }
-
-    /*
-    /**********************************************************
-    /* Internal methods
-    /**********************************************************
-     */
-    
     protected Byte[] deserializeFromBase64(JsonParser jp, DeserializationContext ctxt)
         throws IOException, JsonProcessingException
     {

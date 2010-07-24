@@ -33,6 +33,19 @@ public class ThrowableDeserializer
      */
 
     @Override
+    public void validateCreators()
+    {
+        /* Unlike regular beans, exceptions require String constuctor
+         *
+         * !!! 07-Apr-2009, tatu: Ideally we would try to use String+Throwable
+         *   constructor, but for now String one has to do
+         */
+        if (_stringCreator == null) {
+            throw new IllegalArgumentException("Can not create Throwable deserializer for ("+_beanType+"): no single-String Creator (constructor, factory method) found");
+        }
+    }
+
+    @Override
     public Object deserializeFromObject(JsonParser jp, DeserializationContext ctxt)
         throws IOException, JsonProcessingException
     {
@@ -40,10 +53,9 @@ public class ThrowableDeserializer
         Object[] pending = null;
         int pendingIx = 0;
 
-        for (; jp.getCurrentToken() != JsonToken.END_OBJECT; jp.nextToken()) {
+        while (jp.nextToken() != JsonToken.END_OBJECT) { // otherwise field name
             String propName = jp.getCurrentName();
             SettableBeanProperty prop = _props.get(propName);
-            jp.nextToken(); // to point to field value
 
             if (prop != null) { // normal case
                 if (throwable != null) {
@@ -60,6 +72,9 @@ public class ThrowableDeserializer
                 continue;
             }
 
+            @SuppressWarnings("unused")
+			JsonToken t = jp.nextToken();
+
             // Maybe it's "message"?
             if (PROP_NAME_MESSAGE.equals(propName)) {
                 throwable = _stringCreator.construct(jp.getText());
@@ -74,7 +89,7 @@ public class ThrowableDeserializer
                 continue;
             }
             // Unknown: let's call handler method
-            handleUnknownProperty(jp, ctxt, throwable, propName);
+            handleUnknownProperty(ctxt, throwable, propName);
         }
         // Sanity check: did we find "message"?
         if (throwable == null) {

@@ -21,7 +21,6 @@ import java.net.URL;
 import org.codehaus.jackson.io.*;
 import org.codehaus.jackson.impl.ByteSourceBootstrapper;
 import org.codehaus.jackson.impl.ReaderBasedParser;
-import org.codehaus.jackson.impl.Utf8Generator;
 import org.codehaus.jackson.impl.WriterBasedGenerator;
 import org.codehaus.jackson.sym.BytesToNameCanonicalizer;
 import org.codehaus.jackson.sym.CharsToNameCanonicalizer;
@@ -41,7 +40,7 @@ import org.codehaus.jackson.util.BufferRecycler;
  *<p>
  * Creation of a factory instance is a light-weight operation,
  * and since there is no need for pluggable alternative implementations
- * (as there is no "standard" JSON processor API to implement),
+ * (as there is no "standard" json processor API to implement),
  * the default constructor is used for constructing factory
  * instances.
  *
@@ -62,9 +61,9 @@ public class JsonFactory
     final static int DEFAULT_GENERATOR_FEATURE_FLAGS = JsonGenerator.Feature.collectDefaults();
 
     /*
-    /******************************************************
-    /* Buffer, symbol table management
-    /******************************************************
+    ///////////////////////////////////////////////////////
+    // Buffer, symbol table management
+    ///////////////////////////////////////////////////////
      */
 
     /**
@@ -72,15 +71,14 @@ public class JsonFactory
      * to a {@link BufferRecycler} used to provide a low-cost
      * buffer recycling between reader and writer instances.
      */
-    final protected static ThreadLocal<SoftReference<BufferRecycler>> _recyclerRef
-        = new ThreadLocal<SoftReference<BufferRecycler>>();
+    final static ThreadLocal<SoftReference<BufferRecycler>> _recyclerRef = new ThreadLocal<SoftReference<BufferRecycler>>();
 
     /**
      * Each factory comes equipped with a shared root symbol table.
      * It should not be linked back to the original blueprint, to
      * avoid contents from leaking between factories.
      */
-    protected CharsToNameCanonicalizer _rootCharSymbols = CharsToNameCanonicalizer.createRoot();
+    protected CharsToNameCanonicalizer _rootCharSymbols = CharsToNameCanonicalizer.createRoot(true);
 
     /**
      * Alternative to the basic symbol table, some stream-based
@@ -92,14 +90,14 @@ public class JsonFactory
     protected BytesToNameCanonicalizer _rootByteSymbols = BytesToNameCanonicalizer.createRoot();
 
     /*
-    /******************************************************
-    /* Configuration
-    /******************************************************
+    ///////////////////////////////////////////////////////
+    // Configuration
+    ///////////////////////////////////////////////////////
      */
 
     /**
      * Object that implements conversion functionality between
-     * Java objects and JSON content. For base JsonFactory implementation
+     * Java objects and Json content. For base JsonFactory implementation
      * usually not set by default, but can be explicitly set.
      * Sub-classes (like @link org.codehaus.jackson.map.MappingJsonFactory}
      * usually provide an implementation.
@@ -125,9 +123,9 @@ public class JsonFactory
     public JsonFactory(ObjectCodec oc) { _objectCodec = oc; }
 
     /*
-    /**********************************************************
-    /* Configuration, parser settings
-    /**********************************************************
+    //////////////////////////////////////////////////////
+    // Configuration, parser settings
+    //////////////////////////////////////////////////////
      */
 
     /**
@@ -208,9 +206,9 @@ public class JsonFactory
     }
 
     /*
-    /**********************************************************
-    /* Configuration, generator settings
-    /**********************************************************
+    //////////////////////////////////////////////////////
+    // Configuration, generator settings
+    //////////////////////////////////////////////////////
      */
 
     /**
@@ -252,7 +250,7 @@ public class JsonFactory
     }
 
     /**
-     * Check whether specified generator feature is enabled.
+     * Checked whether specified generator feature is enabled.
      *
      * @since 1.2
      */
@@ -291,9 +289,9 @@ public class JsonFactory
     }
 
     /*
-    /**********************************************************
-    /* Configuration, other
-    /**********************************************************
+    //////////////////////////////////////////////////////
+    // Configuration, other
+    //////////////////////////////////////////////////////
      */
 
     public JsonFactory setCodec(ObjectCodec oc) {
@@ -304,9 +302,9 @@ public class JsonFactory
     public ObjectCodec getCodec() { return _objectCodec; }
 
     /*
-    /**********************************************************
-    /* Reader factories
-    /**********************************************************
+    //////////////////////////////////////////////////////
+    // Reader factories
+    //////////////////////////////////////////////////////
      */
 
     /**
@@ -407,13 +405,13 @@ public class JsonFactory
     }
 
     /*
-    /**********************************************************
-    /* Generator factories
-    /**********************************************************
+    //////////////////////////////////////////////////////
+    // Generator factories
+    //////////////////////////////////////////////////////
      */
 
     /**
-     * Method for constructing JSON generator for writing JSON content
+     * Method for constructing json generator for writing json content
      * using specified output stream.
      * Encoding to use must be specified, and needs to be one of available
      * types (as per JSON specification).
@@ -426,7 +424,7 @@ public class JsonFactory
      * is enabled).
      * Using application needs to close it explicitly if this is the case.
      *
-     * @param out OutputStream to use for writing JSON content 
+     * @param out OutputStream to use for writing json content 
      * @param enc Character encoding to use
      */
     public JsonGenerator createJsonGenerator(OutputStream out, JsonEncoding enc)
@@ -435,21 +433,11 @@ public class JsonFactory
 	// false -> we won't manage the stream unless explicitly directed to
         IOContext ctxt = _createContext(out, false);
         ctxt.setEncoding(enc);
-        if (enc == JsonEncoding.UTF8) {
-            return _createUTF8JsonGenerator(out, ctxt);
-        }
-        // !!! TEST
-        /*
-        if (true) {
-            ctxt.setEncoding(JsonEncoding.UTF8);
-            return _createJsonGenerator(_createWriter(out, JsonEncoding.UTF8, ctxt), ctxt);
-        }
-        */
 	return _createJsonGenerator(_createWriter(out, enc, ctxt), ctxt);
     }
 
     /**
-     * Method for constructing JSON generator for writing JSON content
+     * Method for constructing json generator for writing json content
      * using specified Writer.
      *<p>
      * Underlying stream <b>is NOT owned</b> by the generator constructed,
@@ -459,7 +447,7 @@ public class JsonFactory
      * {@link org.codehaus.jackson.JsonGenerator.Feature#AUTO_CLOSE_TARGET} is enabled).
      * Using application needs to close it explicitly.
      *
-     * @param out Writer to use for writing JSON content 
+     * @param out Writer to use for writing json content 
      */
     public JsonGenerator createJsonGenerator(Writer out)
         throws IOException
@@ -489,21 +477,17 @@ public class JsonFactory
 	// true -> yes, we have to manage the stream since we created it
         IOContext ctxt = _createContext(out, true);
         ctxt.setEncoding(enc);
-        if (enc == JsonEncoding.UTF8) {
-            return _createUTF8JsonGenerator(out, ctxt);
-        }
 	return _createJsonGenerator(_createWriter(out, enc, ctxt), ctxt);
     }
 
     /*
-    /**********************************************************
-    /* Internal factory methods, overridable
-    /**********************************************************
+    ///////////////////////////////////////////////////////////
+    // Internal methods
+    ///////////////////////////////////////////////////////////
      */
 
     /**
-     * Overridable factory method that actually instantiates desired
-     * context object.
+     * Overridable construction method that actually instantiates desired generator.
      */
     protected IOContext _createContext(Object srcRef, boolean resourceManaged)
     {
@@ -511,8 +495,7 @@ public class JsonFactory
     }
 
     /**
-     * Overridable factory method that actually instantiates desired
-     * parser.
+     * Overridable construction method that actually instantiates desired parser.
      */
     protected JsonParser _createJsonParser(InputStream in, IOContext ctxt)
         throws IOException, JsonParseException
@@ -520,22 +503,13 @@ public class JsonFactory
         return new ByteSourceBootstrapper(ctxt, in).constructParser(_parserFeatures, _objectCodec, _rootByteSymbols, _rootCharSymbols);
     }
 
-    /**
-     * Overridable factory method that actually instantiates desired
-     * parser.
-     */
     protected JsonParser _createJsonParser(Reader r, IOContext ctxt)
 	throws IOException, JsonParseException
     {
         return new ReaderBasedParser(ctxt, _parserFeatures, r, _objectCodec,
-                _rootCharSymbols.makeChild(isEnabled(JsonParser.Feature.CANONICALIZE_FIELD_NAMES),
-                    isEnabled(JsonParser.Feature.INTERN_FIELD_NAMES)));
+				     _rootCharSymbols.makeChild(isEnabled(JsonParser.Feature.INTERN_FIELD_NAMES)));
     }
 
-    /**
-     * Overridable factory method that actually instantiates desired
-     * parser.
-     */
     protected JsonParser _createJsonParser(byte[] data, int offset, int len, IOContext ctxt)
         throws IOException, JsonParseException
     {
@@ -544,8 +518,7 @@ public class JsonFactory
     }
 
     /**
-     * Overridable factory method that actually instantiates desired
-     * generator.
+     * Overridable construction method that actually instantiates desired generator
      */
     protected JsonGenerator _createJsonGenerator(Writer out, IOContext ctxt)
         throws IOException
@@ -553,19 +526,6 @@ public class JsonFactory
         return new WriterBasedGenerator(ctxt, _generatorFeatures, _objectCodec, out);
     }
 
-    /**
-     * Overridable factory method that actually instantiates desired
-     * generator that is specifically to output content using specified
-     * output stream and using UTF-8 encoding.
-     *
-     * @return
-     */
-    protected JsonGenerator _createUTF8JsonGenerator(OutputStream out, IOContext ctxt)
-        throws IOException
-    {
-        return new Utf8Generator(ctxt, _generatorFeatures, _objectCodec, out);
-    }
-    
     /**
      * Method used by factory to create buffer recycler instances
      * for parsers and generators.
@@ -585,22 +545,6 @@ public class JsonFactory
         }
         return br;
     }
-
-    protected Writer _createWriter(OutputStream out, JsonEncoding enc, IOContext ctxt) throws IOException
-    {
-        // note: this should not get called any more (caller checks, dispatches)
-        if (enc == JsonEncoding.UTF8) { // We have optimized writer for UTF-8
-            return new UTF8Writer(ctxt, out);
-        }
-        // not optimal, but should do unless we really care about UTF-16/32 encoding speed
-        return new OutputStreamWriter(out, enc.getJavaName());
-    }
-    
-    /*
-    /**********************************************************
-    /* Internal factory methods, other
-    /**********************************************************
-     */
 
     /**
      * Helper methods used for constructing an optimal stream for
@@ -623,5 +567,14 @@ public class JsonFactory
             }
         }
         return url.openStream();
+    }
+
+    protected Writer _createWriter(OutputStream out, JsonEncoding enc, IOContext ctxt) throws IOException
+    {
+        if (enc == JsonEncoding.UTF8) { // We have optimized writer for UTF-8
+	    return new UTF8Writer(ctxt, out);
+	}
+	// not optimal, but should do unless we really care about UTF-16/32 encoding speed
+	return new OutputStreamWriter(out, enc.getJavaName());
     }
 }

@@ -4,17 +4,13 @@ import java.io.IOException;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.util.*;
-import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.concurrent.atomic.AtomicReference;
 
 import org.codehaus.jackson.JsonProcessingException;
 import org.codehaus.jackson.JsonParser;
 import org.codehaus.jackson.JsonToken;
 import org.codehaus.jackson.map.*;
-import org.codehaus.jackson.map.annotate.JacksonStdImpl;
-import org.codehaus.jackson.map.type.TypeFactory;
+import org.codehaus.jackson.map.util.LinkedNode;
 import org.codehaus.jackson.type.JavaType;
-import org.codehaus.jackson.util.TokenBuffer;
 
 /**
  * Base class for common deserializers. Contains shared
@@ -24,56 +20,21 @@ import org.codehaus.jackson.util.TokenBuffer;
 public abstract class StdDeserializer<T>
     extends JsonDeserializer<T>
 {
-    /**
-     * Type of values this deserializer handles: sometimes
-     * exact types, other time most specific supertype of
-     * types deserializer handles (which may be as generic
-     * as {@link Object} in some case)
-     */
-    final protected Class<?> _valueClass;
+    final Class<?> _valueClass;
 
     protected StdDeserializer(Class<?> vc) {
         _valueClass = vc;
     }
-    
-    /*
-    /**********************************************************
-    /* Extended API
-    /**********************************************************
-     */
 
     public Class<?> getValueClass() { return _valueClass; }
 
-    /**
-     * Exact structured type deserializer handles, if known.
-     *<p>
-     * Default implementation just returns null.
-     */
     public JavaType getValueType() { return null; }
 
     /*
-    /**********************************************************
-    /* Partial JsonDeserializer implementation 
-    /**********************************************************
-     */
-    
-    /**
-     * Base implementation that does not assume specific type
-     * inclusion mechanism. Sub-classes are expected to override
-     * this method if they are to handle type information.
-     */
-    public Object deserializeWithType(JsonParser jp, DeserializationContext ctxt,
-            TypeDeserializer typeDeserializer)
-        throws IOException, JsonProcessingException
-    {
-        return typeDeserializer.deserializeTypedFromAny(jp, ctxt);
-    }
-    
-    /*
-    /**********************************************************
-    /* Helper methods for sub-classes, parsing
-    /**********************************************************
-     */
+    /////////////////////////////////////////////////////////////
+    // Helper methods for sub-classes, parsing
+    /////////////////////////////////////////////////////////////
+    */
 
     protected final boolean _parseBoolean(JsonParser jp, DeserializationContext ctxt)
         throws IOException, JsonProcessingException
@@ -128,23 +89,12 @@ public abstract class StdDeserializer<T>
             return jp.getIntValue();
         }
         if (t == JsonToken.VALUE_STRING) { // let's do implicit re-parse
-            /* 31-Dec-2009, tatus: Should improve handling of overflow
-             *   values... but this'll have to do for now
-             */
+            // !!! 05-Jan-2009, tatu: Should we try to limit value space, JDK is too lenient?
             String text = jp.getText().trim();
             try {
-                if (text.length() > 9) {
-                    long l = Long.parseLong(text);
-                    if (l < Integer.MIN_VALUE || l > Integer.MAX_VALUE) {
-                        throw ctxt.weirdStringException(_valueClass,
-                            "Overflow: numeric value ("+text+") out of range of int ("+Integer.MIN_VALUE+" - "+Integer.MAX_VALUE+")");
-                    }
-                    return (int) l;
-                } else {
-                    return Integer.parseInt(text);
-                }
+                return Integer.parseInt(text);
             } catch (IllegalArgumentException iae) {
-                throw ctxt.weirdStringException(_valueClass, "not a valid int value");
+                throw ctxt.weirdStringException(_valueClass, "not a valid representation of integral number value");
             }
         }
         if (t == JsonToken.VALUE_NULL) {
@@ -288,15 +238,14 @@ public abstract class StdDeserializer<T>
     }
 
     /*
-    /****************************************************
-    /* Helper methods for sub-classes, resolving dependencies
-    /****************************************************
+    /////////////////////////////////////////////////////////////
+    // Helper methods for sub-classes, resolving dependencies
+    /////////////////////////////////////////////////////////////
     */
 
     /**
      * Helper method used to locate deserializers for properties the
-     * type this deserializer handles contains (usually for properties of
-     * bean types)
+     * bean itself contains.
      *
      * @param type Type of property to deserialize
      */
@@ -305,7 +254,8 @@ public abstract class StdDeserializer<T>
                                                         Map<JavaType, JsonDeserializer<Object>> seen)
         throws JsonMappingException
     {
-        JsonDeserializer<Object> deser = (seen == null) ? null : seen.get(type);
+        JsonDeserializer<Object> deser = (seen == null) ?
+            null : seen.get(type);
         if (deser == null) {
             deser = provider.findValueDeserializer(config, type, getValueType(), propertyName);
             if (seen != null) {
@@ -318,22 +268,17 @@ public abstract class StdDeserializer<T>
     }
 
     /*
-    /**********************************************************
-    /* Helper methods for sub-classes, problem reporting
-    /**********************************************************
-     */
+    /////////////////////////////////////////////////////////////
+    // Helper methods for sub-classes, problem reporting
+    /////////////////////////////////////////////////////////////
+    */
 
     /**
      * Method called to deal with a property that did not map to a known
      * Bean property. Method can deal with the problem as it sees fit (ignore,
      * throw exception); but if it does return, it has to skip the matching
      * Json content parser has.
-     *<p>
-     * NOTE: method signature was changed in version 1.5; explicit JsonParser
-     * <b>must</b> be passed since it may be something other than what
-     * context has. Prior versions did not include the first parameter.
      *
-     * @param jp Parser that points to value of the unknown property
      * @param ctxt Context for deserialization; allows access to the parser,
      *    error reporting functionality
      * @param instanceOrClass Instance that is being populated by this
@@ -341,15 +286,18 @@ public abstract class StdDeserializer<T>
      *   If null, will assume type is what {@link #getValueClass} returns.
      * @param propName Name of the property that can not be mapped
      */
-    protected void handleUnknownProperty(JsonParser jp, DeserializationContext ctxt, Object instanceOrClass, String propName)
+    protected void handleUnknownProperty(DeserializationContext ctxt, Object instanceOrClass, String propName)
         throws IOException, JsonProcessingException
     {
+        LinkedNode<DeserializationProblemHandler> h = ctxt.getConfig().getProblemHandlers();
         if (instanceOrClass == null) {
             instanceOrClass = getValueClass();
         }
-        // Maybe we have configured handler(s) to take care of it?
-        if (ctxt.handleUnknownProperty(jp, this, instanceOrClass, propName)) {
-            return;
+        while (h != null) {
+            // Can bail out if it's handled
+            if (h.value().handleUnknownProperty(ctxt, this, instanceOrClass, propName)) {
+                return;
+            }
         }
         // Nope, not handled. Potentially that's a problem...
         reportUnknownProperty(ctxt, instanceOrClass, propName);
@@ -357,7 +305,7 @@ public abstract class StdDeserializer<T>
         /* If we get this far, need to skip now; we point to first token of
          * value (START_xxx for structured, or the value token for others)
          */
-        jp.skipChildren();
+        ctxt.getParser().skipChildren();
     }
         
     protected void reportUnknownProperty(DeserializationContext ctxt,
@@ -373,14 +321,14 @@ public abstract class StdDeserializer<T>
 
 
     /*
-    /**********************************************************
-    /* Then one intermediate base class for things that have
-    /* both primitive and wrapper types
-    /**********************************************************
-     */
+    /////////////////////////////////////////////////////////////
+    // Then one intermediate base class for things that have
+    // both primitive and wrapper types
+    /////////////////////////////////////////////////////////////
+    */
 
     protected abstract static class PrimitiveOrWrapperDeserializer<T>
-        extends StdScalarDeserializer<T>
+        extends StdDeserializer<T>
     {
         final T _nullValue;
         
@@ -394,14 +342,13 @@ public abstract class StdDeserializer<T>
     }
 
     /*
-    /**********************************************************
-    /* First, generic (Object, String, String-like, Class) deserializers
-    /**********************************************************
-     */
+    /////////////////////////////////////////////////////////////
+    // First, generic (Object, String, String-like, Class) deserializers
+    /////////////////////////////////////////////////////////////
+    */
 
-    @JacksonStdImpl
     public final static class StringDeserializer
-        extends StdScalarDeserializer<String>
+        extends StdDeserializer<String>
     {
         public StringDeserializer() { super(String.class); }
 
@@ -414,27 +361,16 @@ public abstract class StdDeserializer<T>
             if (curr == JsonToken.VALUE_STRING) {
                 return jp.getText();
             }
-            // Can deserialize any scalar value, but not markers
+            // Can deserialize any scaler value, but not markers
             if (curr.isScalarValue()) {
                 return jp.getText();
             }
             throw ctxt.mappingException(_valueClass);
         }
-
-        // 1.6: since we can never have type info ("natural type"; String, Boolean, Integer, Double):
-        // (is it an error to even call this version?)
-        @Override
-        public String deserializeWithType(JsonParser jp, DeserializationContext ctxt,
-                TypeDeserializer typeDeserializer)
-            throws IOException, JsonProcessingException
-        {
-            return deserialize(jp, ctxt);
-        }
     }
 
-    @JacksonStdImpl
     public final static class ClassDeserializer
-        extends StdScalarDeserializer<Class<?>>
+        extends StdDeserializer<Class<?>>
     {
         public ClassDeserializer() { super(Class.class); }
 
@@ -456,12 +392,11 @@ public abstract class StdDeserializer<T>
     }
 
     /*
-    /**********************************************************
-    /* Then primitive/wrapper types
-    /**********************************************************
-     */
+    /////////////////////////////////////////////////////////////
+    // Then primitive/wrapper types
+    /////////////////////////////////////////////////////////////
+    */
 
-    @JacksonStdImpl
     public final static class BooleanDeserializer
         extends PrimitiveOrWrapperDeserializer<Boolean>
     {
@@ -476,19 +411,8 @@ public abstract class StdDeserializer<T>
         {
             return _parseBoolean(jp, ctxt) ? Boolean.TRUE : Boolean.FALSE;
         }
-
-        // 1.6: since we can never have type info ("natural type"; String, Boolean, Integer, Double):
-        // (is it an error to even call this version?)
-        @Override
-        public Boolean deserializeWithType(JsonParser jp, DeserializationContext ctxt,
-                TypeDeserializer typeDeserializer)
-            throws IOException, JsonProcessingException
-        {
-            return _parseBoolean(jp, ctxt) ? Boolean.TRUE : Boolean.FALSE;
-        }
     }
 
-    @JacksonStdImpl
     public final static class ByteDeserializer
         extends PrimitiveOrWrapperDeserializer<Byte>
     {
@@ -510,7 +434,6 @@ public abstract class StdDeserializer<T>
         }
     }
 
-    @JacksonStdImpl
     public final static class ShortDeserializer
         extends PrimitiveOrWrapperDeserializer<Short>
     {
@@ -527,7 +450,6 @@ public abstract class StdDeserializer<T>
         }
     }
 
-    @JacksonStdImpl
     public final static class CharacterDeserializer
         extends PrimitiveOrWrapperDeserializer<Character>
     {
@@ -559,7 +481,6 @@ public abstract class StdDeserializer<T>
         }
     }
 
-    @JacksonStdImpl
     public final static class IntegerDeserializer
         extends PrimitiveOrWrapperDeserializer<Integer>
     {
@@ -574,19 +495,8 @@ public abstract class StdDeserializer<T>
         {
             return _parseInt(jp, ctxt);
         }
-
-        // 1.6: since we can never have type info ("natural type"; String, Boolean, Integer, Double):
-        // (is it an error to even call this version?)
-        @Override
-        public Integer deserializeWithType(JsonParser jp, DeserializationContext ctxt,
-                TypeDeserializer typeDeserializer)
-            throws IOException, JsonProcessingException
-        {
-            return _parseInt(jp, ctxt);
-        }
     }
 
-    @JacksonStdImpl
     public final static class LongDeserializer
         extends PrimitiveOrWrapperDeserializer<Long>
     {
@@ -603,7 +513,6 @@ public abstract class StdDeserializer<T>
         }
     }
 
-    @JacksonStdImpl
     public final static class FloatDeserializer
         extends PrimitiveOrWrapperDeserializer<Float>
     {
@@ -623,7 +532,6 @@ public abstract class StdDeserializer<T>
         }
     }
 
-    @JacksonStdImpl
     public final static class DoubleDeserializer
         extends PrimitiveOrWrapperDeserializer<Double>
     {
@@ -638,31 +546,14 @@ public abstract class StdDeserializer<T>
         {
             return _parseDouble(jp, ctxt);
         }
-
-        // 1.6: since we can never have type info ("natural type"; String, Boolean, Integer, Double):
-        // (is it an error to even call this version?)
-        @Override
-        public Double deserializeWithType(JsonParser jp, DeserializationContext ctxt,
-                TypeDeserializer typeDeserializer)
-            throws IOException, JsonProcessingException
-        {
-            return _parseDouble(jp, ctxt);
-        }
     }
 
     /**
      * For type <code>Number.class</code>, we can just rely on type
      * mappings that plain {@link JsonParser#getNumberValue} returns.
-     *<p>
-     * Since 1.5, there is one additional complication: some numeric
-     * types (specifically, int/Integer and double/Double) are "non-typed";
-     * meaning that they will NEVER be output with type information.
-     * But other numeric types may need such type information.
-     * This is why {@link #deserializeWithType} must be overridden.
      */
-    @JacksonStdImpl
     public final static class NumberDeserializer
-        extends StdScalarDeserializer<Number>
+        extends StdDeserializer<Number>
     {
         public NumberDeserializer() { super(Number.class); }
 
@@ -715,105 +606,22 @@ public abstract class StdDeserializer<T>
             // Otherwise, no can do:
             throw ctxt.mappingException(_valueClass);
         }
-
-        /**
-         * As mentioned in class Javadoc, there is additional complexity in
-         * handling potentially mixed type information here. Because of this,
-         * we must actually check for "raw" integers and doubles first, before
-         * calling type deserializer.
-         */
-        @Override
-        public Object deserializeWithType(JsonParser jp, DeserializationContext ctxt,
-                                          TypeDeserializer typeDeserializer)
-            throws IOException, JsonProcessingException
-        {
-            switch (jp.getCurrentToken()) {
-            case VALUE_NUMBER_INT:
-            case VALUE_NUMBER_FLOAT:
-            case VALUE_STRING:
-                // can not point to type information: hence must be non-typed (int/double)
-                return deserialize(jp, ctxt);
-            }
-            return typeDeserializer.deserializeTypedFromScalar(jp, ctxt);
-        }
     }
 
     /*
-    /**********************************************************
-    /* Atomic types (java.util.concurrent.atomic), [JACKSON-283]
-    /* 
-    /* note: AtomicInteger and AtomicLong work out of the box,
-    /* due to single-arg constructors
-    /**********************************************************
-     */
+    /////////////////////////////////////////////////////////////
+    // And then bit more complicated (but non-structured) number
+    // types
+    /////////////////////////////////////////////////////////////
+    */
 
-    public final static class AtomicBooleanDeserializer
-        extends StdScalarDeserializer<AtomicBoolean>
-    {
-        public AtomicBooleanDeserializer() { super(AtomicBoolean.class); }
-        
-        @Override
-        public AtomicBoolean deserialize(JsonParser jp, DeserializationContext ctxt)
-            throws IOException, JsonProcessingException
-        {
-            return new AtomicBoolean(_parseBoolean(jp, ctxt));
-        }
-    }
-
-    public static class AtomicReferenceDeserializer
-        extends StdScalarDeserializer<AtomicReference<?>>
-        implements ResolvableDeserializer
-    {
-        /**
-         * Type of value that we reference
-         */
-        protected final JavaType _referencedType;
-
-        protected JsonDeserializer<?> _valueDeserializer;
-        
-        /**
-         * @param type AtomicReference deserializer is to be constructed for
-         */
-        public AtomicReferenceDeserializer(JavaType type)
-        {
-            super(type.getRawClass());
-            JavaType refType = type.containedType(0);
-            if (refType == null) { // untyped... assume Object
-                refType = TypeFactory.type(Object.class);
-            }
-            _referencedType = refType;
-        }
-
-        @Override
-        public AtomicReference<?> deserialize(JsonParser jp, DeserializationContext ctxt)
-            throws IOException, JsonProcessingException
-        {
-            return new AtomicReference<Object>(_valueDeserializer.deserialize(jp, ctxt));
-        }
-
-        @Override
-        public void resolve(DeserializationConfig config, DeserializerProvider provider)
-            throws JsonMappingException
-        {
-            _valueDeserializer = provider.findValueDeserializer(config, _referencedType, getValueType(), "");
-        }
-    }
-    
-    /*
-    /**********************************************************
-    /* And then bit more complicated (but non-structured) number
-    /* types
-    /**********************************************************
-     */
-
-    @JacksonStdImpl
     public static class BigDecimalDeserializer
-        extends StdScalarDeserializer<BigDecimal>
+        extends StdDeserializer<BigDecimal>
     {
         public BigDecimalDeserializer() { super(BigDecimal.class); }
 
         @Override
-	public BigDecimal deserialize(JsonParser jp, DeserializationContext ctxt)
+		public BigDecimal deserialize(JsonParser jp, DeserializationContext ctxt)
             throws IOException, JsonProcessingException
         {
             JsonToken t = jp.getCurrentToken();
@@ -839,9 +647,8 @@ public abstract class StdDeserializer<T>
      * This is bit trickier to implement efficiently, while avoiding
      * overflow problems.
      */
-    @JacksonStdImpl
     public static class BigIntegerDeserializer
-        extends StdScalarDeserializer<BigInteger>
+        extends StdDeserializer<BigInteger>
     {
         public BigIntegerDeserializer() { super(BigInteger.class); }
 
@@ -877,45 +684,22 @@ public abstract class StdDeserializer<T>
     }
 
     /*
-    /****************************************************
-    /* Then trickier things: Date/Calendar types
-    /****************************************************
+    /////////////////////////////////////////////////////////////
+    // Then trickier things: Date/Calendar types
+    /////////////////////////////////////////////////////////////
     */
 
-    @JacksonStdImpl
     public static class CalendarDeserializer
-        extends StdScalarDeserializer<Calendar>
+        extends StdDeserializer<Calendar>
     {
-        /**
-         * We may know actual expected type; if so, it will be
-         * used for instantiation.
-         */
-        Class<? extends Calendar> _calendarClass;
-        
-        public CalendarDeserializer() { this(null); }
-        public CalendarDeserializer(Class<? extends Calendar> cc) {
-            super(Calendar.class);
-            _calendarClass = cc;
-        }
+        public CalendarDeserializer() { super(Calendar.class); }
 
         @Override
-        public Calendar deserialize(JsonParser jp, DeserializationContext ctxt)
+            public Calendar deserialize(JsonParser jp, DeserializationContext ctxt)
             throws IOException, JsonProcessingException
         {
             Date d = _parseDate(jp, ctxt);
-            if (d == null) {
-                return null;
-            }
-            if (_calendarClass == null) {
-                return ctxt.constructCalendar(d);
-            }
-            try {
-                Calendar c = _calendarClass.newInstance();            
-                c.setTimeInMillis(d.getTime());
-                return c;
-            } catch (Exception e) {
-                throw ctxt.instantiationException(_calendarClass, e);
-            }
+            return (d == null) ? null : ctxt.constructCalendar(d);
         }
     }
 
@@ -924,7 +708,7 @@ public abstract class StdDeserializer<T>
      * to deal with: mostly because it is more limited.
      */
     public static class SqlDateDeserializer
-        extends StdScalarDeserializer<java.sql.Date>
+        extends StdDeserializer<java.sql.Date>
     {
         public SqlDateDeserializer() { super(java.sql.Date.class); }
 
@@ -938,13 +722,13 @@ public abstract class StdDeserializer<T>
     }
 
     /*
-    /****************************************************
-    /* And other oddities
-    /****************************************************
+    /////////////////////////////////////////////////////////////
+    // And other oddities
+    /////////////////////////////////////////////////////////////
     */
 
     public static class StackTraceElementDeserializer
-        extends StdScalarDeserializer<StackTraceElement>
+        extends StdDeserializer<StackTraceElement>
     {
         public StackTraceElementDeserializer() { super(StackTraceElement.class); }
 
@@ -975,39 +759,12 @@ public abstract class StdDeserializer<T>
                     } else if ("nativeMethod".equals(propName)) {
                         // no setter, not passed via constructor: ignore
                     } else {
-                        handleUnknownProperty(jp, ctxt, _valueClass, propName);
+                        handleUnknownProperty(ctxt, _valueClass, propName);
                     }
                 }
                 return new StackTraceElement(className, methodName, fileName, lineNumber);
             }
             throw ctxt.mappingException(_valueClass);
-        }
-    }
-
-    /**
-     * We also want to directly support deserialization of
-     * {@link TokenBuffer}.
-     *<p>
-     * Note that we use scalar deserializer base just because we claim
-     * to be of scalar for type information inclusion purposes; actual
-     * underlying content can be of any (Object, Array, scalar) type.
-     *
-     * @since 1.5
-     */
-    @JacksonStdImpl
-    public static class TokenBufferDeserializer
-        extends StdScalarDeserializer<TokenBuffer>
-    {
-        public TokenBufferDeserializer() { super(TokenBuffer.class); }
-
-        @Override
-        public TokenBuffer deserialize(JsonParser jp, DeserializationContext ctxt)
-            throws IOException, JsonProcessingException
-        {
-            TokenBuffer tb = new TokenBuffer(jp.getCodec());
-            // quite simple, given that TokenBuffer is a JsonGenerator:
-            tb.copyCurrentStructure(jp);
-            return tb;
         }
     }
 }

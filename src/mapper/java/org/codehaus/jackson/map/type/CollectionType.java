@@ -6,7 +6,7 @@ import org.codehaus.jackson.type.JavaType;
  * Type that represents Java Collection types (Lists, Sets).
  */
 public final class CollectionType
-    extends TypeBase
+    extends JavaType
 {
     /**
      * Type of elements in collection
@@ -14,9 +14,9 @@ public final class CollectionType
     final JavaType _elementType;
 
     /*
-    /**********************************************************
-    /* Life-cycle
-    /**********************************************************
+    //////////////////////////////////////////////////////////
+    // Life-cycle
+    //////////////////////////////////////////////////////////
      */
 
     private CollectionType(Class<?> collT, JavaType elemT)
@@ -38,7 +38,7 @@ public final class CollectionType
             return this;
         }
         JavaType newElementType = _elementType.narrowBy(contentClass);
-        return new CollectionType(_class, newElementType).copyHandlers(this);
+        return new CollectionType(_class, newElementType);
     }
 
     public static CollectionType construct(Class<?> rawType, JavaType elemT)
@@ -47,65 +47,26 @@ public final class CollectionType
         return new CollectionType(rawType, elemT);
     }
 
-    protected String buildCanonicalName() {
-        StringBuilder sb = new StringBuilder();
-        sb.append(_class.getName());
-        if (_elementType != null) {
-            sb.append('<');
-            sb.append(_elementType.toCanonical());
-            sb.append('>');
-        }
-        return sb.toString();
-    }
-    
     /*
-    /**********************************************************
-    /* Public API
-    /**********************************************************
+    //////////////////////////////////////////////////////////
+    // Public API
+    //////////////////////////////////////////////////////////
      */
 
-    @Override
-    public boolean mayBeGeneric() { return true; }
-    
     public JavaType getContentType() { return _elementType; }
-    public int containedTypeCount() { return 1; }
-    public JavaType containedType(int index) {
-            return (index == 0) ? _elementType : null;
-    }
 
-    /**
-     * Not sure if we should count on this, but type names
-     * for core interfaces use "E" for element type
-     */
-    public String containedTypeName(int index) {
-        if (index == 0) return "E";
-        return null;
-    }
-
-    public StringBuilder getErasedSignature(StringBuilder sb) {
-        return _classSignature(_class, sb, true);
-    }
-    
-    public StringBuilder getGenericSignature(StringBuilder sb) {
-        _classSignature(_class, sb, false);
-        sb.append('<');
-        _elementType.getGenericSignature(sb);
-        sb.append(">;");
-        return sb;
-    }
-    
     /*
-    /**********************************************************
-    /* Extended API
-    /**********************************************************
+    //////////////////////////////////////////////////////////
+    // Extended API
+    //////////////////////////////////////////////////////////
      */
 
     public boolean isContainerType() { return true; }
 
     /*
-    /**********************************************************
-    /* Standard methods
-    /**********************************************************
+    //////////////////////////////////////////////////////////
+    // Standard methods
+    //////////////////////////////////////////////////////////
      */
 
     @Override

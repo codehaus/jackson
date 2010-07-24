@@ -5,25 +5,14 @@ import java.lang.reflect.Type;
 
 import org.codehaus.jackson.*;
 import org.codehaus.jackson.map.*;
-import org.codehaus.jackson.map.annotate.JacksonStdImpl;
-import org.codehaus.jackson.map.introspect.BasicBeanDescription;
 import org.codehaus.jackson.map.type.TypeFactory;
 import org.codehaus.jackson.map.util.EnumValues;
 import org.codehaus.jackson.node.ObjectNode;
 import org.codehaus.jackson.node.ArrayNode;
 import org.codehaus.jackson.type.JavaType;
 
-/**
- * Standard serializer used for {@link java.lang.Enum} types.
- *<p>
- * Based on {@link ScalarSerializerBase} since the JSON value is
- * scalar (String).
- * 
- * @author tatu
- */
-@JacksonStdImpl
 public class EnumSerializer
-    extends ScalarSerializerBase<Enum<?>>
+    extends SerializerBase<Enum<?>>
 {
     /**
      * This map contains pre-resolved values (since there are ways
@@ -33,26 +22,14 @@ public class EnumSerializer
     protected final EnumValues _values;
 
     public EnumSerializer(EnumValues v) {
-        super(Enum.class, false);
         _values = v;
     }
 
-    @Deprecated
     public static EnumSerializer construct(Class<Enum<?>> enumClass, AnnotationIntrospector intr)
     {
         return new EnumSerializer(EnumValues.construct(enumClass, intr));
     }
 
-    public static EnumSerializer construct(Class<Enum<?>> enumClass, SerializationConfig config,
-            BasicBeanDescription beanDesc)
-    {
-        // [JACKSON-212]: If toString() is to be used instead, leave EnumValues null
-        AnnotationIntrospector intr = config.getAnnotationIntrospector();
-        EnumValues v = config.isEnabled(SerializationConfig.Feature.WRITE_ENUMS_USING_TO_STRING)
-            ? EnumValues.constructFromToString(enumClass, intr) : EnumValues.constructFromName(enumClass, intr);
-        return new EnumSerializer(v);
-    }
-    
     @Override
     public void serialize(Enum<?> en, JsonGenerator jgen, SerializerProvider provider)
         throws IOException, JsonGenerationException

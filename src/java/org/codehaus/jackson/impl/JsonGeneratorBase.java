@@ -2,10 +2,6 @@ package org.codehaus.jackson.impl;
 
 import java.io.*;
 import java.math.BigDecimal;
-import java.math.BigInteger;
-import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.concurrent.atomic.AtomicInteger;
-import java.util.concurrent.atomic.AtomicLong;
 
 import org.codehaus.jackson.*;
 
@@ -18,9 +14,9 @@ public abstract class JsonGeneratorBase
     extends JsonGenerator
 {
     /*
-    /**********************************************************
-    /* Configuration
-    /**********************************************************
+    ////////////////////////////////////////////////////
+    // Configuration
+    ////////////////////////////////////////////////////
      */
 
     protected ObjectCodec _objectCodec;
@@ -40,9 +36,9 @@ public abstract class JsonGeneratorBase
     protected boolean _cfgNumbersAsStrings;
 
     /*
-    /**********************************************************
-    /* State
-    /**********************************************************
+    ////////////////////////////////////////////////////
+    // State
+    ////////////////////////////////////////////////////
      */
 
     /**
@@ -59,9 +55,9 @@ public abstract class JsonGeneratorBase
     protected boolean _closed;
 
     /*
-    /**********************************************************
-    /* Life-cycle
-    /**********************************************************
+    ////////////////////////////////////////////////////
+    // Life-cycle
+    ////////////////////////////////////////////////////
      */
 
     protected JsonGeneratorBase(int features, ObjectCodec codec)
@@ -74,9 +70,9 @@ public abstract class JsonGeneratorBase
     }
 
     /*
-    /**********************************************************
-    /* Configuration
-    /**********************************************************
+    ////////////////////////////////////////////////////
+    // Configuration
+    ////////////////////////////////////////////////////
      */
 
     @Override
@@ -117,9 +113,9 @@ public abstract class JsonGeneratorBase
     public final ObjectCodec getCodec() { return _objectCodec; }
 
     /*
-    /**********************************************************
-    /* Public API, accessors
-    /**********************************************************
+    ////////////////////////////////////////////////////
+    // Public API, accessors
+    ////////////////////////////////////////////////////
      */
 
     /**
@@ -128,9 +124,9 @@ public abstract class JsonGeneratorBase
     public final JsonWriteContext getOutputContext() { return _writeContext; }
 
     /*
-    /**********************************************************
-    /* Public API, write methods, structural
-    /**********************************************************
+    ////////////////////////////////////////////////////
+    // Public API, write methods, structural
+    ////////////////////////////////////////////////////
      */
 
     public final void writeStartArray()
@@ -213,9 +209,9 @@ public abstract class JsonGeneratorBase
         throws IOException, JsonGenerationException;
 
     /*
-    /**********************************************************
-    /* Public API, write methods, textual
-    /**********************************************************
+    ////////////////////////////////////////////////////
+    // Public API, write methods, textual
+    ////////////////////////////////////////////////////
      */
 
     //public abstract void writeString(String text) throws IOException, JsonGenerationException;
@@ -226,37 +222,12 @@ public abstract class JsonGeneratorBase
 
     //public abstract void writeRaw(char[] text, int offset, int len) throws IOException, JsonGenerationException;
 
-    @Override
-    public void writeRawValue(String text)
-        throws IOException, JsonGenerationException
-    {
-        _verifyValueWrite("write raw value");
-        writeRaw(text);
-    }
-
-    @Override
-    public void writeRawValue(String text, int offset, int len)
-        throws IOException, JsonGenerationException
-    {
-        _verifyValueWrite("write raw value");
-        writeRaw(text, offset, len);
-    }
-
-    @Override
-    public void writeRawValue(char[] text, int offset, int len)
-        throws IOException, JsonGenerationException
-    {
-        _verifyValueWrite("write raw value");
-        writeRaw(text, offset, len);
-    }
-    
     //public abstract void writeBinary(byte[] data, int offset, int len, boolean includeLFs) throws IOException, JsonGenerationException;
 
-    
     /*
-    /**********************************************************
-    /* Public API, write methods, primitive
-    /**********************************************************
+    ////////////////////////////////////////////////////
+    // Public API, write methods, primitive
+    ////////////////////////////////////////////////////
      */
 
     public abstract void writeNumber(int i)
@@ -281,49 +252,21 @@ public abstract class JsonGeneratorBase
         throws IOException, JsonGenerationException;
 
     /*
-    /**********************************************************
-    /* Public API, write methods, POJOs, trees
-    /**********************************************************
+    ////////////////////////////////////////////////////
+    // Public API, write methods, POJOs, trees
+    ////////////////////////////////////////////////////
      */
 
-    public void writeObject(Object value)
-        throws IOException, JsonProcessingException
-    {
-        if (value == null) {
-            // important: call method that does check value write:
-            writeNull();
-        } else {
-            /* 02-Mar-2009, tatu: we are NOT to call _verifyValueWrite here,
-             *   because that will be done when codec actually serializes
-             *   contained POJO. If we did call it it would advance state
-             *   causing exception later on
-             */
-            if (_objectCodec != null) {
-                _objectCodec.writeValue(this, value);
-                return;
-            }
-            _writeSimpleObject(value);
-        }
-    }
+    public abstract void writeObject(Object value)
+        throws IOException, JsonProcessingException;
 
-    public void writeTree(JsonNode rootNode)
-        throws IOException, JsonProcessingException
-    {
-        // As with 'writeObject()', we are not check if write would work
-        if (rootNode == null) {
-            writeNull();
-        } else {
-            if (_objectCodec == null) {
-                throw new IllegalStateException("No ObjectCodec defined for the generator, can not serialize JsonNode-based trees");
-            }
-            _objectCodec.writeTree(this, rootNode);
-        }
-    }
+    public abstract void writeTree(JsonNode rootNode)
+        throws IOException, JsonProcessingException;
 
     /*
-    /**********************************************************
-    /* Public API, low-level output handling
-    /**********************************************************
+    ////////////////////////////////////////////////////
+    // Public API, low-level output handling
+    ////////////////////////////////////////////////////
      */
 
     public abstract void flush() throws IOException;
@@ -336,9 +279,9 @@ public abstract class JsonGeneratorBase
     public boolean isClosed() { return _closed; }
 
     /*
-    /**********************************************************
-    /* Public API, copy-through methods
-    /**********************************************************
+    ////////////////////////////////////////////////////
+    // Public API, copy-through methods
+    ////////////////////////////////////////////////////
      */
 
     public final void copyCurrentEvent(JsonParser jp)
@@ -361,35 +304,13 @@ public abstract class JsonGeneratorBase
             writeFieldName(jp.getCurrentName());
             break;
         case VALUE_STRING:
-            if (jp.hasTextCharacters()) {
-                writeString(jp.getTextCharacters(), jp.getTextOffset(), jp.getTextLength());
-            } else {
-                writeString(jp.getText());
-            }
+            writeString(jp.getTextCharacters(), jp.getTextOffset(), jp.getTextLength());
             break;
         case VALUE_NUMBER_INT:
-            switch (jp.getNumberType()) {
-            case INT:
-                writeNumber(jp.getIntValue());
-                break;
-            case BIG_INTEGER:
-                writeNumber(jp.getBigIntegerValue());
-                break;
-            default:
-                writeNumber(jp.getLongValue());
-            }
+            writeNumber(jp.getIntValue());
             break;
         case VALUE_NUMBER_FLOAT:
-            switch (jp.getNumberType()) {
-            case BIG_DECIMAL:
-                writeNumber(jp.getDecimalValue());
-                break;
-            case FLOAT:
-                writeNumber(jp.getFloatValue());
-                break;
-            default:
-                writeNumber(jp.getDoubleValue());
-            }
+            writeNumber(jp.getDoubleValue());
             break;
         case VALUE_TRUE:
             writeBoolean(true);
@@ -399,9 +320,6 @@ public abstract class JsonGeneratorBase
             break;
         case VALUE_NULL:
             writeNull();
-            break;
-        case VALUE_EMBEDDED_OBJECT:
-            writeObject(jp.getEmbeddedObject());
             break;
         default:
             _cantHappen();
@@ -441,9 +359,9 @@ public abstract class JsonGeneratorBase
     }
 
     /*
-    /**********************************************************
-    /* Package methods for this, sub-classes
-    /**********************************************************
+    ////////////////////////////////////////////////////
+    // Package methods for this, sub-classes
+    ////////////////////////////////////////////////////
      */
 
     protected abstract void _releaseBuffers();
@@ -460,82 +378,5 @@ public abstract class JsonGeneratorBase
     protected void _cantHappen()
     {
         throw new RuntimeException("Internal error: should never end up through this code path");
-    }
-
-    /**
-     * Helper method to try to call appropriate write method for given
-     * untyped Object. At this point, no structural conversions should be done,
-     * only simple basic types are to be coerced as necessary.
-     *
-     * @param value Non-null value to write
-     */
-    protected void _writeSimpleObject(Object value) 
-        throws IOException, JsonGenerationException
-    {
-        /* 31-Dec-2009, tatu: Actually, we could just handle some basic
-         *    types even without codec. This can improve interoperability,
-         *    and specifically help with TokenBuffer.
-         */
-        if (value == null) {
-            writeNull();
-            return;
-        }
-        if (value instanceof String) {
-            writeString((String) value);
-            return;
-        }
-        if (value instanceof Number) {
-            Number n = (Number) value;
-            if (n instanceof Integer) {
-                writeNumber(n.intValue());
-                return;
-            } else if (n instanceof Long) {
-                writeNumber(n.longValue());
-                return;
-            } else if (n instanceof Double) {
-                writeNumber(n.doubleValue());
-                return;
-            } else if (n instanceof Float) {
-                writeNumber(n.floatValue());
-                return;
-            } else if (n instanceof Short) {
-                writeNumber(n.shortValue());
-                return;
-            } else if (n instanceof Byte) {
-                writeNumber(n.byteValue());
-                return;
-            } else if (n instanceof BigInteger) {
-                writeNumber((BigInteger) n);
-                return;
-            } else if (n instanceof BigDecimal) {
-                writeNumber((BigDecimal) n);
-                return;
-                
-            // then Atomic types
-                
-            } else if (n instanceof AtomicInteger) {
-                writeNumber(((AtomicInteger) n).get());
-                return;
-            } else if (n instanceof AtomicLong) {
-                writeNumber(((AtomicLong) n).get());
-                return;
-            }
-        } else if (value instanceof byte[]) {
-            writeBinary((byte[]) value);
-            return;
-        } else if (value instanceof Boolean) {
-            writeBoolean(((Boolean) value).booleanValue());
-            return;
-        } else if (value instanceof AtomicBoolean) {
-            writeBoolean(((AtomicBoolean) value).get());
-            return;
-        }
-        throw new IllegalStateException("No ObjectCodec defined for the generator, can only serialize simple wrapper types (type passed "
-                +value.getClass().getName()+")");
-    }    
-
-    protected final void _throwInternal()
-    {
-        throw new RuntimeException("Internal error: this code path should never get executed");
     }
 }

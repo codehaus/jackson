@@ -10,7 +10,7 @@ import org.codehaus.jackson.type.JavaType;
  * legal {@link JavaType}.
  */
 public final class ArrayType
-    extends TypeBase
+    extends JavaType
 {
     /**
      * Type of elements in the array.
@@ -23,7 +23,7 @@ public final class ArrayType
      * it is essentially immutable and thus can be shared.
      */
     final Object _emptyArray;
-    
+
     private ArrayType(JavaType componentType, Object emptyInstance)
     {
         super(emptyInstance.getClass());
@@ -44,14 +44,10 @@ public final class ArrayType
         return new ArrayType(componentType, emptyInstance);
     }                                   
 
-    protected String buildCanonicalName() {
-        return _class.getName();
-    }
-    
     /*
-    /**********************************************************
-    /* Methods for narrowing conversions
-    /**********************************************************
+    //////////////////////////////////////////////////////////
+    // Methods for narrowing conversions
+    //////////////////////////////////////////////////////////
      */
 
     /**
@@ -85,55 +81,13 @@ public final class ArrayType
             return this;
         }
         JavaType newComponentType = _componentType.narrowBy(contentClass);
-        return construct(newComponentType).copyHandlers(this);
+        return construct(newComponentType);
     }
 
     /*
-    /**********************************************************
-    /* Overridden methods
-    /**********************************************************
-     */
-
-    @Override
-    public boolean isArrayType() { return true; }
-    
-    /**
-     * For some odd reason, modifiers for array classes would
-     * claim they are abstract types. Not so, at least for our
-     * purposes.
-     */
-    @Override
-    public boolean isAbstract() { return false; }
-
-    /**
-     * For some odd reason, modifiers for array classes would
-     * claim they are abstract types. Not so, at least for our
-     * purposes.
-     */
-    @Override
-    public boolean isConcrete() { return true; }
-
-    @Override
-    public boolean mayBeGeneric() {
-        // arrays are not parameterized, but element type may be:
-        return _componentType.mayBeGeneric();
-    }
-    
-    /**
-     * Not sure what symbolic name is used internally, if any;
-     * let's follow naming of Collection types here.
-     * Should not really matter since array types have no
-     * super types.
-     */
-    public String containedTypeName(int index) {
-        if (index == 0) return "E";
-        return null;
-    }
-    
-    /*
-    /**********************************************************
-    /* Public API
-    /**********************************************************
+    //////////////////////////////////////////////////////////
+    // Public API
+    //////////////////////////////////////////////////////////
      */
 
     public boolean isContainerType() { return true; }
@@ -141,29 +95,14 @@ public final class ArrayType
     @Override
     public JavaType getContentType() { return  _componentType; }
 
-    public int containedTypeCount() { return 1; }
-    public JavaType containedType(int index) {
-            return (index == 0) ? _componentType : null;
-    }
-    
-    public StringBuilder getGenericSignature(StringBuilder sb) {
-        sb.append('[');
-        return _componentType.getGenericSignature(sb);
-    }
-
-    public StringBuilder getErasedSignature(StringBuilder sb) {
-        sb.append('[');
-        return _componentType.getErasedSignature(sb);
-    }
-    
     /*
-    /**********************************************************
-    /* Standard methods
-    /**********************************************************
+    //////////////////////////////////////////////////////////
+    // Standard methods
+    //////////////////////////////////////////////////////////
      */
 
     @Override
-    public String toString()
+        public String toString()
     {
         return "[array type, component type: "+_componentType+"]";
     }

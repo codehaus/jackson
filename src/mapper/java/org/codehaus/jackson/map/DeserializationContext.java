@@ -1,13 +1,10 @@
 package org.codehaus.jackson.map;
 
-import java.io.IOException;
 import java.util.*;
 
 import org.codehaus.jackson.*;
 import org.codehaus.jackson.map.util.ArrayBuilders;
 import org.codehaus.jackson.map.util.ObjectBuffer;
-import org.codehaus.jackson.node.JsonNodeFactory;
-import org.codehaus.jackson.type.JavaType;
 
 /**
  * Context for deserialization process. Used to allow passing in configuration
@@ -23,28 +20,13 @@ public abstract class DeserializationContext
     }
 
     /*
-    /**********************************************************
-    /* Configuration methods
-    /**********************************************************
-     */
+    //////////////////////////////////////////////////////////////
+    // Config methods
+    //////////////////////////////////////////////////////////////
+    */
 
-    /**
-     * Method for accessing configuration setting object for
-     * currently active deserialization.
-     */
     public DeserializationConfig getConfig() { return _config; }
 
-    /**
-     * Returns provider that can be used for dynamically locating
-     * other deserializers during runtime.
-     * 
-     * @since 1.5
-     */
-    public DeserializerProvider getDeserializerProvider() {
-        // will be overridden by impl class
-        return null;
-    }
-    
     /**
      * Convenience method for checking whether specified on/off
      * feature is enabled
@@ -53,14 +35,6 @@ public abstract class DeserializationContext
     	return _config.isEnabled(feat);
     }
 
-    /**
-     * Convenience method for accessing the default Base64 encoding
-     * used for decoding base64 encoded binary content.
-     * Same as calling:
-     *<pre>
-     *  getConfig().getBase64Variant();
-     *</pre>
-     */
     public Base64Variant getBase64Variant() {
         return _config.getBase64Variant();
     }
@@ -71,15 +45,11 @@ public abstract class DeserializationContext
      */
     public abstract JsonParser getParser();
 
-    public final JsonNodeFactory getNodeFactory() {
-        return _config.getNodeFactory();
-    }
-    
     /*
-    /**********************************************************
-    /* Methods for accessing reusable/recyclable helper objects
-    /**********************************************************
-     */
+    //////////////////////////////////////////////////////////////
+    // Methods for accessing reusable/recyclable helper objects
+    //////////////////////////////////////////////////////////////
+    */
 
     /**
      * Method that can be used to get access to a reusable ObjectBuffer,
@@ -104,47 +74,21 @@ public abstract class DeserializationContext
     public abstract ArrayBuilders getArrayBuilders();
 
     /*
-    /**********************************************************
-    /* Parsing methods that may use reusable/-cyclable objects
-    /**********************************************************
-     */
+    //////////////////////////////////////////////////////////////
+    // Parsing methods that may use reusable/-cyclable objects
+    //////////////////////////////////////////////////////////////
+    */
 
-    /**
-     * Convenience method for parsing a Date from given String, using
-     * currently configured date format (accessed using
-     * {@link DeserializationConfig#getDateFormat()}).
-     *<p>
-     * Implementation will handle thread-safety issues related to
-     * date formats such that first time this method is called,
-     * date format is cloned, and cloned instance will be retained
-     * for use during this deserialization round.
-     */
     public abstract java.util.Date parseDate(String dateStr)
         throws IllegalArgumentException;
 
-    /**
-     * Convenience method for constructing Calendar instance set
-     * to specified time, to be modified and used by caller.
-     */
     public abstract Calendar constructCalendar(Date d);
 
     /*
-    /**********************************************************
-    /* Methods for problem handling, reporting
-    /**********************************************************
-     */
-
-    /**
-     * Method deserializers can call to inform configured {@link DeserializationProblemHandler}s
-     * of an unrecognized property.
-     * 
-     * @return True if there was a configured problem handler that was able to handle the
-     *   proble
-     * 
-     * @since 1.5
-     */
-    public abstract boolean handleUnknownProperty(JsonParser jp, JsonDeserializer<?> deser, Object instanceOrClass, String propName)
-        throws IOException, JsonProcessingException;
+    //////////////////////////////////////////////////////////////
+    // Methods for constructing exceptions
+    //////////////////////////////////////////////////////////////
+    */
 
     /**
      * Helper method for constructing generic mapping exception for specified type
@@ -157,8 +101,6 @@ public abstract class DeserializationContext
      * specified class (missing constructor, exception from constructor)
      */
     public abstract JsonMappingException instantiationException(Class<?> instClass, Exception e);
-
-    public abstract JsonMappingException instantiationException(Class<?> instClass, String msg);
     
     /**
      * Helper method for constructing exception to indicate that input JSON
@@ -180,12 +122,6 @@ public abstract class DeserializationContext
     public abstract JsonMappingException weirdKeyException(Class<?> keyClass, String keyValue, String msg);
 
     /**
-     * Helper method for indicating that the current token was expected to be another
-     * token.
-     */
-    public abstract JsonMappingException wrongTokenException(JsonParser jp, JsonToken expToken, String msg);
-    
-    /**
      * Helper method for constructing exception to indicate that JSON Object
      * field name did not map to a known property of type being
      * deserialized.
@@ -195,12 +131,4 @@ public abstract class DeserializationContext
      *   have been) instantiated
      */
     public abstract JsonMappingException unknownFieldException(Object instanceOrClass, String fieldName);
-
-    /**
-     * Helper method for constructing exception to indicate that given
-     * type id (parsed from JSON) could not be converted to a Java type.
-     * 
-     * @since 1.5
-     */
-    public abstract JsonMappingException unknownTypeException(JavaType baseType, String id);
 }

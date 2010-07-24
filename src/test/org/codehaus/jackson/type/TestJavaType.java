@@ -29,8 +29,9 @@ public class TestJavaType
         assertFalse(baseType.isInterface());
         assertFalse(baseType.isPrimitive());
 
+        assertNull(baseType.findVariableType("foobar"));
         assertNull(baseType.getContentType());
-        assertNull(baseType.getValueHandler());
+        assertNull(baseType.getHandler());
 
         /* both narrow and widen just return type itself (exact, not just
          * equal)
@@ -48,23 +49,12 @@ public class TestJavaType
         }
 
         // Also, let's try assigning bogus handler
-        baseType.setValueHandler("xyz"); // untyped
-        assertEquals("xyz", baseType.getValueHandler());
+        baseType.setHandler("xyz"); // untyped
+        assertEquals("xyz", baseType.getHandler());
         // illegal to re-set
         try {
-            baseType.setValueHandler("foobar");
-            fail("Shouldn't allow re-setting value handler");
-        } catch (IllegalStateException iae) {
-            verifyException(iae, "Trying to reset");
-        }
-
-        // and similarly for 1.5...
-        baseType.setTypeHandler("abc"); // untyped
-        assertEquals("abc", baseType.getTypeHandler());
-        // illegal to re-set
-        try {
-            baseType.setTypeHandler("foobar");
-            fail("Shouldn't allow re-setting type handler");
+            baseType.setHandler("foobar");
+            fail("Shouldn't allow re-setting handler");
         } catch (IllegalStateException iae) {
             verifyException(iae, "Trying to reset");
         }
@@ -92,7 +82,7 @@ public class TestJavaType
 
         // Also, must use map type constructor, not simple...
         try {
-            SimpleType.construct(HashMap.class);
+            SimpleType.construct(HashMap.class, null);
         } catch (IllegalArgumentException e) {
             verifyException(e, "for a Map");
         }
@@ -118,7 +108,7 @@ public class TestJavaType
 
         // Also, must NOT try to create using simple type
         try {
-            SimpleType.construct(String[].class);
+            SimpleType.construct(String[].class, null);
         } catch (IllegalArgumentException e) {
             verifyException(e, "for an array");
         }
@@ -145,7 +135,7 @@ public class TestJavaType
 
         // Also, must NOT try to create using simple type
         try {
-            SimpleType.construct(ArrayList.class);
+            SimpleType.construct(ArrayList.class, null);
         } catch (IllegalArgumentException e) {
             verifyException(e, "for a Collection");
         }

@@ -5,7 +5,6 @@ import java.util.*;
 
 import org.codehaus.jackson.*;
 import org.codehaus.jackson.map.*;
-import org.codehaus.jackson.map.annotate.JacksonStdImpl;
 import org.codehaus.jackson.map.type.*;
 import org.codehaus.jackson.map.util.ArrayBuilders;
 import org.codehaus.jackson.map.util.ObjectBuffer;
@@ -58,47 +57,14 @@ public class ArrayDeserializers
                               (JsonDeserializer<Object>) deser);
     }
 
-    public Object deserializeWithType(JsonParser jp, DeserializationContext ctxt,
-            TypeDeserializer typeDeserializer)
-        throws IOException, JsonProcessingException
-    {
-        /* Should there be separate handling for base64 stuff?
-         * for now this should be enough:
-         */
-        return typeDeserializer.deserializeTypedFromArray(jp, ctxt);
-    }
-
     /*
-    /********************************************************
-    /* Intermediate base class
-    /********************************************************
-     */
-    
-    static abstract class ArrayDeser<T>
-        extends StdDeserializer<T>
-    {
-        protected ArrayDeser(Class<T> cls) {
-            super(cls);
-        }
-
-        @Override
-        public Object deserializeWithType(JsonParser jp, DeserializationContext ctxt,
-            TypeDeserializer typeDeserializer)
-            throws IOException, JsonProcessingException
-        {
-            return typeDeserializer.deserializeTypedFromArray(jp, ctxt);
-        }
-    }
-    
-    /*
-    /********************************************************
-    /* Actual deserializers: efficient String[], char[] deserializers
-    /********************************************************
+    /////////////////////////////////////////////////////////////
+    // Actual deserializers: efficient String[], char[] deserializers
+    /////////////////////////////////////////////////////////////
     */
 
-    @JacksonStdImpl
     final static class StringDeser
-        extends ArrayDeser<String[]>
+        extends StdDeserializer<String[]>
     {
         public StringDeser() { super(String[].class); }
 
@@ -129,9 +95,8 @@ public class ArrayDeserializers
         }
     }
 
-    @JacksonStdImpl
     final static class CharDeser
-        extends ArrayDeser<char[]>
+        extends StdDeserializer<char[]>
     {
         public CharDeser() { super(char[].class); }
 
@@ -142,57 +107,28 @@ public class ArrayDeserializers
              * convert other tokens to Strings... but let's not bother
              * yet, doesn't seem to make sense)
              */
-            JsonToken t = jp.getCurrentToken();
-            if (t == JsonToken.VALUE_STRING) {
-                // note: can NOT return shared internal buffer, must copy:
-                char[] buffer = jp.getTextCharacters();
-                int offset = jp.getTextOffset();
-                int len = jp.getTextLength();
-    
-                char[] result = new char[len];
-                System.arraycopy(buffer, offset, result, 0, len);
-                return result;
+            if (jp.getCurrentToken() != JsonToken.VALUE_STRING) {
+                throw ctxt.mappingException(_valueClass);
             }
-            if (t == JsonToken.START_ARRAY) {
-                // Let's actually build as a String, then get chars
-                StringBuilder sb = new StringBuilder(64);
-                while ((t = jp.nextToken()) != JsonToken.END_ARRAY) {
-                    if (t != JsonToken.VALUE_STRING) {
-                        throw ctxt.mappingException(Character.TYPE);
-                    }
-                    String str = jp.getText();
-                    if (str.length() != 1) {
-                        throw JsonMappingException.from(jp, "Can not convert a JSON String of length "+str.length()+" into a char element of char array");
-                    }
-                    sb.append(str.charAt(0));
-                }
-                return sb.toString().toCharArray();
-            }
-            // or, maybe an embedded object?
-            if (t == JsonToken.VALUE_EMBEDDED_OBJECT) {
-                Object ob = jp.getEmbeddedObject();
-                if (ob == null) return null;
-                if (ob instanceof char[]) {
-                    return (char[]) ob;
-                }
-                if (ob instanceof String) {
-                    return ((String) ob).toCharArray();
-                }
-                // not recognized, just fall through
-            }
-            throw ctxt.mappingException(_valueClass);
+            // note: can NOT return shared internal buffer, must copy:
+            char[] buffer = jp.getTextCharacters();
+            int offset = jp.getTextOffset();
+            int len = jp.getTextLength();
+
+            char[] result = new char[len];
+            System.arraycopy(buffer, offset, result, 0, len);
+            return result;
         }
     }
 
     /*
-    /********************************************************
-    /* Actual deserializers: primivate array desers
-    /********************************************************
+    /////////////////////////////////////////////////////////////
+    // Actual deserializers: primivate array desers
+    /////////////////////////////////////////////////////////////
     */
 
-    @JacksonStdImpl
     final static class BooleanDeser
-        extends ArrayDeser<boolean[]>
+        extends StdDeserializer<boolean[]>
     {
         public BooleanDeser() { super(boolean[].class); }
 
@@ -223,9 +159,8 @@ public class ArrayDeserializers
      * When dealing with byte arrays we have one more alternative (compared
      * to int/long/shorts): base64 encoded data.
      */
-    @JacksonStdImpl
     final static class ByteDeser
-        extends ArrayDeser<byte[]>
+        extends StdDeserializer<byte[]>
     {
         public ByteDeser() { super(byte[].class); }
 
@@ -276,9 +211,8 @@ public class ArrayDeserializers
         }
     }
 
-    @JacksonStdImpl
     final static class ShortDeser
-        extends ArrayDeser<short[]>
+        extends StdDeserializer<short[]>
     {
         public ShortDeser() { super(short[].class); }
 
@@ -304,9 +238,8 @@ public class ArrayDeserializers
         }
     }
 
-    @JacksonStdImpl
     final static class IntDeser
-        extends ArrayDeser<int[]>
+        extends StdDeserializer<int[]>
     {
         public IntDeser() { super(int[].class); }
 
@@ -333,9 +266,8 @@ public class ArrayDeserializers
         }
     }
 
-    @JacksonStdImpl
     final static class LongDeser
-        extends ArrayDeser<long[]>
+        extends StdDeserializer<long[]>
     {
         public LongDeser() { super(long[].class); }
 
@@ -361,9 +293,8 @@ public class ArrayDeserializers
         }
     }
 
-    @JacksonStdImpl
     final static class FloatDeser
-        extends ArrayDeser<float[]>
+        extends StdDeserializer<float[]>
     {
         public FloatDeser() { super(float[].class); }
 
@@ -390,9 +321,8 @@ public class ArrayDeserializers
         }
     }
 
-    @JacksonStdImpl
     final static class DoubleDeser
-        extends ArrayDeser<double[]>
+        extends StdDeserializer<double[]>
     {
         public DoubleDeser() { super(double[].class); }
 

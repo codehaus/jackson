@@ -14,16 +14,9 @@ import org.codehaus.jackson.map.annotate.JsonSerialize;
  * {@link JsonSerialize#include} annotation property work
  * as expected.
  */
-@SuppressWarnings("deprecation")
 public class TestNullProperties
     extends BaseMapTest
 {
-    /*
-    /**********************************************************
-    /* Helper beans
-    /**********************************************************
-     */
-
     static class SimpleBean
     {
         public String getA() { return "a"; }
@@ -43,12 +36,6 @@ public class TestNullProperties
         public String getB() { return null; }
     }
 
-    static class LegacyFieldBean
-    {
-        @JsonWriteNullProperties(false)
-        public String b;
-    }
-    
     @JsonSerialize(include=JsonSerialize.Inclusion.ALWAYS) // just to ensure default
     static class NoNullsBean
     {
@@ -82,13 +69,9 @@ public class TestNullProperties
         public String getB() { return _b; }
     }
 
-    /*
-    /**********************************************************
-    /* Unit tests
-    /**********************************************************
-     */
-    
-    public void testGlobal() throws IOException
+
+    @SuppressWarnings("deprecation")
+	public void testGlobal() throws IOException
     {
         ObjectMapper m = new ObjectMapper();
         assertTrue(m.getSerializationConfig().isEnabled(SerializationConfig.Feature.WRITE_NULL_PROPERTIES));
@@ -157,7 +140,8 @@ public class TestNullProperties
 
     // // // Tests for deprecated legacy annotations:
 
-    public void testByClassLegacy() throws IOException
+    @SuppressWarnings("deprecation")
+	public void testByClassLegacy() throws IOException
     {
         ObjectMapper m = new ObjectMapper();
         assertTrue(m.getSerializationConfig().isEnabled(SerializationConfig.Feature.WRITE_NULL_PROPERTIES));
@@ -172,13 +156,6 @@ public class TestNullProperties
     {
         ObjectMapper m = new ObjectMapper();
         Map<String,Object> result = writeAndMap(m, new LegacyMethodBean());
-        assertEquals(0, result.size());
-    }
-
-    public void testByFieldLegacy() throws IOException
-    {
-        ObjectMapper m = new ObjectMapper();
-        Map<String,Object> result = writeAndMap(m, new LegacyFieldBean());
         assertEquals(0, result.size());
     }
 }

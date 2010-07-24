@@ -9,12 +9,9 @@ import java.lang.reflect.Type;
 import org.codehaus.jackson.JsonGenerationException;
 import org.codehaus.jackson.JsonGenerator;
 import org.codehaus.jackson.JsonNode;
-import org.codehaus.jackson.map.*;
-import org.codehaus.jackson.map.annotate.JacksonStdImpl;
-import org.codehaus.jackson.map.type.TypeFactory;
 import org.codehaus.jackson.schema.SchemaAware;
 import org.codehaus.jackson.schema.JsonSchema;
-import org.codehaus.jackson.type.JavaType;
+import org.codehaus.jackson.map.*;
 
 /**
  * Serializer class that can serialize Object that have a
@@ -28,15 +25,14 @@ import org.codehaus.jackson.type.JavaType;
  * done from {@link #resolve} method, and NOT from constructor;
  * otherwise we could end up with an infinite loop.
  */
-@JacksonStdImpl
 public final class JsonValueSerializer
-    extends SerializerBase<Object>
+    extends JsonSerializer<Object>
     implements ResolvableSerializer, SchemaAware
 {
-    protected final Method _accessorMethod;
+    final Method _accessorMethod;
 
-    protected JsonSerializer<Object> _valueSerializer;
-    
+    JsonSerializer<Object> _serializer;
+
     /**
      * @param ser Explicit serializer to use, if caller knows it (which
      *            occurs if and only if the "value method" was annotated with
@@ -45,9 +41,8 @@ public final class JsonValueSerializer
      */
     public JsonValueSerializer(Method valueMethod, JsonSerializer<Object> ser)
     {
-        super(Object.class);
         _accessorMethod = valueMethod;
-        _valueSerializer = ser;
+        _serializer = ser;
     }
 
     public void serialize(Object bean, JsonGenerator jgen, SerializerProvider prov)
@@ -60,15 +55,9 @@ public final class JsonValueSerializer
             if (value == null) {
                 ser = prov.getNullValueSerializer();
             } else {
-                ser = _valueSerializer;
+                ser = _serializer;
                 if (ser == null) {
-                    Class<?> c = value.getClass();
-                    /* 10-Mar-2010, tatu: Ideally we would actually separate out type
-                     *   serializer from value serializer; but, alas, there's no access
-                     *   to serializer factory at this point... 
-                     */
-                    // let's cache it, may be needed soon again
-                    ser = prov.findTypedValueSerializer(c, true);
+                    ser = prov.findValueSerializer(value.getClass());
                 }
             }
             ser.serialize(value, jgen, prov);
@@ -93,15 +82,15 @@ public final class JsonValueSerializer
     public JsonNode getSchema(SerializerProvider provider, Type typeHint)
         throws JsonMappingException
     {
-        return (_valueSerializer instanceof SchemaAware) ?
-                ((SchemaAware) _valueSerializer).getSchema(provider, null) :
+        return (_serializer instanceof SchemaAware) ?
+                ((SchemaAware) _serializer).getSchema(provider, null) :
                 JsonSchema.getDefaultSchemaNode();
     }
     
     /*
-    /*******************************************************
-    /* ResolvableSerializer impl
-    /*******************************************************
+    ////////////////////////////////////////////////////////
+    // ResolvableSerializer impl
+    ////////////////////////////////////////////////////////
      */
 
     /**
@@ -109,31 +98,24 @@ public final class JsonValueSerializer
      * statically figure out what the result type must be.
      */
     public void resolve(SerializerProvider provider)
-        throws JsonMappingException
+            throws JsonMappingException
     {
-        if (_valueSerializer == null) {
+        if (_serializer == null) {
+            Class<?> rt = _accessorMethod.getReturnType();
             /* Note: we can only assign serializer statically if the
              * declared type is final -- if not, we don't really know
              * the actual type until we get the instance.
              */
-            // 10-Mar-2010, tatu: Except if static typing is to be used
-            if (provider.isEnabled(SerializationConfig.Feature.USE_STATIC_TYPING)
-                    || Modifier.isFinal(_accessorMethod.getReturnType().getModifiers())) {
-                JavaType t = TypeFactory.type(_accessorMethod.getGenericReturnType());
-                // false -> no need to cache
-                /* 10-Mar-2010, tatu: Ideally we would actually separate out type
-                 *   serializer from value serializer; but, alas, there's no access
-                 *   to serializer factory at this point... 
-                 */
-                _valueSerializer = provider.findTypedValueSerializer(t, false);
+            if (Modifier.isFinal(rt.getModifiers())) {
+                _serializer = provider.findValueSerializer(rt);
             }
         }
     }
 
     /*
-    /*******************************************************
-    /* Other methods
-    /*******************************************************
+    ////////////////////////////////////////////////////////
+    // Other methods
+    ////////////////////////////////////////////////////////
      */
 
     @Override

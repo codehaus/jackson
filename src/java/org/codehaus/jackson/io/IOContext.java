@@ -13,16 +13,16 @@ import org.codehaus.jackson.util.TextBuffer;
 public final class IOContext
 {
     /*
-    /**********************************************************
-    /* Configuration
-    /**********************************************************
+    //////////////////////////////////////////////////////
+    // Configuration
+    //////////////////////////////////////////////////////
      */
 
     /**
      * Reference to the source object, which can be used for displaying
      * location information
      */
-    protected final Object _sourceRef;
+    final Object _sourceRef;
 
     /**
      * Encoding used by the underlying stream, if known.
@@ -40,15 +40,12 @@ public final class IOContext
     protected final boolean _managedResource;
 
     /*
-    /**********************************************************
-    /* Buffer handling, recycling
-    /**********************************************************
+    //////////////////////////////////////////////////////
+    // Buffer handling, recycling
+    //////////////////////////////////////////////////////
      */
 
-    /**
-     * Recycler used for actual allocation/deallocation/reuse
-     */
-    protected final BufferRecycler _bufferRecycler;
+    final BufferRecycler _bufferRecycler;
 
     /**
      * Reference to the allocated I/O buffer for low-level input reading,
@@ -57,24 +54,24 @@ public final class IOContext
     protected byte[] _readIOBuffer = null;
 
     /**
-     * Reference to the allocated I/O buffer used for low-level
-     * encoding-related buffering.
+     * Reference to the allocated I/O buffer for low-level input writing
+     * if any allocated.
      */
-    protected byte[] _writeEncodingBuffer = null;
-    
+    protected byte[] _writeIOBuffer = null;
+
     /**
      * Reference to the buffer allocated for tokenization purposes,
      * in which character input is read, and from which it can be
      * further returned.
      */
-    protected char[] _tokenCBuffer = null;
+    protected char[] _tokenBuffer = null;
 
     /**
      * Reference to the buffer allocated for buffering it for
      * output, before being encoded: generally this means concatenating
      * output, then encoding when buffer fills up.
      */
-    protected char[] _concatCBuffer = null;
+    protected char[] _concatBuffer = null;
 
     /**
      * Reference temporary buffer Parser instances need if calling
@@ -85,9 +82,9 @@ public final class IOContext
     protected char[] _nameCopyBuffer = null;
 
     /*
-    /**********************************************************
-    /* Life-cycle
-    /**********************************************************
+    //////////////////////////////////////////////////////
+    // Life-cycle
+    //////////////////////////////////////////////////////
      */
 
     public IOContext(BufferRecycler br, Object sourceRef, boolean managedResource)
@@ -103,9 +100,9 @@ public final class IOContext
     }
 
     /*
-    /**********************************************************
-    /* Public API, accessors
-    /**********************************************************
+    //////////////////////////////////////////////////////
+    // Public API, accessors
+    //////////////////////////////////////////////////////
      */
 
     public Object getSourceReference() { return _sourceRef; }
@@ -113,9 +110,9 @@ public final class IOContext
     public boolean isResourceManaged() { return _managedResource; }
 
     /*
-    /**********************************************************
-    /* Public API, buffer management
-    /**********************************************************
+    //////////////////////////////////////////////////////
+    // Public API, buffer management
+    //////////////////////////////////////////////////////
      */
 
     public TextBuffer constructTextBuffer()
@@ -137,31 +134,31 @@ public final class IOContext
         return _readIOBuffer;
     }
 
-    public byte[] allocWriteEncodingBuffer()
+    public byte[] allocWriteIOBuffer()
     {
-        if (_writeEncodingBuffer != null) {
-            throw new IllegalStateException("Trying to call allocWriteEncodingBuffer() second time");
+        if (_writeIOBuffer != null) {
+            throw new IllegalStateException("Trying to call allocWriteIOBuffer() second time");
         }
-        _writeEncodingBuffer = _bufferRecycler.allocByteBuffer(BufferRecycler.ByteBufferType.WRITE_ENCODING_BUFFER);
-        return _writeEncodingBuffer;
+        _writeIOBuffer = _bufferRecycler.allocByteBuffer(BufferRecycler.ByteBufferType.WRITE_IO_BUFFER);
+        return _writeIOBuffer;
     }
-    
+
     public char[] allocTokenBuffer()
     {
-        if (_tokenCBuffer != null) {
+        if (_tokenBuffer != null) {
             throw new IllegalStateException("Trying to call allocTokenBuffer() second time");
         }
-        _tokenCBuffer = _bufferRecycler.allocCharBuffer(BufferRecycler.CharBufferType.TOKEN_BUFFER);
-        return _tokenCBuffer;
+        _tokenBuffer = _bufferRecycler.allocCharBuffer(BufferRecycler.CharBufferType.TOKEN_BUFFER);
+        return _tokenBuffer;
     }
 
     public char[] allocConcatBuffer()
     {
-        if (_concatCBuffer != null) {
+        if (_concatBuffer != null) {
             throw new IllegalStateException("Trying to call allocConcatBuffer() second time");
         }
-        _concatCBuffer = _bufferRecycler.allocCharBuffer(BufferRecycler.CharBufferType.CONCAT_BUFFER);
-        return _concatCBuffer;
+        _concatBuffer = _bufferRecycler.allocCharBuffer(BufferRecycler.CharBufferType.CONCAT_BUFFER);
+        return _concatBuffer;
     }
 
     public char[] allocNameCopyBuffer(int minSize)
@@ -191,27 +188,27 @@ public final class IOContext
         }
     }
 
-    public void releaseWriteEncodingBuffer(byte[] buf)
+    public void releaseWriteIOBuffer(byte[] buf)
     {
         if (buf != null) {
             /* Let's do sanity checks to ensure once-and-only-once release,
              * as well as avoiding trying to release buffers not owned
              */
-            if (buf != _writeEncodingBuffer) {
+            if (buf != _writeIOBuffer) {
                 throw new IllegalArgumentException("Trying to release buffer not owned by the context");
             }
-            _writeEncodingBuffer = null;
-            _bufferRecycler.releaseByteBuffer(BufferRecycler.ByteBufferType.WRITE_ENCODING_BUFFER, buf);
+            _writeIOBuffer = null;
+            _bufferRecycler.releaseByteBuffer(BufferRecycler.ByteBufferType.WRITE_IO_BUFFER, buf);
         }
     }
-    
+
     public void releaseTokenBuffer(char[] buf)
     {
         if (buf != null) {
-            if (buf != _tokenCBuffer) {
+            if (buf != _tokenBuffer) {
                 throw new IllegalArgumentException("Trying to release buffer not owned by the context");
             }
-            _tokenCBuffer = null;
+            _tokenBuffer = null;
             _bufferRecycler.releaseCharBuffer(BufferRecycler.CharBufferType.TOKEN_BUFFER, buf);
         }
     }
@@ -219,10 +216,10 @@ public final class IOContext
     public void releaseConcatBuffer(char[] buf)
     {
         if (buf != null) {
-            if (buf != _concatCBuffer) {
+            if (buf != _concatBuffer) {
                 throw new IllegalArgumentException("Trying to release buffer not owned by the context");
             }
-            _concatCBuffer = null;
+            _concatBuffer = null;
             _bufferRecycler.releaseCharBuffer(BufferRecycler.CharBufferType.CONCAT_BUFFER, buf);
         }
     }

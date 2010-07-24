@@ -1,13 +1,13 @@
 package org.codehaus.jackson.map.deser;
 
-import java.util.*;
-
 import org.codehaus.jackson.annotate.*;
 import org.codehaus.jackson.map.*;
 
+import java.util.*;
+
 /**
  * Unit tests for verifying that it is possible to annotate
- * various kinds of things with {@link JsonCreator} annotation.
+ * various kinds of things with {@link @JsonCreator} annotation.
  */
 public class TestCreators
     extends BaseMapTest

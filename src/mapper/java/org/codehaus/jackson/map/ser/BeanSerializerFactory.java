@@ -2,22 +2,18 @@ package org.codehaus.jackson.map.ser;
 
 import java.util.*;
 
-import org.codehaus.jackson.annotate.JsonAutoDetect.Visibility;
-import org.codehaus.jackson.map.*;
+import org.codehaus.jackson.map.AnnotationIntrospector;
+import org.codehaus.jackson.map.JsonSerializer;
+import org.codehaus.jackson.map.SerializationConfig;
+import org.codehaus.jackson.map.SerializerFactory;
+import org.codehaus.jackson.map.annotate.JsonSerialize;
 import org.codehaus.jackson.map.introspect.AnnotatedClass;
 import org.codehaus.jackson.map.introspect.AnnotatedField;
-import org.codehaus.jackson.map.introspect.AnnotatedMember;
 import org.codehaus.jackson.map.introspect.AnnotatedMethod;
 import org.codehaus.jackson.map.introspect.BasicBeanDescription;
-import org.codehaus.jackson.map.introspect.VisibilityChecker;
-import org.codehaus.jackson.map.jsontype.NamedType;
-import org.codehaus.jackson.map.jsontype.TypeResolverBuilder;
-import org.codehaus.jackson.map.type.TypeBindings;
 import org.codehaus.jackson.map.util.ArrayBuilders;
 import org.codehaus.jackson.map.util.ClassUtil;
-import org.codehaus.jackson.map.util.SubTypeHelper;
-import org.codehaus.jackson.type.JavaType;
- 
+
 /**
  * Factory class that can provide serializers for any regular Java beans
  * (as defined by "having at least one get method recognizable as bean
@@ -57,9 +53,9 @@ public class BeanSerializerFactory
     public final static BeanSerializerFactory instance = new BeanSerializerFactory();
 
     /*
-    /**********************************************************
-    /* Life cycle
-    /**********************************************************
+    ////////////////////////////////////////////////////////////
+    // Life cycle
+    ////////////////////////////////////////////////////////////
      */
 
     /**
@@ -70,9 +66,9 @@ public class BeanSerializerFactory
     protected BeanSerializerFactory() { }
 
     /*
-    /**********************************************************
-    /* JsonSerializerFactory impl
-    /**********************************************************
+    ////////////////////////////////////////////////////////////
+    // JsonSerializerFactory impl
+    ////////////////////////////////////////////////////////////
      */
 
     /**
@@ -87,19 +83,19 @@ public class BeanSerializerFactory
      */
     @Override
     @SuppressWarnings("unchecked")
-    public JsonSerializer<Object> createSerializer(JavaType type, SerializationConfig config)
+    public <T> JsonSerializer<T> createSerializer(Class<T> type, SerializationConfig config)
     {
         /* [JACKSON-220]: Very first thing, let's check annotations to
          * see if we have explicit definition
          */
-        BasicBeanDescription beanDesc = config.introspect(type.getRawClass());
+        BasicBeanDescription beanDesc = config.introspect(type);
         JsonSerializer<?> ser = findSerializerFromAnnotation(config, beanDesc.getClassInfo());
         if (ser == null) {
             // First, fast lookup for exact type:
-            ser = super.findSerializerByLookup(type, config, beanDesc);
+            ser = super.findSerializerByLookup(type, config);
             if (ser == null) {
                 // and then introspect for some safe (?) JDK types
-                ser = super.findSerializerByPrimaryType(type, config, beanDesc);
+                ser = super.findSerializerByPrimaryType(type, config);
                 if (ser == null) {
                     /* And this is where this class comes in: if type is
                      * not a known "primary JDK type", perhaps it's a bean?
@@ -111,90 +107,50 @@ public class BeanSerializerFactory
                      * implementation of some basic JDK interface?
                      */
                     if (ser == null) {
-                        ser = super.findSerializerByAddonType(type, config, beanDesc);
+                        ser = super.findSerializerByAddonType(type, config);
                     }
                 }
             }
         }
-        return (JsonSerializer<Object>) ser;
+        return (JsonSerializer<T>) ser;
     }
 
     /*
-    /**********************************************************
-    /* Other public methods that are not part of
-    /* JsonSerializerFactory API
-    /**********************************************************
+    ////////////////////////////////////////////////////////////
+    // Other public methods that are not part of
+    // JsonSerializerFactory API
+    ////////////////////////////////////////////////////////////
      */
 
     /**
      * Method that will try to construct a {@link BeanSerializer} for
      * given class. Returns null if no properties are found.
      */
-    public JsonSerializer<Object> findBeanSerializer(JavaType type, SerializationConfig config,
+    public JsonSerializer<Object> findBeanSerializer(Class<?> type, SerializationConfig config,
                                                      BasicBeanDescription beanDesc)
     {
         // First things first: we know some types are not beans...
-        if (!isPotentialBeanType(type.getRawClass())) {
+        if (!isPotentialBeanType(type)) {
             return null;
+        }
+        /* [JACKSON-80]: Should support @JsonValue, which is alternative to
+         *   actual bean method introspection.
+         */
+        AnnotatedMethod valueMethod = beanDesc.findJsonValueMethod();
+        if (valueMethod != null) {
+            /* Further, method itself may also be annotated to indicate
+             * exact JsonSerializer to use for whatever value is returned...
+             */
+            JsonSerializer<Object> ser = findSerializerFromAnnotation(config, valueMethod);
+            return new JsonValueSerializer(valueMethod.getAnnotated(), ser);
         }
         return constructBeanSerializer(config, beanDesc);
     }
 
-    /**
-     * Method called to create a type information serializer for values of given
-     * non-container property
-     * if one is needed. If not needed (no polymorphic handling configured), should
-     * return null.
-     *
-     * @param baseType Declared type to use as the base type for type information serializer
-     * 
-     * @return Type serializer to use for property values, if one is needed; null if not.
-     * 
-     * @since 1.5
-     */
-    public TypeSerializer findPropertyTypeSerializer(JavaType baseType, SerializationConfig config,
-            AnnotatedMember propertyEntity)
-    {
-        AnnotationIntrospector ai = config.getAnnotationIntrospector();
-        TypeResolverBuilder<?> b = ai.findPropertyTypeResolver(propertyEntity, baseType);        
-        // Defaulting: if no annotations on member, check value class
-        if (b == null) {
-            return createTypeSerializer(baseType, config);
-        }
-        Collection<NamedType> subtypes = SubTypeHelper.collectAndResolveSubtypes(propertyEntity, config, ai);
-        return b.buildTypeSerializer(baseType, subtypes);
-    }
-
-    /**
-     * Method called to create a type information serializer for values of given
-     * container property
-     * if one is needed. If not needed (no polymorphic handling configured), should
-     * return null.
-     *
-     * @param containerType Declared type of the container to use as the base type for type information serializer
-     * 
-     * @return Type serializer to use for property value contents, if one is needed; null if not.
-     * 
-     * @since 1.5
-     */    
-    public TypeSerializer findPropertyContentTypeSerializer(JavaType containerType, SerializationConfig config,
-            AnnotatedMember propertyEntity)
-    {
-        JavaType contentType = containerType.getContentType();
-        AnnotationIntrospector ai = config.getAnnotationIntrospector();
-        TypeResolverBuilder<?> b = ai.findPropertyContentTypeResolver(propertyEntity, containerType);        
-        // Defaulting: if no annotations on member, check value class
-        if (b == null) {
-            return createTypeSerializer(contentType, config);
-        }
-        Collection<NamedType> subtypes = SubTypeHelper.collectAndResolveSubtypes(propertyEntity, config, ai);
-        return b.buildTypeSerializer(contentType, subtypes);
-    }
-    
     /*
-    /**********************************************************
-    /* Overridable non-public methods
-    /**********************************************************
+    ////////////////////////////////////////////////////////////
+    // Overridable non-public methods
+    ////////////////////////////////////////////////////////////
      */
 
     /**
@@ -222,7 +178,7 @@ public class BeanSerializerFactory
              *  (which may come from a mix-in too)
              */
             if (beanDesc.hasKnownClassAnnotations()) {
-                return BeanSerializer.createDummy(beanDesc.getBeanClass());
+                return BeanSerializer.createDummy(beanDesc.classDescribed());
             }
             return null;
         }
@@ -230,7 +186,7 @@ public class BeanSerializerFactory
         props = filterBeanProperties(config, beanDesc, props);
         // Do they need to be sorted in some special way?
         props = sortBeanProperties(config, beanDesc, props);
-        BeanSerializer ser = new BeanSerializer(beanDesc.getBeanClass(), props);
+        BeanSerializer ser = new BeanSerializer(beanDesc.classDescribed(), props);
         // One more thing: need to gather view information, if any:
         ser = processViews(config, beanDesc, ser, props);
         return ser;
@@ -242,84 +198,55 @@ public class BeanSerializerFactory
      */
     protected List<BeanPropertyWriter> findBeanProperties(SerializationConfig config, BasicBeanDescription beanDesc)
     {
-        // Ok: let's aggregate visibility settings: first, baseline:
-        VisibilityChecker<?> vchecker = config.getDefaultVisibilityChecker();
-        if (!config.isEnabled(SerializationConfig.Feature.AUTO_DETECT_GETTERS)) {
-            vchecker = vchecker.withGetterVisibility(Visibility.NONE);
-        }
-        // then global overrides (disabling)
-        if (!config.isEnabled(SerializationConfig.Feature.AUTO_DETECT_IS_GETTERS)) {
-            vchecker = vchecker.withIsGetterVisibility(Visibility.NONE);
-        }
-        if (!config.isEnabled(SerializationConfig.Feature.AUTO_DETECT_FIELDS)) {
-            vchecker = vchecker.withFieldVisibility(Visibility.NONE);
-        }
-        // and finally per-class overrides:
-        AnnotationIntrospector intr = config.getAnnotationIntrospector();
-        vchecker = intr.findAutoDetectVisibility(beanDesc.getClassInfo(), vchecker);
+        LinkedHashMap<String,AnnotatedMethod> methodsByProp = beanDesc.findGetters
+            (config.isEnabled(SerializationConfig.Feature.AUTO_DETECT_GETTERS),
+             config.isEnabled(SerializationConfig.Feature.AUTO_DETECT_IS_GETTERS),
+             null);
 
-        LinkedHashMap<String,AnnotatedMethod> methodsByProp = beanDesc.findGetters(vchecker, null);
-        LinkedHashMap<String,AnnotatedField> fieldsByProp = beanDesc.findSerializableFields(vchecker, methodsByProp.keySet());
+        /* [JACKSON-98]: also include field-backed properties:
+         *   (second arg passed to ignore anything for which there is a getter
+         *   method)
+         */
+        LinkedHashMap<String,AnnotatedField> fieldsByProp = beanDesc.findSerializableFields(config.isEnabled(SerializationConfig.Feature.AUTO_DETECT_FIELDS), methodsByProp.keySet());
 
         // nothing? can't proceed (caller may or may not throw an exception)
         if (methodsByProp.isEmpty() && fieldsByProp.isEmpty()) {
             return null;
         }
+        boolean fixAccess = config.isEnabled(SerializationConfig.Feature.CAN_OVERRIDE_ACCESS_MODIFIERS);
         boolean staticTyping = usesStaticTyping(config, beanDesc);
         PropertyBuilder pb = constructPropertyBuilder(config, beanDesc);
 
         ArrayList<BeanPropertyWriter> props = new ArrayList<BeanPropertyWriter>(methodsByProp.size());
-        TypeBindings typeBind = beanDesc.bindingsForBeanType();
+        AnnotationIntrospector intr = config.getAnnotationIntrospector();
+
         // [JACKSON-98]: start with field properties, if any
-        for (Map.Entry<String,AnnotatedField> en : fieldsByProp.entrySet()) {      
-            // [JACKSON-235]: suppress writing of back references
-            AnnotationIntrospector.ReferenceProperty prop = intr.findReferenceType(en.getValue());
-            if (prop != null && prop.isBackReference()) {
-                continue;
+        for (Map.Entry<String,AnnotatedField> en : fieldsByProp.entrySet()) {
+            AnnotatedField af = en.getValue();
+            if (fixAccess) {
+                af.fixAccess();
             }
-            props.add(_constructWriter(config, typeBind, pb, staticTyping, en.getKey(), en.getValue()));
+            // Does Method specify a serializer? If so, let's use it.
+            JsonSerializer<Object> annotatedSerializer = findSerializerFromAnnotation(config, af);
+            BeanPropertyWriter pbw = pb.buildProperty(en.getKey(), annotatedSerializer, af, staticTyping);
+            // how about views? (1.4+)
+            pbw.setViews(intr.findSerializationViews(af));
+            props.add(pbw);
         }
-        // and then add member properties
+
         for (Map.Entry<String,AnnotatedMethod> en : methodsByProp.entrySet()) {
-            // [JACKSON-235]: suppress writing of back references
-            AnnotationIntrospector.ReferenceProperty prop = intr.findReferenceType(en.getValue());
-            if (prop != null && prop.isBackReference()) {
-                continue;
+            AnnotatedMethod am = en.getValue();
+            if (fixAccess) {
+                am.fixAccess();
             }
-            props.add(_constructWriter(config, typeBind, pb, staticTyping, en.getKey(), en.getValue()));
+            // Does Method specify a serializer? If so, let's use it.
+            JsonSerializer<Object> annotatedSerializer = findSerializerFromAnnotation(config, am);
+            BeanPropertyWriter pbw = pb.buildProperty(en.getKey(), annotatedSerializer, am, staticTyping);
+            pbw.setViews(intr.findSerializationViews(am));
+            props.add(pbw);
         }
         return props;
     }
-
-    /**
-     * Secondary helper method for constructing {@link BeanPropertyWriter} for
-     * given member (field or method).
-     */
-    protected BeanPropertyWriter _constructWriter(SerializationConfig config, TypeBindings typeContext,
-            PropertyBuilder pb, boolean staticTyping, String name, AnnotatedMember propertyMember)
-    {
-        if (config.isEnabled(SerializationConfig.Feature.CAN_OVERRIDE_ACCESS_MODIFIERS)) {
-            propertyMember.fixAccess();
-        }
-        // Does member specify a serializer? If so, let's use it.
-        JsonSerializer<Object> annotatedSerializer = findSerializerFromAnnotation(config, propertyMember);
-        // And how about polymorphic typing? First special to cover JAXB per-field settings:
-        TypeSerializer contentTypeSer = null;
-        JavaType type = propertyMember.getType(typeContext);
-        if (ClassUtil.isCollectionMapOrArray(type.getRawClass())) {
-            contentTypeSer = findPropertyContentTypeSerializer(type, config, propertyMember);
-        }
-
-        // and if not JAXB collection/array with annotations, maybe regular type info?
-        TypeSerializer typeSer = findPropertyTypeSerializer(type, config, propertyMember);
-        BeanPropertyWriter pbw = pb.buildProperty(name, annotatedSerializer,
-        		typeSer, contentTypeSer, propertyMember, staticTyping);
-        // how about views? (1.4+)
-        AnnotationIntrospector intr = config.getAnnotationIntrospector();
-        pbw.setViews(intr.findSerializationViews(propertyMember));
-        return pbw;
-    }
-
     /**
      * Overridable method that can filter out properties. Default implementation
      * checks annotations class may have.
@@ -386,44 +313,34 @@ public class BeanSerializerFactory
     protected BeanSerializer processViews(SerializationConfig config, BasicBeanDescription beanDesc,
                                           BeanSerializer ser, List<BeanPropertyWriter> props)
     {
-        // [JACKSON-232]: whether non-annotated fields are included by default or not is configurable
-        boolean includeByDefault = config.isEnabled(SerializationConfig.Feature.DEFAULT_VIEW_INCLUSION);
-        if (includeByDefault) { // non-annotated are included
-            final int propCount = props.size();
-            BeanPropertyWriter[] filtered = null;        
-            // Simple: view information is stored within individual writers, need to combine:
-            for (int i = 0; i < propCount; ++i) {
-                BeanPropertyWriter bpw = props.get(i);
-                Class<?>[] views = bpw.getViews();
-                if (views != null) {
-                    if (filtered == null) {
-                        filtered = new BeanPropertyWriter[props.size()];
-                    }
-                    filtered[i] = constructFilteredBeanWriter(bpw, views);
-                }
-            }        
-            // Anything missing? Need to fill in
-            if (filtered != null) {
-                for (int i = 0; i < propCount; ++i) {
-                    if (filtered[i] == null) {
-                        filtered[i] = props.get(i);
-                    }
-                }
-                return ser.withFiltered(filtered);
-            }        
-            // No views, return as is
-            return ser;
-        }
-        // Otherwise: only include fields with view definitions.
-        ArrayList<BeanPropertyWriter> explicit = new ArrayList<BeanPropertyWriter>(props.size());
+        BeanPropertyWriter[] filtered = null;
+        /* Simple: we have stashed view information within individual writers;
+         * now need combine.
+         */
+        int i = 0;
         for (BeanPropertyWriter bpw : props) {
             Class<?>[] views = bpw.getViews();
-            if (views != null) {
-                explicit.add(constructFilteredBeanWriter(bpw, views));
-            }            
+            if (views != null && views.length > 0) {
+                if (filtered == null) {
+                    filtered = new BeanPropertyWriter[props.size()];
+                }
+                filtered[i] = constructFilteredBeanWriter(bpw, views);
+            }
+            ++i;
         }
-        BeanPropertyWriter[] filtered = explicit.toArray(new BeanPropertyWriter[explicit.size()]);
-        return ser.withFiltered(filtered);
+        // Anything missing? Need to fill in
+        if (filtered != null) {
+            i = 0;
+            for (BeanPropertyWriter bpw : props) {
+                if (filtered[i] == null) {
+                    filtered[i] = bpw;
+                }
+                ++i;
+            }
+            return ser.withFiltered(filtered);
+        }
+        // No views, return as is
+        return ser;
     }
 
     /**
@@ -442,10 +359,26 @@ public class BeanSerializerFactory
         return new PropertyBuilder(config, beanDesc);
     }
 
+    /**
+     * Helper method to check whether global settings and/or class
+     * annotations for the bean class indicate that static typing
+     * (declared types)  should be used for properties.
+     * (instead of dynamic runtime types).
+     */
+    protected boolean usesStaticTyping(SerializationConfig config,
+                                       BasicBeanDescription beanDesc)
+    {
+        JsonSerialize.Typing t = config.getAnnotationIntrospector().findSerializationTyping(beanDesc.getClassInfo());
+        if (t != null) {
+            return (t == JsonSerialize.Typing.STATIC);
+        }
+        return config.isEnabled(SerializationConfig.Feature.USE_STATIC_TYPING);
+    }
+
     /*
-    /**********************************************************
-    /* Internal helper methods
-    /**********************************************************
+    *****************************************************************
+    * Internal helper methods
+    *****************************************************************
      */
 
     /**

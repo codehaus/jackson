@@ -6,9 +6,6 @@ import org.codehaus.jackson.JsonParser;
 import org.codehaus.jackson.JsonProcessingException;
 import org.codehaus.jackson.annotate.*;
 import org.codehaus.jackson.map.*;
-import org.codehaus.jackson.map.annotate.JsonDeserialize;
-import org.codehaus.jackson.map.annotate.JsonSerialize;
-import org.codehaus.jackson.map.deser.StdDeserializer;
 
 import javax.xml.namespace.QName;
 import java.io.IOException;
@@ -58,6 +55,7 @@ public class TestJacksonAnnotationIntrospector
         VALUE1
     }
 
+    @SuppressWarnings("deprecation")
     public static class JacksonExample
     {
         private String attributeProperty;
@@ -66,49 +64,49 @@ public class TestJacksonAnnotationIntrospector
         private EnumExample enumProperty;
         private QName qname;
 
-        @JsonSerialize(using=QNameSerializer.class)
+		@JsonUseSerializer(QNameSerializer.class)
         public QName getQname()
         {
             return qname;
         }
 
-        @JsonDeserialize(using=QNameDeserializer.class)
+		@JsonUseDeserializer(QNameDeserializer.class)
         public void setQname(QName qname)
         {
             this.qname = qname;
         }
 
-        @JsonProperty("myattribute")
+        @JsonGetter("myattribute")
         public String getAttributeProperty()
         {
             return attributeProperty;
         }
 
-        @JsonProperty("myattribute")
+        @JsonSetter("myattribute")
         public void setAttributeProperty(String attributeProperty)
         {
             this.attributeProperty = attributeProperty;
         }
 
-        @JsonProperty("myelement")
+        @JsonGetter("myelement")
         public String getElementProperty()
         {
             return elementProperty;
         }
 
-        @JsonProperty("myelement")
+        @JsonSetter("myelement")
         public void setElementProperty(String elementProperty)
         {
             this.elementProperty = elementProperty;
         }
 
-        @JsonProperty("mywrapped")
+        @JsonGetter("mywrapped")
         public List<String> getWrappedElementProperty()
         {
             return wrappedElementProperty;
         }
 
-        @JsonProperty("mywrapped")
+        @JsonSetter("mywrapped")
         public void setWrappedElementProperty(List<String> wrappedElementProperty)
         {
             this.wrappedElementProperty = wrappedElementProperty;
@@ -136,9 +134,9 @@ public class TestJacksonAnnotationIntrospector
     }
 
 
-    public static class QNameDeserializer extends StdDeserializer<QName>
+    public static class QNameDeserializer extends JsonDeserializer<QName>
     {
-        public QNameDeserializer() { super(QName.class); }
+
         @Override
         public QName deserialize(JsonParser jp, DeserializationContext ctxt)
                 throws IOException, JsonProcessingException

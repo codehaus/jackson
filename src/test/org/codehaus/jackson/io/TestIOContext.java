@@ -30,18 +30,18 @@ public class TestIOContext
 
         /* I/O Write buffer */
 
-        assertNotNull(ctxt.allocWriteEncodingBuffer());
+        assertNotNull(ctxt.allocWriteIOBuffer());
         try {
-            ctxt.allocWriteEncodingBuffer();
+            ctxt.allocWriteIOBuffer();
         } catch (IllegalStateException e) {
             verifyException(e, "second time");
         }
         try {
-            ctxt.releaseWriteEncodingBuffer(new byte[1]);
+            ctxt.releaseWriteIOBuffer(new byte[1]);
         } catch (IllegalArgumentException e) {
             verifyException(e, "not owned");
         }
-        ctxt.releaseWriteEncodingBuffer(null);
+        ctxt.releaseWriteIOBuffer(null);
 
         /* Token (read) buffer */
 

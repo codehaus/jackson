@@ -1,12 +1,6 @@
 package org.codehaus.jackson.map;
 
-import java.text.DateFormat;
 import java.util.Map;
-
-import org.codehaus.jackson.annotate.JsonAutoDetect;
-import org.codehaus.jackson.map.introspect.VisibilityChecker;
-import org.codehaus.jackson.map.jsontype.TypeResolverBuilder;
-import org.codehaus.jackson.type.JavaType;
 
 /**
  * Interface that defines functionality accessible through both
@@ -16,7 +10,7 @@ import org.codehaus.jackson.type.JavaType;
  *
  * @since 1.2
  */
-public interface MapperConfig<T extends MapperConfig<T>>
+public interface MapperConfig
     extends ClassIntrospector.MixInResolver
 {
     // // // Accessors
@@ -37,7 +31,7 @@ public interface MapperConfig<T extends MapperConfig<T>>
      * Method to use for constructing an instance that is not shared
      * between multiple operations but only used for a single one.
      */
-    public T createUnshared(TypeResolverBuilder<?> typer, VisibilityChecker<?> vc);
+    public MapperConfig createUnshared();
 
     // // // Configuration
 
@@ -84,54 +78,4 @@ public interface MapperConfig<T extends MapperConfig<T>>
      * annotations) for given class
      */
     public Class<?> findMixInClassFor(Class<?> cls);
-
-    /**
-     * Method for accessing currently configured (textual) date format
-     * that will be used for reading or writing date values (in case
-     * of writing, only if textual output is configured; not if dates
-     * are to be serialized as time stamps).
-     *<p>
-     * Note that typically {@link DateFormat} instances are <b>not thread-safe</b>
-     * (at least ones provided by JDK):
-     * this means that calling code should clone format instance before
-     * using it.
-     *<p>
-     * This method is usually only called by framework itself, since there
-     * are convenience methods available via
-     * {@link DeserializationContext} and {@link SerializerProvider} that
-     * take care of cloning and thread-safe reuse.
-     */
-    public DateFormat getDateFormat();
-
-    /**
-     * Method that will define specific date format to use for reading/writing
-     * Date and Calendar values; instance is used as is, without creating
-     * a clone.
-     * Format object can be access using
-     * {@link #getDateFormat}.
-     */
-    public void setDateFormat(DateFormat df);
-    
-    /**
-     * Method called to locate a type info handler for types that do not have
-     * one explicitly declared via annotations (or other configuration).
-     * If such default handler is configured, it is returned; otherwise
-     * null is returned.
-     * 
-     * @since 1.5
-     */
-    public TypeResolverBuilder<?> getDefaultTyper(JavaType baseType);
-
-    /**
-     * Accessor for object used for determining whether specific property elements
-     * (method, constructors, fields) can be auto-detected based on
-     * their visibility (access modifiers). Can be changed to allow
-     * different minimum visibility levels for auto-detection. Note
-     * that this is the global handler; individual types (classes)
-     * can further override active checker used (using
-     * {@link JsonAutoDetect} annotation)
-     * 
-     * @since 1.5
-     */    
-    public VisibilityChecker<?> getDefaultVisibilityChecker();
 }

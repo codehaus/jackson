@@ -8,12 +8,9 @@ import org.codehaus.jackson.Base64Variants;
 import org.codehaus.jackson.annotate.*;
 import org.codehaus.jackson.map.introspect.AnnotatedClass;
 import org.codehaus.jackson.map.introspect.NopAnnotationIntrospector;
-import org.codehaus.jackson.map.introspect.VisibilityChecker;
-import org.codehaus.jackson.map.jsontype.TypeResolverBuilder;
 import org.codehaus.jackson.map.type.ClassKey;
 import org.codehaus.jackson.map.util.LinkedNode;
 import org.codehaus.jackson.map.util.StdDateFormat;
-import org.codehaus.jackson.node.JsonNodeFactory;
 import org.codehaus.jackson.type.JavaType;
 
 /**
@@ -29,7 +26,7 @@ import org.codehaus.jackson.type.JavaType;
  * cached first time they are needed.
  */
 public class DeserializationConfig
-    implements MapperConfig<DeserializationConfig>
+    implements MapperConfig
 {
     /**
      * Enumeration that defines togglable features that guide
@@ -48,7 +45,7 @@ public class DeserializationConfig
          *
          * @since 1.2
          */
-        USE_ANNOTATIONS(true)
+        USE_ANNOTATIONS(true),
 
         /**
          * Feature that determines whether "setter" methods are
@@ -64,7 +61,7 @@ public class DeserializationConfig
          *<P>
          * Feature is enabled by default.
          */
-        ,AUTO_DETECT_SETTERS(true)
+        AUTO_DETECT_SETTERS(true),
         /**
          * Feature that determines whether "creator" methods are
          * automatically detected by consider public constructors,
@@ -79,7 +76,7 @@ public class DeserializationConfig
          *<P>
          * Feature is enabled by default.
          */
-        ,AUTO_DETECT_CREATORS(true)
+        AUTO_DETECT_CREATORS(true),
 
         /**
          * Feature that determines whether non-static fields are recognized as
@@ -96,7 +93,7 @@ public class DeserializationConfig
          *
          * @since 1.1
          */
-        ,AUTO_DETECT_FIELDS(true)
+        AUTO_DETECT_FIELDS(true),
 
         /**
          * Feature that determines whether otherwise regular "getter"
@@ -114,7 +111,7 @@ public class DeserializationConfig
          *<p>
          * Feature is enabled by default.
          */
-        ,USE_GETTERS_AS_SETTERS(true)
+        USE_GETTERS_AS_SETTERS(true),
 
         /**
          * Feature that determines whether method and field access
@@ -124,7 +121,7 @@ public class DeserializationConfig
          * may be called to enable access to otherwise unaccessible
          * objects.
          */
-        ,CAN_OVERRIDE_ACCESS_MODIFIERS(true)
+        CAN_OVERRIDE_ACCESS_MODIFIERS(true),
 
         // // // Type conversion configuration
 
@@ -142,7 +139,7 @@ public class DeserializationConfig
          * (choice is for performance reason -- BigDecimals are slower than
          * Doubles)
          */
-        ,USE_BIG_DECIMAL_FOR_FLOATS(false)
+        USE_BIG_DECIMAL_FOR_FLOATS(false),
 
         /**
          * Feature that determines whether Json integral (non-floating-point)
@@ -160,24 +157,8 @@ public class DeserializationConfig
          * point numbers will by default be deserialized using whatever
          * is the most compact integral type, to optimize efficiency.
          */
-        ,USE_BIG_INTEGER_FOR_INTS(false)
+        USE_BIG_INTEGER_FOR_INTS(false),
 
-        /**
-         * Feature that determines standard deserialization mechanism used for
-         * Enum values: if enabled, Enums are assumed to have been serialized  using
-         * return value of <code>Enum.toString()</code>;
-         * if disabled, return value of <code>Enum.name()</code> is assumed to have been used.
-         * Since pre-1.6 method was to use Enum name, this is the default.
-         *<p>
-         * Note: this feature should usually have same value
-         * as {@link SerializationConfig#WRITE_ENUMS_USING_TO_STRING}.
-         *<p>
-         * For further details, check out [JACKSON-212]
-         * 
-         * @since 1.6
-         */
-        ,READ_ENUMS_USING_TO_STRING(false)
-        
         // // // Problem handling
 
         /**
@@ -197,7 +178,7 @@ public class DeserializationConfig
          *
          * @since 1.2
          */
-         ,FAIL_ON_UNKNOWN_PROPERTIES(true)
+         FAIL_ON_UNKNOWN_PROPERTIES(true)
 
         // // // Structural changes
 
@@ -252,9 +233,9 @@ public class DeserializationConfig
     protected final static DateFormat DEFAULT_DATE_FORMAT = StdDateFormat.instance;
 
     /*
-    /**********************************************************
-    /* Configuration settings
-    /**********************************************************
+    ///////////////////////////////////////////////////////////
+    // Configuration settings
+    ///////////////////////////////////////////////////////////
      */
 
     /**
@@ -270,7 +251,7 @@ public class DeserializationConfig
     protected AnnotationIntrospector _annotationIntrospector;
 
     /**
-     * Bit set that contains all enabled features
+     * Bitset that contains all enabled features
      */
     protected int _featureFlags = DEFAULT_FEATURE_FLAGS;
 
@@ -315,78 +296,34 @@ public class DeserializationConfig
      */
     protected boolean _mixInAnnotationsShared;
 
-    /**
-     * Type information handler used for "untyped" values (ones declared
-     * to have type <code>Object.class</code>)
-     * 
-     * @since 1.5
-     */
-    protected final TypeResolverBuilder<?> _typer;
-
-    /**
-     * Object used for determining whether specific property elements
-     * (method, constructors, fields) can be auto-detected based on
-     * their visibility (access modifiers). Can be changed to allow
-     * different minimum visibility levels for auto-detection. Note
-     * that this is the global handler; individual types (classes)
-     * can further override active checker used (using
-     * {@link JsonAutoDetect} annotation)
-     * 
-     * @since 1.5
-     */
-    protected VisibilityChecker<?> _visibilityChecker;
-
-    /**
-     * To support on-the-fly class generation for interface and abstract classes
-     * it is possible to register "abstract type resolver".
-     * 
-     * @since 1.6
-     */
-    protected AbstractTypeResolver _abstractTypeResolver;
-
-    /**
-     * @since 1.6
-     */
-    protected JsonNodeFactory _nodeFactory;
-    
     /*
-    /**********************************************************
-    /* Life-cycle
-    /**********************************************************
+    ///////////////////////////////////////////////////////////
+    // Life-cycle
+    ///////////////////////////////////////////////////////////
      */
 
     public DeserializationConfig(ClassIntrospector<? extends BeanDescription> intr,
-                               AnnotationIntrospector annIntr, VisibilityChecker<?> vc)
+                               AnnotationIntrospector annIntr)
     {
         _classIntrospector = intr;
         _annotationIntrospector = annIntr;
-        _typer = null;
-        _visibilityChecker = vc;
-        _nodeFactory = JsonNodeFactory.instance;
-
     }
 
     protected DeserializationConfig(DeserializationConfig src,
-                                    HashMap<ClassKey,Class<?>> mixins,
-                                    TypeResolverBuilder<?> typer,
-                                    VisibilityChecker<?> vc)
+                                    HashMap<ClassKey,Class<?>> mixins)
     {
         _classIntrospector = src._classIntrospector;
         _annotationIntrospector = src._annotationIntrospector;
-        _abstractTypeResolver = src._abstractTypeResolver;
         _featureFlags = src._featureFlags;
         _problemHandlers = src._problemHandlers;
         _dateFormat = src._dateFormat;
-        _nodeFactory = src._nodeFactory;
         _mixInAnnotations = mixins;
-        _typer = typer;
-        _visibilityChecker = vc;
     }
 
     /*
-    /**********************************************************
-    /* MapperConfig implementation
-    /**********************************************************
+    ///////////////////////////////////////////////////////////
+    // MapperConfig implementation
+    ///////////////////////////////////////////////////////////
      */
 
     /**
@@ -420,8 +357,16 @@ public class DeserializationConfig
          *    'MixInResolver'; no mix-ins set at this point
          */
         AnnotatedClass ac = AnnotatedClass.construct(cls, _annotationIntrospector, null);
-        // visibility checks handled via separate checker object...
-        _visibilityChecker = _annotationIntrospector.findAutoDetectVisibility(ac, _visibilityChecker);
+
+        // Auto-detect setters, creators?
+        Boolean ad = _annotationIntrospector.findSetterAutoDetection(ac);
+        if (ad != null) {
+            set(Feature.AUTO_DETECT_SETTERS, ad.booleanValue());
+    	}
+        ad = _annotationIntrospector.findCreatorAutoDetection(ac);
+        if (ad != null) {
+            set(Feature.AUTO_DETECT_CREATORS, ad.booleanValue());
+    	}
     }
 
     /**
@@ -433,27 +378,13 @@ public class DeserializationConfig
      * instance.
      */
     //@Override
-    public DeserializationConfig createUnshared(TypeResolverBuilder<?> typer,
-    		VisibilityChecker<?> vc)
-
+    public DeserializationConfig createUnshared()
     {
         HashMap<ClassKey,Class<?>> mixins = _mixInAnnotations;
         _mixInAnnotationsShared = true;
-    	return new DeserializationConfig(this, mixins, typer, vc);
+    	return new DeserializationConfig(this, mixins);
     }
 
-    /**
-     * Alternative "copy factory" that creates an unshared copy that uses
-     * different node factory than this instance.
-     * 
-     * @since 1.6
-     */
-    public DeserializationConfig createUnshared(JsonNodeFactory nf)
-    {
-        DeserializationConfig config = createUnshared(_typer, _visibilityChecker);
-        config.setNodeFactory(nf);
-        return config;
-    }
 
     //@Override
     public void setIntrospector(ClassIntrospector<? extends BeanDescription> i) {
@@ -530,37 +461,10 @@ public class DeserializationConfig
         return (_mixInAnnotations == null) ? null : _mixInAnnotations.get(new ClassKey(cls));
     }
 
-    //@Override
-    public DateFormat getDateFormat() { return _dateFormat; }
-
-    /**
-     * Method that will set the textual deserialization to use for
-     * deserializing Dates (and Calendars). If null is passed, will
-     * use {@link StdDateFormat}.
-     */
-    //@Override
-    public void setDateFormat(DateFormat df) {
-        _dateFormat = (df == null) ? StdDateFormat.instance : df;
-    }
-    
-    /**
-     * @since 1.6
-     */
-    public void setAbstractTypeResolver(AbstractTypeResolver atr) {
-        _abstractTypeResolver = atr;
-    }
-
-    /**
-     * @since 1.6
-     */
-    public void setNodeFactory(JsonNodeFactory nf) {
-        _nodeFactory = nf;
-    }
-
     /*
-    /**********************************************************
-    /* Adding problem handlers
-    /**********************************************************
+    ///////////////////////////////////////////////////////////
+    // Adding problem handlers
+    ///////////////////////////////////////////////////////////
      */
 
     /**
@@ -589,9 +493,9 @@ public class DeserializationConfig
     }
         
     /*
-    /**********************************************************
-    /* Accessors
-    /**********************************************************
+    ///////////////////////////////////////////////////////////
+    // Accessors
+    ///////////////////////////////////////////////////////////
      */
 
     /**
@@ -619,6 +523,8 @@ public class DeserializationConfig
     {
         return _problemHandlers;
     }
+
+    public DateFormat getDateFormat() { return _dateFormat; }
 
     /**
      * Method that will introspect full bean properties for the purpose
@@ -649,42 +555,10 @@ public class DeserializationConfig
         return (T) _classIntrospector.forClassAnnotations(this, cls, this);
     }
 
-    /**
-     * Accessor for getting bean description that only contains immediate class
-     * annotations: ones from the class, and its direct mix-in, if any, but
-     * not from super types.
-     */
-    @SuppressWarnings("unchecked")
-    public <T extends BeanDescription> T introspectDirectClassAnnotations(Class<?> cls) {
-        return (T) _classIntrospector.forDirectClassAnnotations(this, cls, this);
-    }
-    
-    public TypeResolverBuilder<?> getDefaultTyper(JavaType baseType) {
-        return _typer;
-    }
-
-    public VisibilityChecker<?> getDefaultVisibilityChecker() {
-    	return _visibilityChecker;
-    }
-
-    /**
-     * @since 1.6
-     */
-    public AbstractTypeResolver getAbstractTypeResolver() {
-        return _abstractTypeResolver;
-    }
-    
-    /**
-     * @since 1.6
-     */
-    public final JsonNodeFactory getNodeFactory() {
-        return _nodeFactory;
-    }
-    
     /*
-    /**********************************************************
-    /* Configuration: on/off features
-    /**********************************************************
+    ////////////////////////////////////////////////////
+    // Configuration: on/off features
+    ////////////////////////////////////////////////////
      */
 
     /**
@@ -713,11 +587,20 @@ public class DeserializationConfig
         }
     }
 
-    //protected int getFeatures() { return _generatorFeatures; }
+    //protected int getFeatures() { return _features; }
 
     /*
-    /**********************************************************
-    /* Configuration: other
-    /**********************************************************
+    ////////////////////////////////////////////////////
+    // Configuration: other
+    ////////////////////////////////////////////////////
      */
+
+    /**
+     * Method that will set the textual deserialization to use for
+     * deserializing Dates (and Calendars). If null is passed, will
+     * use {@link StdDateFormat}.
+     */
+    public void setDateFormat(DateFormat df) {
+        _dateFormat = (df == null) ? StdDateFormat.instance : df;
+    }
 }

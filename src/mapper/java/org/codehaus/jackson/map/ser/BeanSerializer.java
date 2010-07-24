@@ -1,6 +1,7 @@
 package org.codehaus.jackson.map.ser;
 
 import java.io.IOException;
+import java.lang.reflect.Modifier;
 import java.lang.reflect.Type;
 import java.util.Collection;
 
@@ -11,8 +12,6 @@ import org.codehaus.jackson.schema.SchemaAware;
 import org.codehaus.jackson.schema.JsonSchema;
 import org.codehaus.jackson.node.ObjectNode;
 import org.codehaus.jackson.map.*;
-import org.codehaus.jackson.map.type.TypeFactory;
-import org.codehaus.jackson.type.JavaType;
 
 /**
  * Serializer class that can serialize arbitrary bean objects.
@@ -26,7 +25,7 @@ public class BeanSerializer
     extends SerializerBase<Object>
     implements ResolvableSerializer, SchemaAware
 {
-    final protected static BeanPropertyWriter[] NO_PROPS = new BeanPropertyWriter[0];
+    final static BeanPropertyWriter[] NO_PROPS = new BeanPropertyWriter[0];
 
     /**
      * Value type of this serializer,
@@ -65,7 +64,6 @@ public class BeanSerializer
     public BeanSerializer(Class<?> type, BeanPropertyWriter[] props,
                           BeanPropertyWriter[] fprops)
     {
-        super(type, false);
         _props = props;
         // let's store this for debugging
         _class = type;
@@ -89,8 +87,6 @@ public class BeanSerializer
     /**
      * Method used for constructing a filtered serializer instance, using this
      * serializer as the base.
-     *
-     * @since 1.4
      */
     public BeanSerializer withFiltered(BeanPropertyWriter[] filtered) {
         // if no filters, no need to construct new instance...
@@ -101,34 +97,12 @@ public class BeanSerializer
     }
 
     /*
-    /**********************************************************
-    /* JsonSerializer implementation
-    /**********************************************************
+    ******************************************************************
+    * JsonSerializer implementation
+    ******************************************************************
      */
-
-    /**
-     * Main serialization method that will delegate actual output to
-     * configured
-     * {@link BeanPropertyWriter} instances.
-     */
-    public final void serialize(Object bean, JsonGenerator jgen, SerializerProvider provider)
-        throws IOException, JsonGenerationException
-    {
-        jgen.writeStartObject();
-        serializeFields(bean, jgen, provider);
-        jgen.writeEndObject();
-    }
-
-    public final void serializeWithType(Object bean, JsonGenerator jgen, SerializerProvider provider,
-            TypeSerializer typeSer)
-        throws IOException, JsonGenerationException
-    {
-        typeSer.writeTypePrefixForObject(bean, jgen);
-        serializeFields(bean, jgen, provider);
-        typeSer.writeTypeSuffixForObject(bean, jgen);
-    }
     
-    protected void serializeFields(Object bean, JsonGenerator jgen, SerializerProvider provider)
+    public void serialize(Object bean, JsonGenerator jgen, SerializerProvider provider)
         throws IOException, JsonGenerationException
     {
         final BeanPropertyWriter[] props;
@@ -137,6 +111,8 @@ public class BeanSerializer
         } else {
             props = _props;
         }
+        
+        jgen.writeStartObject();
 
         int i = 0;
         try {
@@ -146,6 +122,7 @@ public class BeanSerializer
                     prop.serializeAsField(bean, jgen, provider);
                 }
             }
+            jgen.writeEndObject();
         } catch (Exception e) {
             wrapAndThrow(e, bean, props[i].getName());
         } catch (StackOverflowError e) {
@@ -158,8 +135,8 @@ public class BeanSerializer
             throw mapE;
         }
     }
-    
-    @Override
+
+    //@Override
     public JsonNode getSchema(SerializerProvider provider, Type typeHint)
         throws JsonMappingException
     {
@@ -169,16 +146,16 @@ public class BeanSerializer
         ObjectNode propertiesNode = o.objectNode();
         for (int i = 0; i < _props.length; i++) {
             BeanPropertyWriter prop = _props[i];
-            Type hint = prop.getRawSerializationType();
+            Type hint = prop.getSerializationType();
             if (hint == null) {
                 hint = prop.getGenericPropertyType();
             }
             // Maybe it already has annotated/statically configured serializer?
             JsonSerializer<Object> ser = prop.getSerializer();
             if (ser == null) { // nope
-                Class<?> serType = prop.getRawSerializationType();
+                Class<?> serType = prop.getSerializationType();
                 if (serType == null) {
-                    serType = prop.getPropertyType();
+                    serType = prop.getReturnType();
                 }
                 ser = provider.findValueSerializer(serType);
             }
@@ -193,10 +170,10 @@ public class BeanSerializer
     }
 
     /*
-    /**********************************************************
-    /* ResolvableSerializer impl
-    /**********************************************************
-     */
+   ////////////////////////////////////////////////////////
+   // ResolvableSerializer impl
+   ////////////////////////////////////////////////////////
+    */
 
     public void resolve(SerializerProvider provider)
         throws JsonMappingException
@@ -208,53 +185,36 @@ public class BeanSerializer
                 continue;
             }
             // Was the serialization type hard-coded? If so, use it
-            JavaType type = prop.getSerializationType();
-            
+            Class<?> type = prop.getSerializationType();
             /* It not, we can use declared return type if and only if
              * declared type is final -- if not, we don't really know
              * the actual type until we get the instance.
              */
             if (type == null) {
-                type = TypeFactory.type(prop.getGenericPropertyType());
-                if (!type.isFinal()) {
-                    /* 18-Feb-2010, tatus: But even if it is non-final,
-                     *    we may need to retain some of type information
-                     *    so that we can accurately handle contained
-                     *    types
-                     */
-                    if (type.isContainerType() || type.containedTypeCount() > 0) {
-                        prop.setNonTrivialBaseType(type);
-                    }
+                Class<?> rt = prop.getReturnType();
+                if (!Modifier.isFinal(rt.getModifiers())) {
                     continue;
                 }
+                type = rt;
             }
-            JsonSerializer<Object> ser = provider.findValueSerializer(type);
-            /* 04-Feb-2010, tatu: We may have stashed type serializer for content types
-             *   too, earlier; if so, it's time to connect the dots here:
-             */
-            if (type.isContainerType()) {
-            	TypeSerializer typeSer = type.getContentType().getTypeHandler();
-                if (typeSer != null) {
-                    // for now, can do this only for standard containers...
-                    if (ser instanceof ContainerSerializerBase<?>) {
-                        // ugly casts... but necessary
-                        @SuppressWarnings("unchecked")
-	            	    JsonSerializer<Object> ser2 = (JsonSerializer<Object>)((ContainerSerializerBase<?>) ser).withValueTypeSerializer(typeSer);
-                        ser = ser2;
-                    }
-                }
-            }
-            _props[i] = prop.withSerializer(ser);
+            _props[i] = prop.withSerializer(provider.findValueSerializer(type));
         }
     }
 
     /*
-    /**********************************************************
-    /* Standard methods
-    /**********************************************************
+    ////////////////////////////////////////////////////////
+    // Standard methods
+    ////////////////////////////////////////////////////////
      */
 
     @Override public String toString() {
         return "BeanSerializer for "+_class.getName();
     }
+
+    /*
+    ***************************************************************8
+    * Internal methods
+    ***************************************************************8
+     */
+
 }

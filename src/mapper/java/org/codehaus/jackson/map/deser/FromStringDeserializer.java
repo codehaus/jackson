@@ -17,7 +17,7 @@ import org.codehaus.jackson.map.DeserializationContext;
  * values as the source.
  */
 public abstract class FromStringDeserializer<T>
-    extends StdScalarDeserializer<T>
+    extends StdDeserializer<T>
 {
     protected FromStringDeserializer(Class<?> vc) {
         super(vc);
@@ -45,10 +45,10 @@ public abstract class FromStringDeserializer<T>
         throws IOException, JsonProcessingException;
 
     /*
-    /**********************************************************
-    /* Then concrete implementations
-    /**********************************************************
-     */
+    /////////////////////////////////////////////////////////////
+    // Then concrete implementations
+    /////////////////////////////////////////////////////////////
+    */
 
     public static class UUIDDeserializer
         extends FromStringDeserializer<UUID>

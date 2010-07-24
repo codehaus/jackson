@@ -158,6 +158,8 @@ Benjamin Darfler:
    [1.3.0]
   * Suggested [JACKSON-165]: Add JsonParser.getBooleanValue() convenience method
    [1.3.0]
+  * Reported [JACKSON-237]: NPE in deserialization due to race condition
+   [1.3.5, 1.4.3]
 
 Troy Waldrep:
   * Reported [JACKSON-162]: OSGi packaging problems for xc package.
@@ -241,6 +243,11 @@ Elliot Shepherd:
     fail to serialize
    [1.3.3]
 
+Kenny MacLeod:
+  * Reported [JACKSON-225] and [JACKSON-227]: missing null checks/conversions
+    when adding entries to ArrayNode and ObjectNode
+   [1.3.4 / 1.4.1]
+
 Gil Markham:
   * Reported [JACKSON-196], suggested fix: Schema generation does not
     respect the annotation configured serializer on a bean property
@@ -256,89 +263,20 @@ Mike Rheinheimer:
     @XmlElement.type property for figuring out actual type
    [1.4.0]
 
-Chris Carrier:
-  * Suggested [JACKSON-236]: Allow deserialization of timestamps-as-Strings
-    (not just timestamps as JSON integer numbers).
-   [1.5.0]
+Henning Schmiedehausen:
+  * Reported [JACKSON-230]: wrong NumberType reported for big ints, longs
+   [1.3.4, 1.4.2]
 
-Andrei Voden:
-  * Suggested [JACKSON-232]: Add 'SerializationConfig.Feature.DEFAULT_VIEW_INCLUSION'
-    to disable inclusion of non-annotated properties with explicit views
-   [1.5.0]
-
-Lars Clausen:
-  * Reported [JACKSON-246]: JAXB property name determination not working correctly.
-   [1.5.0]
-  * Reported [JACKSON-250]: Type name not always detected 
-   [1.5.0]
-  * Reported [JACKSON-251]: Concurrency bug in pre-1.5.0 version of
-    @JsonSubTypes handling
-   [1.5.0]
-
-Pierre-Yves Ricay:
-  * Requested [JACKSON-244]: allow private fields processing without having to annotate them
-   [1.5.0]
-
-John Lister:
-  * Reported [JACKSON-256]: incorrect combining of serialization inclusion
-    values; suggested better way to do it
-   [1.5.0]
+Pablo I. Lalloni:
+  * Reported [JACKSON-238]: Problems with DOM/Joda serializers; could not
+    override default serializers
+   [1.4.3]
 
 Gennadiy Shafranovich:
-  * Reported [JACKSON-263]: BooleanNode.asToken() incorrectly returns 'true'
+  * Reported [JACKSON-263] BooleanNode.asToken() incorrectly returns 'true'
     token for all nodes (not just 'false' ones)
-   [1.4.4, 1.5.0]
-
-Fabrice Delhoste:
-  * Reported [JACKSON-265]: problems with generic type handling for
-    serialization
-   [1.5.1]
-
-Raymond Feng:
-  * Reported [JACKSON-269]: missing OSGi export by mapper (o.c.j.m.jsontype.impl)
-    needed by jackson-xc module
-   [1.5.1]
+   [1.4.4]
 
 Martin Tomko:
   * Reported [JACKSON-266] Deserialization from JsonNode fails
-   [1.4.4, 1.5.2]
-
-Lukasz Dywicki:
-  * Reported [JACKSON-273] Problems with OSGi dependency declarations
-   [1.5.2]
-
-Aron Atkins:
-  * Reported [JACKSON-281] JsonGenerator.writeObject() only supports subset of
-    wrapper types (when not specifying ObjectCodec)
-   [1.5.2]
-
-Eric Sirianni:
-  * Reported [JACKSON-311]: Problems handling polymorphic type information for
-    'untyped' (Object) bean properties, default typing
-   [1.5.4]
-
-Brian Oberman:
-  * Requested [JACKSON-289] Ability to serialize char[] values as JSON Arrays
-    with String values of length 1 (and accepting these on deserialization)
-   [1.6.0]
-
-Paul R Brown:
-  * Requested [JACKSON-193] Ability to use @JsonCreator and @JsonValue with
-    enum types
-   [1.6.0]
-
-Ketan G:
-  * Requested [JACKSON-300] Add 'JsonParser.Feature.ALLOW_BACKSLASH_ESCAPING_ANY_CHARACTER
-    to allow non-standard character escapes like \'.
-   [1.6.0]  
-
-Rob Ottway:
-  * Requested [JACKSON-301] Allow JsonMappingException to return name of "bad"
-    (unrecognized) field
-   [1.6.0]  
-
- Thomas Dudziak:
-  * Reported [JACKSON-328] Incorrect precedence between property fields, "getter-as-setter"
-    fallbacks (former should have higher precedence)
-   [1.6.0]
- 
+   [1.4.4]

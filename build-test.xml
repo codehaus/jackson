@@ -48,8 +48,7 @@
     <!-- Compiling and running test cases
       -->
 
-    <target name="test.compile" depends="test.prepare, compile.mapper,
-compile.xc, compile.jaxrs, compile.smile, compile.mrbean">  
+    <target name="test.compile" depends="test.prepare, compile.mapper, compile.xc, compile.jaxrs">  
         <javac srcdir="${dir.src.test}" destdir="${dir.test.classes}"
             source="1.5" target="1.5"
             debug="true"
@@ -61,8 +60,6 @@ compile.xc, compile.jaxrs, compile.smile, compile.mrbean">
                 <pathelement path="${dir.build.classes.mapper}"/>  
                 <pathelement path="${dir.build.classes.jaxrs}"/>  
                 <pathelement path="${dir.build.classes.xc}"/>  
-                <pathelement path="${dir.build.classes.smile}"/>  
-                <pathelement path="${dir.build.classes.mrbean}"/>  
                 <path refid="test-libs"/>
                 <fileset dir="${dir.lib}/jaxrs">
                     <include name="*.jar" />
@@ -95,12 +92,9 @@ compile.xc, compile.jaxrs, compile.smile, compile.mrbean">
 
     <target name="test.run" depends="test.compile">
        <!-- showoutput 'yes' to allow outputting debug msgs... -->
-        <!-- 09-Apr-2010, tatu: Looks like we must fork, otherwise there may be
-               issues with junit version?
-          -->
-        <junit fork="yes" printsummary="yes" haltonfailure="no"
+        <junit fork="no" printsummary="yes" haltonfailure="no"
          showoutput="yes">
-            <batchtest fork="yes" todir="${dir.test.xmlresults}">
+            <batchtest fork="no" todir="${dir.test.xmlresults}">
                 <fileset dir="${dir.test.classes}">
                     <!-- Need to exclude inner classes... -->
                     <exclude name="**/*$*.class"/>
@@ -115,8 +109,6 @@ compile.xc, compile.jaxrs, compile.smile, compile.mrbean">
                 <pathelement path="${dir.build.classes.core}" />
                 <pathelement path="${dir.build.classes.mapper}" />
                 <pathelement path="${dir.build.classes.xc}" />
-                <pathelement path="${dir.build.classes.smile}" />
-                <pathelement path="${dir.build.classes.mrbean}" />
                 <pathelement location="${dir.test.classes}" /> 
                 <path refid="test-libs"/>
             </classpath>     
@@ -170,10 +162,7 @@ compile.xc, compile.jaxrs, compile.smile, compile.mrbean">
     <target name="test.single" depends="test.compile">
          <fail unless="test" message="Must define -Dtest" />
        <!-- showoutput 'yes' to allow outputting debug msgs... -->
-        <!-- 09-Apr-2010, tatu: Looks like we must fork, otherwise there may be
-               issues with junit version?
-          -->
-        <junit fork="yes" maxmemory="128M" showoutput="yes" printsummary="yes">
+        <junit fork="no" maxmemory="128M" showoutput="yes" printsummary="yes">
           <formatter type="plain" usefile="no" />
           <test name="${test}" />
           <classpath>
@@ -181,8 +170,6 @@ compile.xc, compile.jaxrs, compile.smile, compile.mrbean">
                 <pathelement path="${dir.build.classes.mapper}" />
                 <pathelement path="${dir.build.classes.xc}" />
                 <pathelement path="${dir.build.classes.jaxrs}" />
-                <pathelement path="${dir.build.classes.smile}" />
-                <pathelement path="${dir.build.classes.mrbean}" />
                 <pathelement location="${dir.test.classes}" /> 
                 <path refid="test-libs"/>
                 <path refid="test-libs-ext"/>

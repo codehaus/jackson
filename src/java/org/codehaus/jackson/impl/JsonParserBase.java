@@ -45,9 +45,9 @@ public abstract class JsonParserBase
     final static int INT_u = 'u';
 
     /*
-    /**********************************************************
-    /* Generic I/O state
-    /**********************************************************
+    ////////////////////////////////////////////////////
+    // Generic I/O state
+    ////////////////////////////////////////////////////
      */
 
     /**
@@ -64,9 +64,9 @@ public abstract class JsonParserBase
     protected boolean _closed;
 
     /*
-    /**********************************************************
-    /* Current input data
-    /**********************************************************
+    ////////////////////////////////////////////////////
+    // Current input data
+    ////////////////////////////////////////////////////
      */
 
     // Note: type of actual buffer depends on sub-class, can't include
@@ -82,9 +82,9 @@ public abstract class JsonParserBase
     protected int _inputEnd = 0;
 
     /*
-    /**********************************************************
-    /* Current input location information
-    /**********************************************************
+    ////////////////////////////////////////////////////
+    // Current input location information
+    ////////////////////////////////////////////////////
      */
 
     /**
@@ -108,10 +108,10 @@ public abstract class JsonParserBase
     protected int _currInputRowStart = 0;
 
     /*
-    /**********************************************************
-    /* Information about starting location of event
-    /* Reader is pointing to; updated on-demand
-    /**********************************************************
+    ////////////////////////////////////////////////////
+    // Information about starting location of event
+    // Reader is pointing to; updated on-demand
+    ////////////////////////////////////////////////////
      */
 
     // // // Location info at point when current token was started
@@ -135,9 +135,9 @@ public abstract class JsonParserBase
     protected int _tokenInputCol = 0;
 
     /*
-    /**********************************************************
-    /* Parsing state
-    /**********************************************************
+    ////////////////////////////////////////////////////
+    // Parsing state
+    ////////////////////////////////////////////////////
      */
 
     /**
@@ -147,9 +147,9 @@ public abstract class JsonParserBase
     protected JsonReadContext _parsingContext;
 
     /**
-     * Secondary token related to the next token after current one;
-     * used if its type is known. This may be value token that
-     * follows FIELD_NAME, for example.
+     * Secondary token related to the current token: used when
+     * the current token is <code>FIELD_NAME</code> but the
+     * actual value token is also known.
      */
     protected JsonToken _nextToken;
 
@@ -161,9 +161,9 @@ public abstract class JsonParserBase
     protected boolean _tokenIncomplete = false;
 
     /*
-    /**********************************************************
-    /* Buffer(s) for local name(s) and text content
-    /**********************************************************
+    ////////////////////////////////////////////////////
+    // Buffer(s) for local name(s) and text content
+    ////////////////////////////////////////////////////
      */
 
     /**
@@ -202,9 +202,9 @@ public abstract class JsonParserBase
     protected byte[] _binaryValue;
 
     /*
-    /**********************************************************
-    /* Life-cycle
-    /**********************************************************
+    ////////////////////////////////////////////////////
+    // Life-cycle
+    ////////////////////////////////////////////////////
      */
 
     protected JsonParserBase(IOContext ctxt, int features)
@@ -216,9 +216,9 @@ public abstract class JsonParserBase
     }
 
     /*
-    /**********************************************************
-    /* Configuration overrides if any
-    /**********************************************************
+    ////////////////////////////////////////////////////
+    // Configuration overrides if any
+    ////////////////////////////////////////////////////
      */
 
     // from base class:
@@ -229,17 +229,17 @@ public abstract class JsonParserBase
     //public boolean isFeatureEnabled(Feature f)
 
     /*
-    /**********************************************************
-    /* Abstract methods needed from sub-classes
-    /**********************************************************
+    ////////////////////////////////////////////////////
+    // Abstract methods needed from sub-classes
+    ////////////////////////////////////////////////////
      */
 
     protected abstract void _finishString() throws IOException, JsonParseException;
 
     /*
-    /**********************************************************
-    /* JsonParser impl
-    /**********************************************************
+    ////////////////////////////////////////////////////
+    // JsonParser impl
+    ////////////////////////////////////////////////////
      */
 
     public abstract JsonToken nextToken()
@@ -300,16 +300,10 @@ public abstract class JsonParserBase
 
     public void close() throws IOException
     {
-        if (!_closed) {
-            _closed = true;
-            try {
-                _closeInput();
-            } finally {
-                // as per [JACKSON-324], do in finally block
-                // Also, internal buffer(s) can now be released as well
-                _releaseBuffers();
-            }
-        }
+        _closed = true;
+        _closeInput();
+        // Also, internal buffer(s) can now be released as well
+        _releaseBuffers();
     }
 
     public boolean isClosed() { return _closed; }
@@ -345,9 +339,9 @@ public abstract class JsonParserBase
     }
 
     /*
-    /**********************************************************
-    /* Public API, access to token information, text
-    /**********************************************************
+    ////////////////////////////////////////////////////
+    // Public API, access to token information, text
+    ////////////////////////////////////////////////////
      */
 
     /**
@@ -418,20 +412,6 @@ public abstract class JsonParserBase
         return null;
     }
 
-    @Override
-    public boolean hasTextCharacters()
-    {
-        if (_currToken != null) { // null only before/after document
-            switch (_currToken) {
-            case FIELD_NAME:
-                return _nameCopied;
-            case VALUE_STRING:
-                return true; // usually true
-            }        
-        }
-        return false;
-    }
-    
     public int getTextLength()
         throws IOException, JsonParseException
     {
@@ -480,17 +460,16 @@ public abstract class JsonParserBase
     }
 
     /*
-    /**********************************************************
-    /* Public API, access to token information, binary
-    /**********************************************************
+    ////////////////////////////////////////////////////
+    // Public API, access to token information, binary
+    ////////////////////////////////////////////////////
      */
 
-    public byte[] getBinaryValue(Base64Variant b64variant)
+    public final byte[] getBinaryValue(Base64Variant b64variant)
         throws IOException, JsonParseException
     {
-        if (_currToken != JsonToken.VALUE_STRING &&
-                (_currToken != JsonToken.VALUE_EMBEDDED_OBJECT || _binaryValue == null)) {
-            _reportError("Current token ("+_currToken+") not VALUE_STRING or VALUE_EMBEDDED_OBJECT, can not access as binary");
+        if (_currToken != JsonToken.VALUE_STRING) {
+            _reportError("Current token ("+_currToken+") not VALUE_STRING, can not access as binary");
         }
         /* To ensure that we won't see inconsistent data, better clear up
          * state...
@@ -505,7 +484,7 @@ public abstract class JsonParserBase
              * textual content in error cases
              */
             _tokenIncomplete = false;
-        }        
+        }
         return _binaryValue;
     }
 
@@ -513,9 +492,9 @@ public abstract class JsonParserBase
         throws IOException, JsonParseException;
 
     /*
-    /**********************************************************
-    /* Public low-level accessors
-    /**********************************************************
+    ////////////////////////////////////////////////////
+    // Public low-level accessors
+    ////////////////////////////////////////////////////
      */
 
     public final long getTokenCharacterOffset() { return _tokenInputTotal; }
@@ -523,9 +502,9 @@ public abstract class JsonParserBase
     public final int getTokenColumnNr() { return _tokenInputCol+1; }
 
     /*
-    /**********************************************************
-    /* Low-level reading, other
-    /**********************************************************
+    ////////////////////////////////////////////////////
+    // Low-level reading, other
+    ////////////////////////////////////////////////////
      */
 
     protected abstract boolean loadMore() throws IOException;
@@ -571,9 +550,9 @@ public abstract class JsonParserBase
     }
 
     /*
-    /**********************************************************
-    /* Error reporting
-    /**********************************************************
+    ////////////////////////////////////////////////////
+    // Error reporting
+    ////////////////////////////////////////////////////
      */
 
     protected void _reportUnexpectedChar(int ch, String comment)
@@ -629,19 +608,10 @@ public abstract class JsonParserBase
         _reportError("Unexpected close marker '"+((char) actCh)+"': expected '"+expCh+"' (for "+_parsingContext.getTypeDesc()+" starting at "+startDesc+")");
     }
 
-    protected char _handleUnrecognizedCharacterEscape(char ch) throws JsonProcessingException
-    {
-        // as per [JACKSON-300]
-        if (!isEnabled(Feature.ALLOW_BACKSLASH_ESCAPING_ANY_CHARACTER))  {
-            _reportError("Unrecognized character escape "+_getCharDesc(ch));
-        }
-        return ch;
-    }
-    
     /*
-    /**********************************************************
-    /* Error reporting, generic
-    /**********************************************************
+    ////////////////////////////////////////////////////
+    // Error reporting, generic
+    ////////////////////////////////////////////////////
      */
 
     protected final static String _getCharDesc(int ch)
@@ -679,9 +649,9 @@ public abstract class JsonParserBase
     }
 
     /*
-    /**********************************************************
-    /* Other helper methods for sub-classes
-    /**********************************************************
+    ////////////////////////////////////////////////////
+    // Other helper methods for sub-classes
+    ////////////////////////////////////////////////////
      */
 
     public ByteArrayBuilder _getByteArrayBuilder()

@@ -6,7 +6,6 @@ import java.util.*;
 import org.codehaus.jackson.*;
 import org.codehaus.jackson.map.*;
 import org.codehaus.jackson.map.annotate.JsonDeserialize;
-import org.codehaus.jackson.map.deser.StdDeserializer;
 import org.codehaus.jackson.type.TypeReference;
 
 public class TestCollectionDeserialization
@@ -16,14 +15,11 @@ public class TestCollectionDeserialization
         KEY1, KEY2, WHATEVER;
     }
 
-    @SuppressWarnings("serial")
     @JsonDeserialize(using=ListDeserializer.class)
     static class CustomList extends LinkedList<String> { }
 
-    static class ListDeserializer extends StdDeserializer<CustomList>
+    static class ListDeserializer extends JsonDeserializer<CustomList>
     {
-        public ListDeserializer() { super(CustomList.class); }
-
         @Override
         public CustomList deserialize(JsonParser jp, DeserializationContext ctxt)
             throws IOException
@@ -45,7 +41,7 @@ public class TestCollectionDeserialization
          */
         Object value = mapper.readValue(JSON, Object.class);
         assertNotNull(value);
-        assertTrue(value instanceof ArrayList<?>);
+        assertTrue(value instanceof ArrayList);
         List<?> result = (List<?>) value;
 
         assertEquals(4, result.size());

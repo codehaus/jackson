@@ -17,9 +17,7 @@ public class DOMSerializer
 {
     final DOMImplementationLS _domImpl;
 
-    public DOMSerializer()
-    {
-        super(Node.class);
+    public DOMSerializer() {
         DOMImplementationRegistry registry;
         try {
             registry = DOMImplementationRegistry.newInstance();
@@ -33,7 +31,6 @@ public class DOMSerializer
     public void serialize(Node value, JsonGenerator jgen, SerializerProvider provider)
         throws IOException, JsonGenerationException
     {
-        if (_domImpl == null) throw new IllegalStateException("Could not find DOM LS");    	
         LSSerializer writer = _domImpl.createLSSerializer();
         jgen.writeString(writer.writeToString(value));
     }

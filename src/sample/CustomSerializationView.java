@@ -1,5 +1,6 @@
 // no package, i.e. at root of sample/extra
 
+import java.io.*;
 import java.util.*;
 
 import org.codehaus.jackson.*;
@@ -61,7 +62,7 @@ public class CustomSerializationView
         final BeanPropertyWriter _writer;
 
         /**
-         * @param w Original unmodified bean property writer that
+         * @param Original unmodified bean property writer that
          *   we delegate some calls to
          */
         public UpperCasingWriter(BeanPropertyWriter w) {
@@ -109,7 +110,7 @@ public class CustomSerializationView
              * some name -- this would be less work than having separate
              * custom serializer for all classes)
              */
-            if (beanDesc.getBeanClass() == ViewBean.class) {
+            if (beanDesc.classDescribed() == ViewBean.class) {
                 BeanPropertyWriter[] writers = props.toArray(new BeanPropertyWriter[props.size()]);
                 for (int i = 0; i < writers.length; ++i) {
                     String pname = writers[i].getName();
@@ -144,6 +145,7 @@ public class CustomSerializationView
         System.out.println("With default serializer: "+mapper.writeValueAsString(bean));
 
         // Then with customized view-handling
+        StringWriter sw = new StringWriter();
         /* note: View class being passed is irrelevant since we customize handling)
          * Also: setting view would not be necessary if we just completely
          * overrode handling (we didn't, mostly to show more flexible
@@ -155,7 +157,7 @@ public class CustomSerializationView
         /* note: if we wanted use 'writeValueAsString', would have to call
          * 'mapper.getSerializationConfig().setSerializationView(...)' first
          */
-        String json = mapper.viewWriter(String.class).writeValueAsString(bean);
-        System.out.println("With custom serializer: "+json);
+        mapper.writeValueUsingView(sw, bean, String.class);
+        System.out.println("With custom serializer: "+sw.toString());
     }
 }

@@ -1,6 +1,5 @@
 package org.codehaus.jackson.map.introspect;
 
-import java.util.*;
 import java.lang.annotation.Annotation;
 
 import org.codehaus.jackson.annotate.*;
@@ -8,13 +7,10 @@ import org.codehaus.jackson.map.AnnotationIntrospector;
 import org.codehaus.jackson.map.JsonDeserializer;
 import org.codehaus.jackson.map.JsonSerializer;
 import org.codehaus.jackson.map.KeyDeserializer;
-import org.codehaus.jackson.map.annotate.*;
-import org.codehaus.jackson.map.jsontype.NamedType;
-import org.codehaus.jackson.map.jsontype.TypeIdResolver;
-import org.codehaus.jackson.map.jsontype.TypeResolverBuilder;
-import org.codehaus.jackson.map.jsontype.impl.StdTypeResolverBuilder;
-import org.codehaus.jackson.map.util.ClassUtil;
-import org.codehaus.jackson.type.JavaType;
+import org.codehaus.jackson.map.annotate.JsonCachable;
+import org.codehaus.jackson.map.annotate.JsonDeserialize;
+import org.codehaus.jackson.map.annotate.JsonSerialize;
+import org.codehaus.jackson.map.annotate.JsonView;
 
 /**
  * {@link AnnotationIntrospector} implementation that handles standard
@@ -26,9 +22,9 @@ public class JacksonAnnotationIntrospector
     public JacksonAnnotationIntrospector() { }
 
     /*
-    /**********************************************************
-    /* General annotation properties
-    /**********************************************************
+    ////////////////////////////////////////////////////
+    // General annotation properties
+    ////////////////////////////////////////////////////
      */
 
     @Override
@@ -48,9 +44,9 @@ public class JacksonAnnotationIntrospector
     }
 
     /*
-    /**********************************************************
-    /* General annotations
-    /**********************************************************
+    ////////////////////////////////////////////////////
+    // General annotations
+    ////////////////////////////////////////////////////
      */
 
     @Override
@@ -67,10 +63,10 @@ public class JacksonAnnotationIntrospector
     }
     
     /*
-    /**********************************************************
-    /* General class annotations
-    /**********************************************************
-     */
+    ///////////////////////////////////////////////////////
+    // General class annotations
+    ///////////////////////////////////////////////////////
+    */
 
     @Override
     public Boolean findCachability(AnnotatedClass ac)
@@ -80,6 +76,24 @@ public class JacksonAnnotationIntrospector
             return null;
         }
         return ann.value() ? Boolean.TRUE : Boolean.FALSE;
+    }
+
+    @Override
+    public Boolean findFieldAutoDetection(AnnotatedClass ac)
+    {
+        JsonAutoDetect cann = ac.getAnnotation(JsonAutoDetect.class);
+        if (cann != null) {
+            JsonMethod[] methods = cann.value();
+            if (methods != null) {
+                for (JsonMethod jm : methods) {
+                    if (jm.fieldEnabled()) {
+                        return Boolean.TRUE;
+                    }
+                }
+            }
+            return Boolean.FALSE;
+        }
+        return null;
     }
 
     @Override
@@ -102,113 +116,9 @@ public class JacksonAnnotationIntrospector
     }
     
     /*
-    /**********************************************************
-    /* Property auto-detection
-    /**********************************************************
-     */
-    
-    @Override
-    public VisibilityChecker<?> findAutoDetectVisibility(AnnotatedClass ac,
-        VisibilityChecker<?> checker)
-    {
-        JsonAutoDetect ann = ac.getAnnotation(JsonAutoDetect.class);
-        return (ann == null) ? checker : checker.with(ann);
-    }
-
-    /*
-    /**********************************************************
-    /* General member (field, method/constructor) annotations
-    /**********************************************************
-     */
-
-    // @since 1.6
-    @Override        
-    public ReferenceProperty findReferenceType(AnnotatedMember member)
-    {
-        JsonManagedReference ref1 = member.getAnnotation(JsonManagedReference.class);
-        if (ref1 != null) {
-            return AnnotationIntrospector.ReferenceProperty.managed(ref1.value());
-        }
-        JsonBackReference ref2 = member.getAnnotation(JsonBackReference.class);
-        if (ref2 != null) {
-            return AnnotationIntrospector.ReferenceProperty.back(ref2.value());
-        }
-        return null;
-    }
-    
-    /*
-    /**********************************************************
-    /* Class annotations for PM type handling (1.5+)
-    /**********************************************************
-     */
-    
-    @Override
-    public TypeResolverBuilder<?> findTypeResolver(AnnotatedClass ac, JavaType baseType)
-    {
-        // First: maybe we have explicit type resolver?
-        TypeResolverBuilder<?> b;
-        JsonTypeInfo info = ac.getAnnotation(JsonTypeInfo.class);
-        JsonTypeResolver resAnn = ac.getAnnotation(JsonTypeResolver.class);
-        if (resAnn != null) {
-            /* let's not try to force access override (would need to pass
-             * settings through if we did, since that's not doable on some
-             * platforms)
-             */
-            b = ClassUtil.createInstance(resAnn.value(), false);
-        } else { // if not, use standard one, if indicated by annotations
-            if (info == null || info.use() == JsonTypeInfo.Id.NONE) {
-                return null;
-            }
-            b = new StdTypeResolverBuilder();
-        }
-        // Does it define a custom type id resolver?
-        JsonTypeIdResolver idResInfo = ac.getAnnotation(JsonTypeIdResolver.class);
-        TypeIdResolver idRes = (idResInfo == null) ? null
-                : ClassUtil.createInstance(idResInfo.value(), false);
-        b = b.init(info.use(), idRes);
-        b = b.inclusion(info.include());
-        b = b.typeProperty(info.property());
-        return b;
-    }
-
-    @Override
-    public TypeResolverBuilder<?> findPropertyTypeResolver(AnnotatedMember am, JavaType baseType)
-    {
-        // No per-member type overrides (yet)
-        return null;
-    }
-
-    @Override
-    public TypeResolverBuilder<?> findPropertyContentTypeResolver(AnnotatedMember am, JavaType baseType)
-    {
-        // No per-member type overrides (yet)
-        return null;
-    }
-    
-    @Override
-    public List<NamedType> findSubtypes(Annotated a)
-    {
-        JsonSubTypes t = a.getAnnotation(JsonSubTypes.class);
-        if (t == null) return null;
-        JsonSubTypes.Type[] types = t.value();
-        ArrayList<NamedType> result = new ArrayList<NamedType>(types.length);
-        for (JsonSubTypes.Type type : types) {
-            result.add(new NamedType(type.value(), type.name()));
-        }
-        return result;
-    }
-
-    @Override        
-    public String findTypeName(AnnotatedClass ac)
-    {
-        JsonTypeName tn = ac.getAnnotation(JsonTypeName.class);
-        return (tn == null) ? null : tn.value();
-    }
-
-    /*
-    /**********************************************************
-    /* General method annotations
-    /**********************************************************
+    ///////////////////////////////////////////////////////
+    // General method annotations
+    ///////////////////////////////////////////////////////
     */
 
     @Override
@@ -222,9 +132,9 @@ public class JacksonAnnotationIntrospector
     }
 
     /*
-    /**********************************************************
-    /* General field annotations
-    /**********************************************************
+    ////////////////////////////////////////////////////
+    // General field annotations
+    ////////////////////////////////////////////////////
      */
 
     @Override
@@ -233,11 +143,12 @@ public class JacksonAnnotationIntrospector
     }
 
     /*
-    /**********************************************************
-    /* Serialization: general annotations
-    /**********************************************************
+    ///////////////////////////////////////////////////////
+    // Serialization: general annotations
+    ///////////////////////////////////////////////////////
     */
 
+    @SuppressWarnings({ "unchecked", "deprecation" })
     @Override
     public Class<? extends JsonSerializer<?>> findSerializer(Annotated a)
     {
@@ -251,12 +162,25 @@ public class JacksonAnnotationIntrospector
                 return serClass;
             }
         }
-        // 31-Jan-2010, tatus: @JsonUseSerializer removed as of 1.5
-        return null;
+        JsonUseSerializer oldAnn = a.getAnnotation(JsonUseSerializer.class);
+        if (oldAnn == null) {
+            return null;
+        }
+        Class<?> serClass = oldAnn.value();
+        /* 21-Feb-2009, tatu: There is now a way to indicate "no class"
+         *   (to essentially denote a 'dummy' annotation, needed for
+         *   overriding in some cases), need to check:
+         */
+        if (serClass == NoClass.class || serClass == JsonSerializer.None.class) {
+            return null;
+        }
+        if (!JsonSerializer.class.isAssignableFrom(serClass)) {
+            throw new IllegalArgumentException("Invalid @JsonUseSerializer annotation: Class "+serClass.getName()+" not a JsonSerializer");
+        }
+        return (Class<? extends JsonSerializer<?>>)serClass;
     }
 
-    @SuppressWarnings("deprecation")
-	@Override
+    @Override
     public JsonSerialize.Inclusion findSerializationInclusion(Annotated a, JsonSerialize.Inclusion defValue)
     {
         JsonSerialize ann = a.getAnnotation(JsonSerialize.class);
@@ -303,11 +227,46 @@ public class JacksonAnnotationIntrospector
     }
     
     /*
-    /**********************************************************
-    /* Serialization: class annotations
-    /**********************************************************
-     */
+    ///////////////////////////////////////////////////////
+    // Serialization: class annotations
+    ///////////////////////////////////////////////////////
+    */
 
+    @Override
+    public Boolean findGetterAutoDetection(AnnotatedClass ac)
+    {
+        JsonAutoDetect cann = ac.getAnnotation(JsonAutoDetect.class);
+        if (cann != null) {
+            JsonMethod[] methods = cann.value();
+            if (methods != null) {
+                for (JsonMethod jm : methods) {
+                    if (jm.getterEnabled()) {
+                        return Boolean.TRUE;
+                    }
+                }
+            }
+            return Boolean.FALSE;
+        }
+        return null;
+    }
+
+    @Override
+    public Boolean findIsGetterAutoDetection(AnnotatedClass ac)
+    {
+        JsonAutoDetect cann = ac.getAnnotation(JsonAutoDetect.class);
+        if (cann != null) {
+            JsonMethod[] methods = cann.value();
+            if (methods != null) {
+                for (JsonMethod jm : methods) {
+                    if (jm.isGetterEnabled()) {
+                        return Boolean.TRUE;
+                    }
+                }
+            }
+            return Boolean.FALSE;
+        }
+        return null;
+    }
 
     public String[] findSerializationPropertyOrder(AnnotatedClass ac) {
         JsonPropertyOrder order = ac.getAnnotation(JsonPropertyOrder.class);
@@ -320,12 +279,11 @@ public class JacksonAnnotationIntrospector
     }
 
     /*
-    /**********************************************************
-    /* Serialization: method annotations
-    /**********************************************************
-     */
+    ///////////////////////////////////////////////////////
+    // Serialization: method annotations
+    ///////////////////////////////////////////////////////
+    */
 
-    @SuppressWarnings("deprecation")
     @Override
     public String findGettablePropertyName(AnnotatedMethod am)
     {
@@ -346,8 +304,7 @@ public class JacksonAnnotationIntrospector
         /* 22-May-2009, tatu: And finally, JsonSerialize implies
          *   that there is a property, although doesn't define name
          */
-        // 09-Apr-2010, tatu: Ditto for JsonView
-        if (am.hasAnnotation(JsonSerialize.class) || am.hasAnnotation(JsonView.class)) {
+        if (am.hasAnnotation(JsonSerialize.class)) {
             return "";
         }
         return null;
@@ -362,9 +319,9 @@ public class JacksonAnnotationIntrospector
     }
 
     /*
-    /**********************************************************
-    /* Serialization: field annotations
-    /**********************************************************
+    ///////////////////////////////////////////////////////
+    // Serialization: field annotations
+    ///////////////////////////////////////////////////////
     */
 
     @Override
@@ -375,19 +332,19 @@ public class JacksonAnnotationIntrospector
             return pann.value();
         }
         // Also: having JsonSerialize implies it is such a property
-        // 09-Apr-2010, tatu: Ditto for JsonView
-        if (af.hasAnnotation(JsonSerialize.class) || af.hasAnnotation(JsonView.class)) {
+        if (af.hasAnnotation(JsonSerialize.class)) {
             return "";
         }
         return null;
     }
 
     /*
-    /**********************************************************
-    /* Deserialization: general annotations
-    /**********************************************************
-     */
+    ///////////////////////////////////////////////////////
+    // Deserialization: general annotations
+    ///////////////////////////////////////////////////////
+    */
 
+    @SuppressWarnings({ "unchecked", "deprecation" })
     @Override
     public Class<? extends JsonDeserializer<?>> findDeserializer(Annotated a)
     {
@@ -401,8 +358,18 @@ public class JacksonAnnotationIntrospector
                 return deserClass;
             }
         }
-        // 31-Jan-2010, tatus: @JsonUseDeserializer removed as of 1.5
-        return null;
+        JsonUseDeserializer oldAnn = a.getAnnotation(JsonUseDeserializer.class);
+        if (oldAnn == null) {
+            return null;
+        }
+        Class<?> deserClass = oldAnn.value();
+        if (deserClass == NoClass.class || deserClass == JsonDeserializer.None.class) {
+            return null;
+        }
+        if (!JsonDeserializer.class.isAssignableFrom(deserClass)) {
+            throw new IllegalArgumentException("Invalid @JsonUseDeserializer annotation: Class "+deserClass.getName()+" not a JsonDeserializer");
+        }
+        return (Class<? extends JsonDeserializer<?>>)deserClass;
     }
 
     @Override
@@ -431,9 +398,9 @@ public class JacksonAnnotationIntrospector
         return null;
     }
 
+    @SuppressWarnings("deprecation")
     @Override
-    public Class<?> findDeserializationType(Annotated am, JavaType baseType,
-            String propName)
+    public Class<?> findDeserializationType(Annotated am)
     {
         // Primary annotation, JsonDeserialize
         JsonDeserialize ann = am.getAnnotation(JsonDeserialize.class);
@@ -447,10 +414,8 @@ public class JacksonAnnotationIntrospector
         /* TODO: !!! 21-May-2009, tatu: JsonClass is deprecated; will need to
          *    drop support at a later point (for 2.0?)
          */
-        @SuppressWarnings("deprecation")
         JsonClass oldAnn = am.getAnnotation(JsonClass.class);
         if (oldAnn != null) {
-            @SuppressWarnings("deprecation")
             Class<?> cls = oldAnn.value();
             if(cls != NoClass.class) {
                 return cls;
@@ -459,9 +424,8 @@ public class JacksonAnnotationIntrospector
         return null;
     }
 
-    @Override
-    public Class<?> findDeserializationKeyType(Annotated am, JavaType baseKeyType,
-            String propName)
+    @SuppressWarnings("deprecation")
+    public Class<?> findDeserializationKeyType(Annotated am)
     {
         // Primary annotation, JsonDeserialize
         JsonDeserialize ann = am.getAnnotation(JsonDeserialize.class);
@@ -475,10 +439,8 @@ public class JacksonAnnotationIntrospector
         /* !!! 21-May-2009, tatu: JsonClass is deprecated; will need to
          *    drop support at a later point (for 2.0?)
          */
-        @SuppressWarnings("deprecation")
         JsonKeyClass oldAnn = am.getAnnotation(JsonKeyClass.class);
         if (oldAnn != null) {
-            @SuppressWarnings("deprecation")
             Class<?> cls = oldAnn.value();
             if(cls != NoClass.class) {
                 return cls;
@@ -488,9 +450,8 @@ public class JacksonAnnotationIntrospector
     }
 
     @SuppressWarnings("deprecation")
-    @Override
-    public Class<?> findDeserializationContentType(Annotated am, JavaType baseContentType,
-            String propName)
+	@Override
+    public Class<?> findDeserializationContentType(Annotated am)
     {
         // Primary annotation, JsonDeserialize
         JsonDeserialize ann = am.getAnnotation(JsonDeserialize.class);
@@ -515,24 +476,66 @@ public class JacksonAnnotationIntrospector
     }
 
     /*
-    /**********************************************************
-    /* Deserialization: Method annotations
-    /**********************************************************
+    ////////////////////////////////////////////////////
+    // Deserialization: class annotations
+    ////////////////////////////////////////////////////
      */
+
+    @Override
+    public Boolean findCreatorAutoDetection(AnnotatedClass ac)
+    {
+        JsonAutoDetect cann = ac.getAnnotation(JsonAutoDetect.class);
+        if (cann != null) {
+            JsonMethod[] methods = cann.value();
+            if (methods != null) {
+                for (JsonMethod jm : methods) {
+                    if (jm.creatorEnabled()) {
+                        return Boolean.TRUE;
+                    }
+                }
+            }
+            return Boolean.FALSE;
+        }
+        return null;
+    }
+
+    @Override
+    public Boolean findSetterAutoDetection(AnnotatedClass ac)
+    {
+        JsonAutoDetect cann = ac.getAnnotation(JsonAutoDetect.class);
+        if (cann != null) {
+            JsonMethod[] methods = cann.value();
+            if (methods != null) {
+                for (JsonMethod jm : methods) {
+                    if (jm.setterEnabled()) {
+                        return Boolean.TRUE;
+                    }
+                }
+            }
+            return Boolean.FALSE;
+        }
+        return null;
+    }
+
+    /*
+    ///////////////////////////////////////////////////////
+    // Deserialization: Method annotations
+    ///////////////////////////////////////////////////////
+    */
 
     @Override
     public String findSettablePropertyName(AnnotatedMethod am)
     {
-        /* 16-Apr-2010, tatu: Existing priority (since 1.1) is that
-         *   @JsonProperty is checked first; and @JsonSetter next.
-         *   This is not quite optimal now that @JsonSetter is un-deprecated.
-         *   However, it is better to have stable behavior rather than
-         *   cause compatibility problems by fine-tuning.
+        /* 22-May-2009, tatu: JsonProperty is the primary annotation
+         *   to check for
          */
         JsonProperty pann = am.getAnnotation(JsonProperty.class);
         if (pann != null) {
             return pann.value();
         }
+        /* 22-May-2009, tatu: JsonSetter is deprecated as of 1.1
+         *    but still supported
+         */
         JsonSetter ann = am.getAnnotation(JsonSetter.class);
         if (ann != null) {
             return ann.value();
@@ -540,8 +543,7 @@ public class JacksonAnnotationIntrospector
         /* 22-May-2009, tatu: And finally, JsonSerialize implies
          *   that there is a property, although doesn't define name
          */
-        // 09-Apr-2010, tatu: Ditto for JsonView
-    	if (am.hasAnnotation(JsonDeserialize.class) || am.hasAnnotation(JsonView.class)) {
+        if (am.hasAnnotation(JsonDeserialize.class)) {
             return "";
         }
         return null;
@@ -568,10 +570,10 @@ public class JacksonAnnotationIntrospector
     }
 
     /*
-    /**********************************************************
-    /* Deserialization: field annotations
-    /**********************************************************
-     */
+    ///////////////////////////////////////////////////////
+    // Deserialization: field annotations
+    ///////////////////////////////////////////////////////
+    */
 
     @Override
     public String findDeserializablePropertyName(AnnotatedField af)
@@ -581,18 +583,17 @@ public class JacksonAnnotationIntrospector
             return pann.value();
         }
         // Also: having JsonDeserialize implies it is such a property
-        // 09-Apr-2010, tatu: Ditto for JsonView
-        if (af.hasAnnotation(JsonDeserialize.class) || af.hasAnnotation(JsonView.class)) {
+        if (af.hasAnnotation(JsonDeserialize.class)) {
             return "";
         }
         return null;
     }
 
     /*
-    /**********************************************************
-    /* Deserialization: parameters annotations
-    /**********************************************************
-     */
+    ///////////////////////////////////////////////////////
+    // Deserialization: parameters annotations
+    ///////////////////////////////////////////////////////
+    */
 
     @Override
         public String findPropertyNameForParam(AnnotatedParameter param)
@@ -611,9 +612,9 @@ public class JacksonAnnotationIntrospector
     }
 
     /*
-    /**********************************************************
-    /* Helper methods
-    /**********************************************************
+    ////////////////////////////////////////////////////
+    // Helper methods
+    ////////////////////////////////////////////////////
      */
 
     protected boolean _isIgnorable(Annotated a)

@@ -3,9 +3,8 @@ package org.codehaus.jackson.xc;
 import org.codehaus.jackson.JsonParser;
 import org.codehaus.jackson.JsonProcessingException;
 import org.codehaus.jackson.map.DeserializationContext;
+import org.codehaus.jackson.map.JsonDeserializer;
 import org.codehaus.jackson.map.JsonMappingException;
-import org.codehaus.jackson.map.TypeDeserializer;
-import org.codehaus.jackson.map.deser.StdDeserializer;
 
 import javax.xml.bind.annotation.adapters.XmlAdapter;
 import java.io.IOException;
@@ -16,14 +15,13 @@ import java.lang.reflect.Type;
  * @author Ryan Heaton
  */
 public class XmlAdapterJsonDeserializer
-    extends StdDeserializer<Object>
+        extends JsonDeserializer<Object>
 {
     private final XmlAdapter<Object,Object> xmlAdapter;
     private final Class<?> valueClass;
 
     public XmlAdapterJsonDeserializer(XmlAdapter<Object,Object> xmlAdapter)
     {
-        super(Object.class); // type not really known, not passed
         this.xmlAdapter = xmlAdapter;
         this.valueClass = findValueClass();
     }
@@ -49,14 +47,6 @@ public class XmlAdapterJsonDeserializer
         }
     }
 
-    @Override
-    public Object deserializeWithType(JsonParser jp, DeserializationContext ctxt,
-            TypeDeserializer typeDeserializer)
-        throws IOException, JsonProcessingException
-    {
-        /* Output can be as JSON Object, Array or scalar: no way to know
-         * a priori. So:
-         */
-        return typeDeserializer.deserializeTypedFromAny(jp, ctxt);
-    }
+
+
 }

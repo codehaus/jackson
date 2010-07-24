@@ -49,6 +49,7 @@ public class TestJsonFactory
         
     }
     
+    @SuppressWarnings("deprecation")
     public void testJsonWithFiles() throws Exception
     {
         File file = File.createTempFile("jackson-test", null);
@@ -71,7 +72,7 @@ public class TestJsonFactory
         jp.close();
 
         // Then via URL:
-        jp = f.createJsonParser(file.toURI().toURL());
+        jp = f.createJsonParser(file.toURL());
         assertToken(JsonToken.START_OBJECT, jp.nextToken());
         assertToken(JsonToken.END_OBJECT, jp.nextToken());
         assertNull(jp.nextToken());

@@ -2,7 +2,6 @@ package org.codehaus.jackson.map.introspect;
 
 import java.lang.annotation.Annotation;
 
-import org.codehaus.jackson.type.JavaType;
 import org.codehaus.jackson.map.JsonDeserializer;
 import org.codehaus.jackson.map.KeyDeserializer;
 import org.codehaus.jackson.map.AnnotationIntrospector;
@@ -25,9 +24,9 @@ public class NopAnnotationIntrospector
     public final static NopAnnotationIntrospector instance = new NopAnnotationIntrospector();
 
     /*
-    /**********************************************************
-    /* General annotation properties
-    /**********************************************************
+    ////////////////////////////////////////////////////
+    // General annotation properties
+    ////////////////////////////////////////////////////
      */
 
     @Override
@@ -36,9 +35,9 @@ public class NopAnnotationIntrospector
     }
 
     /*
-    /**********************************************************
-    /* General annotations
-    /**********************************************************
+    ////////////////////////////////////////////////////
+    // General annotations
+    ////////////////////////////////////////////////////
      */
 
     @Override
@@ -52,13 +51,18 @@ public class NopAnnotationIntrospector
     }
     
     /*
-    /**********************************************************
-    /* General Class annotations
-    /**********************************************************
-     */
+    ///////////////////////////////////////////////////////
+    // General Class annotations
+    ///////////////////////////////////////////////////////
+    */
 
     @Override
     public Boolean findCachability(AnnotatedClass ac) {
+        return null;
+    }
+
+    @Override
+    public Boolean findFieldAutoDetection(AnnotatedClass ac) {
         return null;
     }
 
@@ -76,23 +80,12 @@ public class NopAnnotationIntrospector
     public Boolean findIgnoreUnknownProperties(AnnotatedClass ac) {
         return null;
     }
-
-    /*
-    /**********************************************************
-    /* Property auto-detection
-    /**********************************************************
-     */
-    
-    @Override
-    public VisibilityChecker<?> findAutoDetectVisibility(AnnotatedClass ac, VisibilityChecker<?> checker) {
-        return checker;
-    }
     
     /*
-    /**********************************************************
-    /* General Method annotations
-    /**********************************************************
-     */
+    ///////////////////////////////////////////////////////
+    // General Method annotations
+    ///////////////////////////////////////////////////////
+    */
 
     @Override
     public boolean isIgnorableConstructor(AnnotatedConstructor c) {
@@ -105,9 +98,9 @@ public class NopAnnotationIntrospector
     }
     
     /*
-    /**********************************************************
-    /* General field annotations
-    /**********************************************************
+    ////////////////////////////////////////////////////
+    // General field annotations
+    ////////////////////////////////////////////////////
      */
 
     @Override
@@ -116,10 +109,10 @@ public class NopAnnotationIntrospector
     }
 
     /*
-    /**********************************************************
-    /* Serialization: general annotations
-    /**********************************************************
-     */
+    ///////////////////////////////////////////////////////
+    // Serialization: general annotations
+    ///////////////////////////////////////////////////////
+    */
 
     @Override
     public Object findSerializer(Annotated am) {
@@ -147,11 +140,24 @@ public class NopAnnotationIntrospector
     }
 
     /*
-    /**********************************************************
-    /* Serialization: class annotations
-    /**********************************************************
-     */
+    ///////////////////////////////////////////////////////
+    // Serialization: class annotations
+    ///////////////////////////////////////////////////////
+    */
 
+    /**
+     * @since 1.3
+     */
+    @Override
+    public Boolean findIsGetterAutoDetection(AnnotatedClass ac) {
+        return null;
+    }
+
+    @Override
+    public Boolean findGetterAutoDetection(AnnotatedClass ac) {
+        return null;
+    }
+    
     public String[] findSerializationPropertyOrder(AnnotatedClass ac) {
         return null;
     }
@@ -161,10 +167,10 @@ public class NopAnnotationIntrospector
     }
 
     /*
-    /**********************************************************
-    /* Serialization: method annotations
-    /**********************************************************
-     */
+    ///////////////////////////////////////////////////////
+    // Serialization: method annotations
+    ///////////////////////////////////////////////////////
+    */
 
     @Override
     public String findGettablePropertyName(AnnotatedMethod am) {
@@ -177,22 +183,27 @@ public class NopAnnotationIntrospector
     }
     
     @Override
+    public Boolean findCreatorAutoDetection(AnnotatedClass ac) {
+        return null;
+    }
+
+    @Override
     public String findDeserializablePropertyName(AnnotatedField af) {
         return null;
     }
 
     @Override
-    public Class<?> findDeserializationContentType(Annotated am, JavaType t, String propName) {
+    public Class<?> findDeserializationContentType(Annotated am) {
         return null;
     }
 
     @Override
-    public Class<?> findDeserializationKeyType(Annotated am, JavaType t, String propName) {
+    public Class<?> findDeserializationKeyType(Annotated am) {
         return null;
     }
 
     @Override
-    public Class<?> findDeserializationType(Annotated am, JavaType t, String propName) {
+    public Class<?> findDeserializationType(Annotated am) {
         return null;
     }
 
@@ -215,9 +226,16 @@ public class NopAnnotationIntrospector
     public String findSerializablePropertyName(AnnotatedField af) {
         return null;
     }
+
+
     
     @Override
     public String findSettablePropertyName(AnnotatedMethod am) {
+        return null;
+    }
+
+    @Override
+    public Boolean findSetterAutoDetection(AnnotatedClass ac) {
         return null;
     }
 

@@ -79,10 +79,10 @@ public abstract class JsonNumericParserBase
     final protected static char CHAR_NULL = '\0';
 
     /*
-    /**********************************************************
-    /* Numeric value holders: multiple fields used for
-    /* for efficiency
-    /**********************************************************
+    ////////////////////////////////////////////////////
+    // Numeric value holders: multiple fields used for
+    // for efficiency
+    ////////////////////////////////////////////////////
      */
 
     /**
@@ -134,9 +134,9 @@ public abstract class JsonNumericParserBase
     protected int mExpLength;
 
     /*
-    /**********************************************************
-    /* Life-cycle
-    /**********************************************************
+    ////////////////////////////////////////////////////
+    // Life-cycle
+    ////////////////////////////////////////////////////
      */
 
     protected JsonNumericParserBase(IOContext ctxt, int features)
@@ -159,16 +159,25 @@ public abstract class JsonNumericParserBase
     }
 
     /*
-    /**********************************************************
-    /* Numeric accessors of public API
-    /**********************************************************
+    ////////////////////////////////////////////////////
+    // Additional methods for sub-classes to implement
+    ////////////////////////////////////////////////////
+     */
+
+    protected abstract JsonToken parseNumberText(int ch)
+        throws IOException, JsonParseException;
+
+    /*
+    ////////////////////////////////////////////////////
+    // Numeric accessors of public API
+    ////////////////////////////////////////////////////
      */
 
     public Number getNumberValue()
         throws IOException, JsonParseException
     {
         if (_numTypesValid == NR_UNKNOWN) {
-            _parseNumericValue(NR_UNKNOWN); // will also check event type
+            parseNumericValue(NR_UNKNOWN); // will also check event type
         }
         // Separate types for int types
         if (_currToken == JsonToken.VALUE_NUMBER_INT) {
@@ -201,7 +210,7 @@ public abstract class JsonNumericParserBase
         throws IOException, JsonParseException
     {
         if (_numTypesValid == NR_UNKNOWN) {
-            _parseNumericValue(NR_UNKNOWN); // will also check event type
+            parseNumericValue(NR_UNKNOWN); // will also check event type
         }
         if (_currToken == JsonToken.VALUE_NUMBER_INT) {
             if ((_numTypesValid & NR_INT) != 0) {
@@ -230,7 +239,7 @@ public abstract class JsonNumericParserBase
     {
         if ((_numTypesValid & NR_INT) == 0) {
             if (_numTypesValid == NR_UNKNOWN) { // not parsed at all
-                _parseNumericValue(NR_INT); // will also check event type
+                parseNumericValue(NR_INT); // will also check event type
             }
             if ((_numTypesValid & NR_INT) == 0) { // wasn't an int natively?
                 convertNumberToInt(); // let's make it so, if possible
@@ -244,7 +253,7 @@ public abstract class JsonNumericParserBase
     {
         if ((_numTypesValid & NR_LONG) == 0) {
             if (_numTypesValid == NR_UNKNOWN) {
-                _parseNumericValue(NR_LONG);
+                parseNumericValue(NR_LONG);
             }
             if ((_numTypesValid & NR_LONG) == 0) {
                 convertNumberToLong();
@@ -258,7 +267,7 @@ public abstract class JsonNumericParserBase
     {
         if ((_numTypesValid & NR_BIGINT) == 0) {
             if (_numTypesValid == NR_UNKNOWN) {
-                _parseNumericValue(NR_BIGINT);
+                parseNumericValue(NR_BIGINT);
             }
             if ((_numTypesValid & NR_BIGINT) == 0) {
                 convertNumberToBigInteger();
@@ -287,7 +296,7 @@ public abstract class JsonNumericParserBase
     {
         if ((_numTypesValid & NR_DOUBLE) == 0) {
             if (_numTypesValid == NR_UNKNOWN) {
-                _parseNumericValue(NR_DOUBLE);
+                parseNumericValue(NR_DOUBLE);
             }
             if ((_numTypesValid & NR_DOUBLE) == 0) {
                 convertNumberToDouble();
@@ -301,7 +310,7 @@ public abstract class JsonNumericParserBase
     {
         if ((_numTypesValid & NR_BIGDECIMAL) == 0) {
             if (_numTypesValid == NR_UNKNOWN) {
-                _parseNumericValue(NR_BIGDECIMAL);
+                parseNumericValue(NR_BIGDECIMAL);
             }
             if ((_numTypesValid & NR_BIGDECIMAL) == 0) {
                 convertNumberToBigDecimal();
@@ -312,9 +321,9 @@ public abstract class JsonNumericParserBase
 
 
     /*
-    /**********************************************************
-    /* Conversion from textual to numeric representation
-    /**********************************************************
+    ////////////////////////////////////////////////////
+    // Conversion from textual to numeric representation
+    ////////////////////////////////////////////////////
      */
 
     /**
@@ -326,8 +335,8 @@ public abstract class JsonNumericParserBase
      * @param expType Numeric type that we will immediately need, if any;
      *   mostly necessary to optimize handling of floating point numbers
      */
-    protected void _parseNumericValue(int expType)
-        throws IOException, JsonParseException
+    protected final void parseNumericValue(int expType)
+        throws JsonParseException
     {
         // First things first: must be a numeric event
         if (_currToken == null || !_currToken.isNumeric()) {
@@ -409,9 +418,9 @@ public abstract class JsonNumericParserBase
     }
 
     /*
-    /**********************************************************
-    /* Conversions
-    /**********************************************************
+    ////////////////////////////////////////////////////
+    // Conversions
+    ////////////////////////////////////////////////////
      */    
 
     protected void convertNumberToInt()
@@ -544,9 +553,9 @@ public abstract class JsonNumericParserBase
     }
 
     /*
-    /**********************************************************
-    /* Exception reporting
-    /**********************************************************
+    ////////////////////////////////////////////////////
+    // Exception reporting
+    ////////////////////////////////////////////////////
      */
 
     protected void reportUnexpectedNumberChar(int ch, String comment)

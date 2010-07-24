@@ -6,7 +6,6 @@ import java.util.*;
 import org.codehaus.jackson.*;
 import org.codehaus.jackson.map.*;
 import org.codehaus.jackson.map.annotate.JsonDeserialize;
-import org.codehaus.jackson.map.deser.StdDeserializer;
 
 /**
  * Unit test suite that tests "usingXxx" properties of
@@ -82,9 +81,8 @@ public class TestAnnotationUsing
     //////////////////////////////////////////////
      */
 
-    static class ValueDeserializer extends StdDeserializer<ValueClass>
+    static class ValueDeserializer extends JsonDeserializer<ValueClass>
     {
-        public ValueDeserializer() { super(ValueClass.class); }
         public ValueClass deserialize(JsonParser jp, DeserializationContext ctxt)
             throws IOException, JsonProcessingException
         {
@@ -93,9 +91,8 @@ public class TestAnnotationUsing
         }
     }
 
-    private final static class IntsDeserializer extends StdDeserializer<int[]>
+    private final static class IntsDeserializer extends JsonDeserializer<int[]>
     {
-        public IntsDeserializer() { super(int[].class); }
         public int[] deserialize(JsonParser jp, DeserializationContext ctxt)
             throws IOException, JsonProcessingException
         {

@@ -13,14 +13,14 @@ import org.codehaus.jackson.map.SerializerProvider;
 public final class ArrayNode
     extends ContainerNode
 {
-    protected ArrayList<JsonNode> _children;
+    ArrayList<JsonNode> _children;
 
     public ArrayNode(JsonNodeFactory nc) { super(nc); }
 
     /*
-    /**********************************************************
-    /* Implementation of core JsonNode API
-    /**********************************************************
+    ///////////////////////////////////////////////////////////
+    // Implementation of core JsonNode API
+    ///////////////////////////////////////////////////////////
      */
 
     @Override public JsonToken asToken() { return JsonToken.START_ARRAY; }
@@ -41,7 +41,7 @@ public final class ArrayNode
     }
 
     @Override
-    public JsonNode get(int index)
+        public JsonNode get(int index)
     {
         if (index >= 0 && (_children != null) && index < _children.size()) {
             return _children.get(index);
@@ -50,10 +50,10 @@ public final class ArrayNode
     }
 
     @Override
-    public JsonNode get(String fieldName) { return null; }
+        public JsonNode get(String fieldName) { return null; }
 
     @Override
-    public JsonNode path(String fieldName) { return MissingNode.getInstance(); }
+        public JsonNode path(String fieldName) { return MissingNode.getInstance(); }
 
     @Override
     public JsonNode path(int index)
@@ -65,9 +65,9 @@ public final class ArrayNode
     }
 
     /*
-    /**********************************************************
-    /* Public API, serialization
-    /**********************************************************
+    ////////////////////////////////////////////////////
+    // Public API, serialization
+    ////////////////////////////////////////////////////
      */
 
     @Override
@@ -89,9 +89,9 @@ public final class ArrayNode
     }
 
     /*
-    /**********************************************************
-    /* Extended ObjectNode API, accessors
-    /**********************************************************
+    ///////////////////////////////////////////////////////////
+    // Extended ObjectNode API, accessors
+    ///////////////////////////////////////////////////////////
      */
 
     /**
@@ -133,12 +133,15 @@ public final class ArrayNode
      */
     public JsonNode addAll(ArrayNode other)
     {
-        int len = other.size();
-        if (len > 0) {
-            if (_children == null) {
-                _children = new ArrayList<JsonNode>(len+2);
-            }
-            other.addContentsTo(_children);
+        ArrayList<JsonNode> contents = other._children;
+        if (contents != null) {
+	    if (_children == null) {
+		_children = new ArrayList<JsonNode>(contents);
+	    } else {
+                for (int i = 0, len = contents.size(); i < len; ++i) {
+                    _children.add(contents.get(i));
+                }
+	    }
         }
         return this;
     }
@@ -154,14 +157,16 @@ public final class ArrayNode
      */
     public JsonNode addAll(Collection<JsonNode> nodes)
     {
-        int len = nodes.size();
-        if (len > 0) {
-            if (_children == null) {
-                _children = new ArrayList<JsonNode>(nodes);
-            } else {
-                _children.addAll(nodes);
-            }
-        }
+	if (_children == null) {
+	    _children = new ArrayList<JsonNode>(nodes);
+	} else {
+	    for (JsonNode n : nodes) {
+		if (n == null) {
+		    n = nullNode();
+		}
+		_children.add(n);
+	    }
+	}
         return this;
     }
     
@@ -200,9 +205,9 @@ public final class ArrayNode
     }
     
     /*
-    /**********************************************************
-    /* Extended ObjectNode API, mutators, generic
-    /**********************************************************
+    ///////////////////////////////////////////////////////////
+    // Extended ObjectNode API, mutators, generic
+    ///////////////////////////////////////////////////////////
      */
 
     /**
@@ -237,11 +242,7 @@ public final class ArrayNode
      */
     public void addPOJO(Object value)
     {
-        if (value == null) {
-            addNull();
-        } else {
-            _add(POJONode(value));
-        }
+        _add(POJONode(value));
     }
 
     public void addNull()
@@ -272,24 +273,12 @@ public final class ArrayNode
     /**
      * Method for setting value of a field to specified numeric value.
      */
-    public void add(BigDecimal v) {
-        if (v == null) {
-            addNull();
-        } else {
-            _add(numberNode(v));
-        }
-    }
+    public void add(BigDecimal v) { _add(numberNode(v)); }
 
     /**
      * Method for setting value of a field to specified String value.
      */
-    public void add(String v) {
-        if (v == null) {
-            addNull();
-        } else {
-            _add(textNode(v));
-        }
-    }
+    public void add(String v) { _add(textNode(v)); }
 
     /**
      * Method for setting value of a field to specified String value.
@@ -299,13 +288,7 @@ public final class ArrayNode
     /**
      * Method for setting value of a field to specified binary value
      */
-    public void add(byte[] v) {
-        if (v == null) {
-            addNull();
-        } else {
-            _add(binaryNode(v));
-        }
-    }
+    public void add(byte[] v) { _add(binaryNode(v)); }
 
     public ArrayNode insertArray(int index)
     {
@@ -333,11 +316,7 @@ public final class ArrayNode
      */
     public void insertPOJO(int index, Object value)
     {
-        if (value == null) {
-            insertNull(index);
-        } else {
-            _insert(index, POJONode(value));
-        }
+        _insert(index, POJONode(value));
     }
 
     public void insertNull(int index)
@@ -368,24 +347,12 @@ public final class ArrayNode
     /**
      * Method for setting value of a field to specified numeric value.
      */
-    public void insert(int index, BigDecimal v) {
-        if (v == null) {
-            insertNull(index);
-        } else {
-            _insert(index, numberNode(v));
-        }
-    }
+    public void insert(int index, BigDecimal v) { _insert(index, numberNode(v)); }
 
     /**
      * Method for setting value of a field to specified String value.
      */
-    public void insert(int index, String v) {
-        if (v == null) {
-            insertNull(index);
-        } else {
-            _insert(index, textNode(v));
-        }
-    }
+    public void insert(int index, String v) { _insert(index, textNode(v)); }
 
     /**
      * Method for setting value of a field to specified String value.
@@ -395,36 +362,12 @@ public final class ArrayNode
     /**
      * Method for setting value of a field to specified binary value
      */
-    public void insert(int index, byte[] v) {
-        if (v == null) {
-            insertNull(index);
-        } else {
-            _insert(index, binaryNode(v));
-        }
-    }
+    public void insert(int index, byte[] v) { _insert(index, binaryNode(v)); }
 
     /*
-    /**********************************************************
-    /* Package methods (for other node classes to use)
-    /**********************************************************
-     */
-
-    /**
-     * @since 1.6
-     */
-    protected void addContentsTo(List<JsonNode> dst)
-    {
-        if (_children != null) {
-            for (JsonNode n : _children) {
-                dst.add(n);
-            }
-        }
-    }
-    
-    /*
-    /**********************************************************
-    /* Standard methods
-    /**********************************************************
+    ////////////////////////////////////////////////////////
+    // Standard methods
+    ////////////////////////////////////////////////////////
      */
 
     @Override
@@ -478,9 +421,9 @@ public final class ArrayNode
     }
 
     /*
-    /**********************************************************
-    /* Internal methods
-    /**********************************************************
+    ////////////////////////////////////////////////////////
+    // Internal methods
+    ////////////////////////////////////////////////////////
      */
 
     public JsonNode _set(int index, JsonNode value)

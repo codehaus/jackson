@@ -7,11 +7,8 @@ import org.codehaus.jackson.annotate.*;
 import org.codehaus.jackson.map.annotate.JsonSerialize;
 import org.codehaus.jackson.map.annotate.JsonSerialize.Inclusion; // for javadocs
 import org.codehaus.jackson.map.introspect.AnnotatedClass;
-import org.codehaus.jackson.map.introspect.VisibilityChecker;
-import org.codehaus.jackson.map.jsontype.TypeResolverBuilder;
 import org.codehaus.jackson.map.type.ClassKey;
 import org.codehaus.jackson.map.util.StdDateFormat;
-import org.codehaus.jackson.type.JavaType;
 
 /**
  * Object that contains baseline configuration for serialization
@@ -26,7 +23,7 @@ import org.codehaus.jackson.type.JavaType;
  * cached first time they are needed.
  */
 public class SerializationConfig
-    implements MapperConfig<SerializationConfig>
+    implements MapperConfig
 {
     /**
      * Enumeration that defines togglable features that guide
@@ -149,9 +146,6 @@ public class SerializationConfig
          * Feature is mostly intended for JAXB compatibility.
          *<p>
          * Default setting is false, meaning root value is not wrapped.
-         *<p>
-         *<b>NOTE</b>: Support for this feature has <b>NOT</b> been
-         * implemented -- it is reserved for future expansion.
          *
          * @since 1.3
          */
@@ -174,92 +168,19 @@ public class SerializationConfig
          */
          ,FAIL_ON_EMPTY_BEANS(true)
 
-         /**
-          * Feature that determines whether properties that have no view
-          * annotations are included in JSON serialization views (see
-          * {@link org.codehaus.jackson.map.annotate.JsonView} for more
-          * details on JSON Views).
-          * If enabled, non-annotated properties will be included;
-          * when disabled, they will be excluded. So this feature
-          * changes between "opt-in" (feature disabled) and
-          * "opt-out" (feature enabled) modes.
-          *<p>
-          * Default value is enabled, meaning that non-annotated
-          * properties are included in all views if there is no
-          * {@link org.codehaus.jackson.map.annotate.JsonView} annotation.
-          * 
-          * @since 1.5
-          */
-         ,DEFAULT_VIEW_INCLUSION(true)
-
-         /**
-          * Feature that determines whether <code>close</code> method of
-          * serialized <b>root level</b> objects (ones for which <code>ObjectMapper</code>'s
-          * writeValue() (or equivalent) method is called)
-          * that implement {@link java.io.Closeable} 
-          * is called after serialization or not. If enabled, <b>close()</b> will
-          * be called after serialization completes (whether succesfully, or
-          * due to an error manifested by an exception being thrown). You can
-          * think of this as sort of "finally" processing.
-          *<p>
-          * NOTE: only affects behavior with <b>root</b> objects, and not other
-          * objects reachable from the root object. Put another way, only one
-          * call will be made for each 'writeValue' call.
-          * 
-          * @since 1.6 (see [JACKSON-282 for details])
-          */
-         ,CLOSE_CLOSEABLE(false)
-         
         // // // Features for datatype-specific serialization
 
         /**
          * Feature that determines whether {@link java.util.Date}s
          * (and Date-based things like {@link java.util.Calendar}s) are to be
          * serialized as numeric timestamps (true; the default),
-         * or as something else (usually textual representation).
+         * or as textual representation (false).
          * If textual representation is used, the actual format is
          * one returned by a call to {@link #getDateFormat}.
-         *<p>
-         * Note: whether this feature affects handling of other date-related
-         * types depend on handlers of those types.
          */
         ,WRITE_DATES_AS_TIMESTAMPS(true)
 
-        /**
-         * Feature that determines how type <code>char[]</code> is serialized:
-         * when enabled, will be serialized as an explict JSON array (with
-         * single-character Strings as values); when disabled, defaults to
-         * serializing them as Strings (which is more compact).
-         * 
-         * @since 1.6 (see [JACKSON-289 for details])
-         */
-        ,WRITE_CHAR_ARRAYS_AS_JSON_ARRAYS(false)
 
-        /**
-         * Feature that determines standard serialization mechanism used for
-         * Enum values: if enabled, return value of <code>Enum.toString()</code>
-         * is used; if disabled, return value of <code>Enum.name()</code> is used.
-         * Since pre-1.6 method was to use Enum name, this is the default.
-         *<p>
-         * Note: this feature should usually have same value
-         * as {@link SerializationConfig#READ_ENUMS_USING_TO_STRING}.
-         *<p>
-         * For further details, check out [JACKSON-212]
-         * 
-         * @since 1.6
-         */
-        ,WRITE_ENUMS_USING_TO_STRING(false)
-
-        /**
-         * Feature that determines whether Map entries with null values are
-         * to be serialized (true) or not (false).
-         *<p>
-         * For further details, check out [JACKSON-314]
-         * 
-         * @since 1.6
-         */
-        ,WRITE_NULL_MAP_VALUES(true)
-        
         // // // Output fine tuning
             
         /**
@@ -316,9 +237,9 @@ public class SerializationConfig
     protected final static int DEFAULT_FEATURE_FLAGS = Feature.collectDefaults();
 
     /*
-    /**********************************************************
-    /* Configuration settings
-    /**********************************************************
+    ///////////////////////////////////////////////////////////
+    // Configuration settings
+    ///////////////////////////////////////////////////////////
      */
 
 
@@ -393,46 +314,21 @@ public class SerializationConfig
      */
     protected boolean _mixInAnnotationsShared;
 
-    /**
-     * Type information handler used for "untyped" values (ones declared
-     * to have type <code>Object.class</code>)
-     * 
-     * @since 1.5
-     */
-    protected final TypeResolverBuilder<?> _typer;
-
-    /**
-     * Object used for determining whether specific property elements
-     * (method, constructors, fields) can be auto-detected based on
-     * their visibility (access modifiers). Can be changed to allow
-     * different minimum visibility levels for auto-detection. Note
-     * that this is the global handler; individual types (classes)
-     * can further override active checker used (using
-     * {@link JsonAutoDetect} annotation)
-     * 
-     * @since 1.5
-     */
-    protected VisibilityChecker<?> _visibilityChecker;
-    
     /*
-    /**********************************************************
-    /* Life-cycle
-    /**********************************************************
+    ///////////////////////////////////////////////////////////
+    // Life-cycle
+    ///////////////////////////////////////////////////////////
      */
 
     public SerializationConfig(ClassIntrospector<? extends BeanDescription> intr,
-                               AnnotationIntrospector annIntr, VisibilityChecker<?> vc)
+                               AnnotationIntrospector annIntr)
     {
         _classIntrospector = intr;
         _annotationIntrospector = annIntr;
-        _typer = null;
-        _visibilityChecker = vc;
     }
 
     protected SerializationConfig(SerializationConfig src,
-                                  HashMap<ClassKey,Class<?>> mixins,
-                                  TypeResolverBuilder<?> typer,
-                                  VisibilityChecker<?> vc)
+                                  HashMap<ClassKey,Class<?>> mixins)
     {
         _classIntrospector = src._classIntrospector;
         _annotationIntrospector = src._annotationIntrospector;
@@ -441,14 +337,12 @@ public class SerializationConfig
         _serializationInclusion = src._serializationInclusion;
         _serializationView = src._serializationView;
         _mixInAnnotations = mixins;
-        _typer = typer;
-        _visibilityChecker = vc;
     }
 
     /*
-    /**********************************************************
-    /* MapperConfig implementation
-    /**********************************************************
+    ///////////////////////////////////////////////////////////
+    // MapperConfig implementation
+    ///////////////////////////////////////////////////////////
      */
 
     /**
@@ -479,7 +373,16 @@ public class SerializationConfig
          *    specifically requested annotations to be added with this call
          */
         AnnotatedClass ac = AnnotatedClass.construct(cls, _annotationIntrospector, null);
-        _visibilityChecker = _annotationIntrospector.findAutoDetectVisibility(ac, _visibilityChecker);
+
+        // Should we enable/disable setter auto-detection?
+        Boolean ad = _annotationIntrospector.findGetterAutoDetection(ac);
+        if (ad != null) {
+            set(Feature.AUTO_DETECT_GETTERS, ad.booleanValue());
+    	}
+        ad = _annotationIntrospector.findIsGetterAutoDetection(ac);
+        if (ad != null) {
+            set(Feature.AUTO_DETECT_IS_GETTERS, ad.booleanValue());
+    	}
 
         // How about writing null property values?
         JsonSerialize.Inclusion incl = _annotationIntrospector.findSerializationInclusion(ac, null);
@@ -502,12 +405,11 @@ public class SerializationConfig
      * instance.
      */
     //@Override
-    public SerializationConfig createUnshared(TypeResolverBuilder<?> typer,
-    		VisibilityChecker<?> vc)
+    public SerializationConfig createUnshared()
     {
         HashMap<ClassKey,Class<?>> mixins = _mixInAnnotations;
         _mixInAnnotationsShared = true;
-    	return new SerializationConfig(this, mixins, typer, vc);
+    	return new SerializationConfig(this, mixins);
     }
 
     //@Override
@@ -576,7 +478,7 @@ public class SerializationConfig
         _mixInAnnotations.put(new ClassKey(target), mixinSource);
     }
 
-    /**
+    /***
      * @since 1.2
      */
     //@Override
@@ -584,28 +486,11 @@ public class SerializationConfig
         return (_mixInAnnotations == null) ? null : _mixInAnnotations.get(new ClassKey(cls));
     }
 
-    //@Override
-    public DateFormat getDateFormat() { return _dateFormat; }
-
-    /**
-     * Method that will set the specific date format to use for
-     * serializing Dates (and Calendars); or if null passed, simply
-     * disable textual serialization and use timestamp.
-     * In addition to setting format, will also enable/disable feature
-     * {@link Feature#WRITE_DATES_AS_TIMESTAMPS}: enable, if argument
-     * is null; disable if non-null.
-     */
-    //@Override
-    public void setDateFormat(DateFormat df) {
-        _dateFormat = df;
-        // Also: enable/disable usage of 
-        set(Feature.WRITE_DATES_AS_TIMESTAMPS, (df == null));
-    }
 
     /*
-    /**********************************************************
-    /* Accessors
-    /**********************************************************
+    ///////////////////////////////////////////////////////////
+    // Accessors
+    ///////////////////////////////////////////////////////////
      */
 
     /**
@@ -614,6 +499,8 @@ public class SerializationConfig
     public final boolean isEnabled(Feature f) {
         return (_featureFlags & f.getMask()) != 0;
     }
+
+    public DateFormat getDateFormat() { return _dateFormat; }
 
     /**
      * Method for checking which serialization view is being used,
@@ -650,30 +537,10 @@ public class SerializationConfig
         return (T) _classIntrospector.forClassAnnotations(this, cls, this);
     }
 
-    /**
-     * Accessor for getting bean description that only contains immediate class
-     * annotations: ones from the class, and its direct mix-in, if any, but
-     * not from super types.
-     */
-    @SuppressWarnings("unchecked")
-    public <T extends BeanDescription> T introspectDirectClassAnnotations(Class<?> cls) {
-        return (T) _classIntrospector.forDirectClassAnnotations(this, cls, this);
-    }
-    
-    //@Override
-    public TypeResolverBuilder<?> getDefaultTyper(JavaType baseType) {
-        return _typer;
-    }
-
-    //@Override
-    public VisibilityChecker<?> getDefaultVisibilityChecker() {
-    	return _visibilityChecker;
-    }
-    
     /*
-    /**********************************************************
-    /* Configuration: on/off features
-    /**********************************************************
+    ////////////////////////////////////////////////////
+    // Configuration: on/off features
+    ////////////////////////////////////////////////////
      */
 
     /**
@@ -702,12 +569,12 @@ public class SerializationConfig
         }
     }
 
-    //protected int getFeatures() { return _generatorFeatures; }
+    //protected int getFeatures() { return _features; }
 
     /*
-    /**********************************************************
-    /* Configuration: other
-    /**********************************************************
+    ////////////////////////////////////////////////////
+    // Configuration: other
+    ////////////////////////////////////////////////////
      */
 
     /**
@@ -730,6 +597,20 @@ public class SerializationConfig
     }
 
     /**
+     * Method that will set the textual serialization to use for
+     * serializing Dates (and Calendars); or if null passed, simply
+     * disable textual serialization and use timestamp.
+     * Also, will enable/disable feature
+     * {@link Feature#WRITE_DATES_AS_TIMESTAMPS}: enable, if argument
+     * is null; disable if non-null.
+     */
+    public void setDateFormat(DateFormat df) {
+        _dateFormat = df;
+        // Also: enable/disable usage of 
+        set(Feature.WRITE_DATES_AS_TIMESTAMPS, (df == null));
+    }
+
+    /**
      * Method for checking which serialization view is being used,
      * if any; null if none.
      *
@@ -741,9 +622,9 @@ public class SerializationConfig
     }
 
     /*
-    /**********************************************************
-    /* Debug support
-    /**********************************************************
+    ///////////////////////////////////////////////////////////
+    // Debug support
+    ///////////////////////////////////////////////////////////
      */
 
     @Override public String toString()

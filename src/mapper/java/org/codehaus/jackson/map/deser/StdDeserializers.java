@@ -53,17 +53,11 @@ class StdDeserializers
         add(new DateDeserializer());
         add(new StdDeserializer.SqlDateDeserializer());
         add(new StdDeserializer.CalendarDeserializer());
-        /* 24-Jan-2010, tatu: When including type information, we may
-         *    know that we specifically need GregorianCalendar...
-         */
-        add(new StdDeserializer.CalendarDeserializer(GregorianCalendar.class),
-                GregorianCalendar.class);
         
         // Then other simple types:
         add(new FromStringDeserializer.UUIDDeserializer());
         add(new FromStringDeserializer.URLDeserializer());
         add(new FromStringDeserializer.URIDeserializer());
-        add(new FromStringDeserializer.CurrencyDeserializer());
         add(new FromStringDeserializer.PatternDeserializer());
 
         /* 25-Aug-2009, tatu: Looks like Google's Android and GAE
@@ -95,11 +89,6 @@ class StdDeserializers
 
         // to deserialize Throwable, need stack trace elements:
         add(new StdDeserializer.StackTraceElementDeserializer());
-
-        // Plus TokenBuffer is a core type since 1.5
-        add(new StdDeserializer.TokenBufferDeserializer());
-        // [JACKSON-283] need to support atomic types, too
-        add(new StdDeserializer.AtomicBooleanDeserializer());
     }
 
     /**

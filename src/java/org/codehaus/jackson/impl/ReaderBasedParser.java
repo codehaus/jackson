@@ -16,9 +16,9 @@ public final class ReaderBasedParser
     extends ReaderBasedNumericParser
 {
     /*
-    /**********************************************************
-    /* Configuration, state
-    /**********************************************************
+    ////////////////////////////////////////////////////
+    // Configuration, state
+    ////////////////////////////////////////////////////
      */
 
     protected ObjectCodec _objectCodec;
@@ -26,9 +26,9 @@ public final class ReaderBasedParser
     final protected CharsToNameCanonicalizer _symbols;
     
     /*
-    /**********************************************************
-    /* Life-cycle
-    /**********************************************************
+    ////////////////////////////////////////////////////
+    // Life-cycle
+    ////////////////////////////////////////////////////
      */
 
     public ReaderBasedParser(IOContext ioCtxt, int features, Reader r,
@@ -48,9 +48,9 @@ public final class ReaderBasedParser
     }
 
     /*
-    /**********************************************************
-    /* Public API, traversal
-    /**********************************************************
+    ////////////////////////////////////////////////////
+    // Public API, traversal
+    ////////////////////////////////////////////////////
      */
 
     /**
@@ -71,6 +71,7 @@ public final class ReaderBasedParser
         if (_tokenIncomplete) {
             _skipString(); // only strings can be partial
         }
+
         int i = _skipWSOrEnd();
         if (i < 0) { // end-of-input
             /* 19-Feb-2009, tatu: Should actually close/release things
@@ -213,7 +214,7 @@ public final class ReaderBasedParser
         }
         return (_currToken = t);
     }
-    
+
     @Override
     public void close() throws IOException
     {
@@ -222,9 +223,9 @@ public final class ReaderBasedParser
     }
 
     /*
-    /**********************************************************
-    /* Internal methods, secondary parsing
-    /**********************************************************
+    ////////////////////////////////////////////////////
+    // Internal methods, secondary parsing
+    ////////////////////////////////////////////////////
      */
 
     protected final String _parseFieldName(int i)
@@ -705,9 +706,9 @@ public final class ReaderBasedParser
     }
 
     /*
-    /**********************************************************
-    /* Internal methods, other parsing
-    /**********************************************************
+    ////////////////////////////////////////////////////
+    // Internal methods, other parsing
+    ////////////////////////////////////////////////////
      */
     
     /**
@@ -884,7 +885,7 @@ public final class ReaderBasedParser
             break;
 
         default:
-            return _handleUnrecognizedCharacterEscape(c);
+            _reportError("Unrecognized character escape "+_getCharDesc(c));
         }
 
         // Ok, a hex escape. Need 4 characters
@@ -906,9 +907,9 @@ public final class ReaderBasedParser
     }
 
     /*
-    /**********************************************************
-    /* Binary access
-    /**********************************************************
+    ////////////////////////////////////////////////////
+    // Binary access
+    ////////////////////////////////////////////////////
      */
 
     @Override

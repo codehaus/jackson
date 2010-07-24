@@ -6,6 +6,7 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 import org.codehaus.jackson.annotate.JacksonAnnotation;
+import org.codehaus.jackson.annotate.NoClass;
 import org.codehaus.jackson.map.JsonSerializer;
 
 /**
@@ -92,9 +93,9 @@ public @interface JsonSerialize
     public Inclusion include() default Inclusion.ALWAYS;
 
     /*
-    /**********************************************************
-    /* Value enumerations needed
-    /**********************************************************
+    /////////////////////////////////////////////////////////////
+    // Value enumerations needed
+    /////////////////////////////////////////////////////////////
      */
 
     /**
@@ -144,7 +145,7 @@ public @interface JsonSerialize
          * Value that indicates that the static declared type is to
          * be used.
          */
-        STATIC
-        ;
+            STATIC
+            ;
     }
 }

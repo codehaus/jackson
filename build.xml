@@ -1,6 +1,6 @@
 <?xml version="1.0" standalone='yes'?>
 
-  <project name="Jackson JSON processor" basedir="." default="readme">
+  <project name="Jackson JSON parser" basedir="." default="readme">
 
     <!-- Source directories -->
     <property name="dir.src" location="${basedir}/src" />
@@ -8,8 +8,6 @@
     <property name="dir.src.java.mapper" location="${dir.src}/mapper/java" />
     <property name="dir.src.java.jaxrs" location="${dir.src}/jaxrs/java" />
     <property name="dir.src.java.xc" location="${dir.src}/xc/java" />
-    <property name="dir.src.java.smile" location="${dir.src}/smile/java" />
-    <property name="dir.src.java.mrbean" location="${dir.src}/mrbean/java" />
     <property name="dir.src.resource.jaxrs" location="${dir.src}/jaxrs/resources" />
     <property name="dir.src.maven" location="${dir.src}/maven" />
     <property name="dir.src.sample" location="${dir.src}/sample" />
@@ -24,8 +22,6 @@
     <property name="dir.build.classes.mapper" location="${dir.build}/classes/mapper" />
     <property name="dir.build.classes.jaxrs" location="${dir.build}/classes/jaxrs" />
     <property name="dir.build.classes.xc" location="${dir.build}/classes/xc" />
-    <property name="dir.build.classes.smile" location="${dir.build}/classes/smile" />
-    <property name="dir.build.classes.mrbean" location="${dir.build}/classes/mrbean" />
     <!-- both "sample" and "tools" java code goes under "extra" -->
     <property name="dir.build.classes.extra" location="${dir.build}/classes/extra" />
 
@@ -40,17 +36,15 @@
     <!-- Version information -->
 
     <!-- Version -->
-    <property name="JSON_TITLE" value="JSON - JavaScript Object Notation" />
+    <property name="JSON_TITLE" value="Json - JavaScript Object Notation" />
     <property name="JSON_VERSION" value="1.0" />
     <property name="JSON_VENDOR" value="http://www.ietf.org/rfc/rfc4627.txt" />
     <property name="IMPL_TITLE_CORE" value="Jackson JSON processor" />
     <property name="IMPL_TITLE_MAPPER" value="Data mapper for Jackson JSON processor" />
     <property name="IMPL_TITLE_JAXRS" value="JAX-RS provider for Json content type, using Jackson data binding" />
     <property name="IMPL_TITLE_XC" value="XML Compatibility extensions for Jackson data binding" />
-    <property name="IMPL_TITLE_SMILE" value="Smile Binary format handling functionality" />
-    <property name="IMPL_TITLE_MRBEAN" value="Bean Materializer (aka Mr. Bean)" />
 
-    <property name="IMPL_VERSION" value="1.6.0" />
+    <property name="IMPL_VERSION" value="1.4.5" />
     <property name="IMPL_VENDOR" value="http://fasterxml.com" />
 
     <patternset id="dist-all-source-files">
@@ -107,8 +101,6 @@
         <mkdir dir="${dir.build.classes.mapper}" />
         <mkdir dir="${dir.build.classes.jaxrs}" />
         <mkdir dir="${dir.build.classes.xc}" />
-        <mkdir dir="${dir.build.classes.smile}" />
-        <mkdir dir="${dir.build.classes.mrbean}" />
         <mkdir dir="${dir.build.classes.extra}" />
 
         <!-- make docs directories -->
@@ -143,8 +135,7 @@
     <target name="compile.all" depends="
 compile.main, test.compile, compile.extra, compile.perf" />
     <target name="compile.main"
-      depends="compile.core, compile.mapper, compile.jaxrs, compile.xc,
-compile.smile, compile.mrbean" />
+      depends="compile.core, compile.mapper, compile.jaxrs, compile.xc" />
 
     <target name="compile.core" depends="prepare">
         <javac srcdir="${dir.src.java.core}" destdir="${dir.build.classes.core}"
@@ -189,9 +180,6 @@ compile.smile, compile.mrbean" />
                <fileset dir="${dir.lib}/jaxb">
                     <include name="*.jar" />
                </fileset>
-               <fileset dir="${dir.lib}/xml">
-                    <include name="*.jar" />
-               </fileset>
             </classpath>
         </javac>
     </target>
@@ -214,44 +202,6 @@ compile.smile, compile.mrbean" />
                <pathelement path="${dir.build.classes.xc}"/>
             </classpath>
         </javac>
-    </target>
-
-    <target name="compile.smile" depends="compile.core">
-        <javac srcdir="${dir.src.java.smile}" destdir="${dir.build.classes.smile}"
-            source="1.5" target="1.5"
-            debug="true"
-        >
-            <compilerarg value="-Xlint:unchecked" />
-            <include name="org/codehaus/jackson/smile/**/*.java" />
-            <!-- builds on core classes -->
-            <classpath>
-               <pathelement path="${dir.build.classes.core}"/>  
-            </classpath>
-        </javac>
-    </target>
-
-    <target name="compile.mrbean" depends="compile.core">
-        <javac srcdir="${dir.src.java.mrbean}" destdir="${dir.build.classes.mrbean}"
-            source="1.5" target="1.5"
-            debug="true"
-        >
-            <compilerarg value="-Xlint:unchecked" />
-            <include name="org/codehaus/jackson/mrbean/**/*.java" />
-            <!-- builds on core and mapper classes -->
-            <classpath>
-               <pathelement path="${dir.build.classes.core}"/>  
-               <pathelement path="${dir.build.classes.mapper}"/>  
-               <fileset dir="${dir.lib}/repackaged">
-                    <include name="jackson-asm*.jar" />
-               </fileset>
-            </classpath>
-        </javac>
-        <!-- also, unpack classes from repackaged asm jar, for OSGi bundle -->
-        <unjar dest="${dir.build.classes.mrbean}">
-          <fileset dir="${dir.lib}/repackaged">
-            <include name="jackson-asm*.jar" />
-          </fileset>
-        </unjar>
     </target>
 
     <target name="compile.extra" depends="compile.main">
@@ -281,7 +231,6 @@ compile.smile, compile.mrbean" />
                </fileset>
                <pathelement path="${dir.build.classes.core}"/>  
                <pathelement path="${dir.build.classes.mapper}"/>  
-               <pathelement path="${dir.build.classes.smile}"/>  
             </classpath>
             <include name="**/*.java" />
         </javac>
@@ -315,12 +264,6 @@ compile.smile, compile.mrbean" />
             </packageset>
             <packageset dir="${dir.src.java.xc}" defaultexcludes="yes">
                 <include name="org/codehaus/jackson/xc/**" />
-            </packageset>
-            <packageset dir="${dir.src.java.smile}" defaultexcludes="yes">
-                <include name="org/codehaus/jackson/smile/**" />
-            </packageset>
-            <packageset dir="${dir.src.java.mrbean}" defaultexcludes="yes">
-                <include name="org/codehaus/jackson/mrbean/**" />
             </packageset>
 
             <!-- Need to link to regular JDK 6 classes  -->

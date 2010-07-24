@@ -1,20 +1,13 @@
 package org.codehaus.jackson.map.deser;
 
-import java.io.IOException;
 import java.text.DateFormat;
 import java.text.ParseException;
 import java.util.*;
 
 import org.codehaus.jackson.JsonParser;
-import org.codehaus.jackson.JsonProcessingException;
-import org.codehaus.jackson.JsonToken;
 import org.codehaus.jackson.map.*;
-import org.codehaus.jackson.map.exc.UnrecognizedPropertyException;
 import org.codehaus.jackson.map.util.ArrayBuilders;
-import org.codehaus.jackson.map.util.ClassUtil;
-import org.codehaus.jackson.map.util.LinkedNode;
 import org.codehaus.jackson.map.util.ObjectBuffer;
-import org.codehaus.jackson.type.JavaType;
 
 /**
  * Default implementation of {@link DeserializationContext}.
@@ -31,17 +24,7 @@ public class StdDeserializationContext
 
     // // // Configuration
 
-    /**
-     * Currently active parser used for deserialization.
-     * May be different from the outermost parser
-     * when content is buffered.
-     */
-    protected JsonParser _parser;
-
-    /**
-     * @since 1.5
-     */
-    protected final DeserializerProvider _deserProvider;
+    protected final JsonParser _parser;
 
     // // // Helper object recycling
 
@@ -53,40 +36,25 @@ public class StdDeserializationContext
 
     // // // Construction
 
-    public StdDeserializationContext(DeserializationConfig config, JsonParser jp,
-            DeserializerProvider prov)
+    public StdDeserializationContext(DeserializationConfig config, JsonParser jp)
     {
     	super(config);
         _parser = jp;
-        _deserProvider = prov;
     }
 
     /*
-    /****************************************************
-    /* Public API, accessors
-    /****************************************************
+    ///////////////////////////////////////////////////
+    // Public API, accessors
+    ///////////////////////////////////////////////////
      */
 
-    @Override
-    public DeserializerProvider getDeserializerProvider() {
-        return _deserProvider;
-    }
-
-    /**
-     * Method for accessing the currently active parser.
-     * May be different from the outermost parser
-     * when content is buffered.
-     *<p>
-     * Use of this method is discouraged: if code has direct access
-     * to the active parser, that should be used instead.
-     */
     @Override
     public JsonParser getParser() { return _parser; }
 
     /*
-    /**********************************************************
-    /* Public API, helper object recycling
-    /**********************************************************
+    ///////////////////////////////////////////////////
+    // Public API, helper object recycling
+    ///////////////////////////////////////////////////
      */
 
     @Override
@@ -123,10 +91,10 @@ public class StdDeserializationContext
     }
 
     /*
-    /**********************************************************
-    /* Parsing methods that may use reusable/recyclable objects
-    /**********************************************************
-     */
+    //////////////////////////////////////////////////////////////
+    // Parsing methods that may use reusable/-cyclable objects
+    //////////////////////////////////////////////////////////////
+    */
 
     @Override
     public Date parseDate(String dateStr)
@@ -149,45 +117,14 @@ public class StdDeserializationContext
         c.setTime(d);
         return c;
     }
+
     /*
-    /**********************************************************
-    /* Public API, problem handling, reporting
-    /**********************************************************
+    ///////////////////////////////////////////////////
+    // Public API, problem handling
+    ///////////////////////////////////////////////////
      */
 
-    /**
-     * Method deserializers can call to inform configured {@link DeserializationProblemHandler}s
-     * of an unrecognized property.
-     * 
-     * @since 1.5
-     */
     @Override
-    public boolean handleUnknownProperty(JsonParser jp, JsonDeserializer<?> deser, Object instanceOrClass, String propName)
-        throws IOException, JsonProcessingException
-    {
-        LinkedNode<DeserializationProblemHandler> h = _config.getProblemHandlers();
-        if (h != null) {
-            /* 04-Jan-2009, tatu: Ugh. Need to mess with currently active parser
-             *   since parser is not explicitly passed to handler... that was a mistake
-             */
-            JsonParser oldParser = _parser;
-            _parser = jp;
-            try {
-                while (h != null) {
-                    // Can bail out if it's handled
-                    if (h.value().handleUnknownProperty(this, deser, instanceOrClass, propName)) {
-                        return true;
-                    }
-                    h = h.next();
-                }
-            } finally {
-                _parser = oldParser;
-            }
-        }
-        return false;
-    }
-
-        @Override
     public JsonMappingException mappingException(Class<?> targetClass)
     {
         String clsName = _calcName(targetClass);
@@ -203,17 +140,11 @@ public class StdDeserializationContext
     }
 
     @Override
-    public JsonMappingException instantiationException(Class<?> instClass, Exception e)
+	public JsonMappingException instantiationException(Class<?> instClass, Exception e)
     {
         return JsonMappingException.from(_parser, "Can not construct instance of "+instClass.getName()+", problem: "+e.getMessage());
     }
 
-    @Override
-    public JsonMappingException instantiationException(Class<?> instClass, String msg)
-    {
-        return JsonMappingException.from(_parser, "Can not construct instance of "+instClass.getName()+", problem: "+msg);
-    }
-    
     /**
      * Method that will construct an exception suitable for throwing when
      * some String values are acceptable, but the one encountered is not
@@ -237,32 +168,26 @@ public class StdDeserializationContext
     }
 
     @Override
-    public JsonMappingException wrongTokenException(JsonParser jp, JsonToken expToken, String msg)
-    {
-        return JsonMappingException.from(jp, "Unexpected token ("+jp.getCurrentToken()+"), expected "+expToken+": "+msg);
-    }
-    
-    @Override
     public JsonMappingException unknownFieldException(Object instanceOrClass, String fieldName)
     {
-        return UnrecognizedPropertyException.from(_parser, instanceOrClass, fieldName);
+        String clsName = determineClassName(instanceOrClass);
+        return JsonMappingException.from(_parser, "Unrecognized field \""+fieldName+"\" (Class "+clsName+"), not marked as ignorable");
     }
 
-    @Override
-    public JsonMappingException unknownTypeException(JavaType type, String id)
-    {
-        return JsonMappingException.from(_parser, "Could not resolve type id '"+id+"' into a subtype of "+type);
-    }
-   
     protected String determineClassName(Object instance)
     {
-        return ClassUtil.getClassDescription(instance);
+        if (instance == null) {
+            return "unknown";
+        }
+        Class<?> cls = (instance instanceof Class) ?
+            (Class<?>) instance : instance.getClass();
+        return cls.getName();
     }
 
     /*
-    /**********************************************************
-    /* Overridable internal methods
-    /**********************************************************
+    ///////////////////////////////////////////////////
+    // Overridable internal methods
+    ///////////////////////////////////////////////////
      */
 
     protected DateFormat getDateFormat()
@@ -275,9 +200,9 @@ public class StdDeserializationContext
     }
 
     /*
-    /**********************************************************
-    /* Internal methods
-    /**********************************************************
+    ///////////////////////////////////////////////////
+    // Internal methods
+    ///////////////////////////////////////////////////
      */
 
     protected String _valueDesc()

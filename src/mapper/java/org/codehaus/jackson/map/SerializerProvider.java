@@ -5,7 +5,6 @@ import java.util.Date;
 
 import org.codehaus.jackson.*;
 import org.codehaus.jackson.schema.JsonSchema;
-import org.codehaus.jackson.type.JavaType;
 
 /**
  * Abstract class that defines API used by {@link ObjectMapper} and
@@ -21,9 +20,6 @@ public abstract class SerializerProvider
 {
     protected final SerializationConfig _config;
 
-    /**
-     * View used for currently active serialization
-     */
     protected final Class<?> _serializationView;
 
     protected SerializerProvider(SerializationConfig config)
@@ -33,9 +29,9 @@ public abstract class SerializerProvider
     }
 
     /*
-    /**********************************************************
-    /* Methods that ObjectMapper will call
-    /**********************************************************
+    //////////////////////////////////////////////////////
+    // Methods that ObjectMapper will call
+    //////////////////////////////////////////////////////
      */
 
     /**
@@ -46,25 +42,11 @@ public abstract class SerializerProvider
      * @param jsf Underlying factory object used for creating serializers
      *    as needed
      */
-    public abstract void serializeValue(SerializationConfig cfg, JsonGenerator jgen,
-            Object value, SerializerFactory jsf)
+    public abstract void serializeValue(SerializationConfig cfg,
+                                        JsonGenerator jgen, Object value,
+                                        SerializerFactory jsf)
         throws IOException, JsonGenerationException;
 
-    /**
-     * The method to be called by {@link ObjectMapper} to
-     * execute recursive serialization, using serializers that
-     * this provider has access to; and using specified root type
-     * for locating first-level serializer.
-     * 
-     * @param rootType Type to use for locating serializer to use, instead of actual
-     *    runtime type. Must be actual type, or one of its super types
-     *    
-     * @since 1.5
-     */
-    public abstract void serializeValue(SerializationConfig cfg, JsonGenerator jgen,
-            Object value, JavaType rootType, SerializerFactory jsf)
-        throws IOException, JsonGenerationException;
-    
     /**
      * Generate <a href="http://json-schema.org/">Json-schema</a> for
      * given type.
@@ -85,9 +67,9 @@ public abstract class SerializerProvider
                                              Class<?> cls, SerializerFactory jsf);
 
     /*
-    /**********************************************************
-    /* Access to configuration
-    /**********************************************************
+    //////////////////////////////////////////////////////
+    // Access to configuration
+    //////////////////////////////////////////////////////
      */
 
     public final SerializationConfig getConfig() { return _config; }
@@ -105,9 +87,9 @@ public abstract class SerializerProvider
     public final Class<?> getSerializationView() { return _serializationView; }
     
     /*
-    /**********************************************************
-    /* General serializer locating functionality
-    /**********************************************************
+    //////////////////////////////////////////////////////
+    // General serializer locating method
+    //////////////////////////////////////////////////////
      */
 
     /**
@@ -118,72 +100,18 @@ public abstract class SerializerProvider
      *<p>
      * Note: this method is only called for non-null values; not for keys
      * or null values. For these, check out other accessor methods.
-     *<p>
-     * Note that starting with version 1.5, serializers should also be type-aware
-     * if they handle polymorphic types. That means that it may be necessary
-     * to also use a {@link TypeSerializer} based on declared (static) type
-     * being serializer (whereas actual data may be serialized using dynamic
-     * type)
      *
      * @throws JsonMappingException if there are fatal problems with
      *   accessing suitable serializer; including that of not
      *   finding any serializer
      */
-    public abstract JsonSerializer<Object> findValueSerializer(Class<?> runtimeType)
+    public abstract JsonSerializer<Object> findValueSerializer(Class<?> type)
         throws JsonMappingException;
 
-    /**
-     * Similar to {@link #findValueSerializer(Class)}, but takes full generics-aware
-     * type instead of raw class.
-     * 
-     * @since 1.5
-     */
-    public abstract JsonSerializer<Object> findValueSerializer(JavaType serializationType)
-        throws JsonMappingException;
-    
-    /**
-     * Method called to locate regular serializer, matching type serializer,
-     * and if both found, wrap them in a serializer that calls both in correct
-     * sequence. This method is currently only used for root-level serializer
-     * handling to allow for simpler caching. A call can always be replaced
-     * by equivalent calls to access serializer and type serializer separately.
-     * 
-     * @param valueType Type for purpose of locating a serializer; usually dynamic
-     *   runtime type, but can also be static declared type, depending on configuration
-     * 
-     * @param cache Whether resulting value serializer should be cached or not; this is just
-     *    a hint 
-     *    
-     * @since 1.5
-     */
-    public abstract JsonSerializer<Object> findTypedValueSerializer(Class<?> valueType,
-            boolean cache)
-        throws JsonMappingException;
-
-    /**
-     * Method called to locate regular serializer, matching type serializer,
-     * and if both found, wrap them in a serializer that calls both in correct
-     * sequence. This method is currently only used for root-level serializer
-     * handling to allow for simpler caching. A call can always be replaced
-     * by equivalent calls to access serializer and type serializer separately.
-     * 
-     * @param valueType Declared type of value being serialized (which may not
-     *    be actual runtime type); used for finding both value serializer and
-     *    type serializer to use for adding polymorphic type (if any)
-     * 
-     * @param cache Whether resulting value serializer should be cached or not; this is just
-     *    a hint 
-     *    
-     * @since 1.5
-     */
-    public abstract JsonSerializer<Object> findTypedValueSerializer(JavaType valueType,
-            boolean cache)
-        throws JsonMappingException;
-    
     /*
-    /********************************************************
-    /* Accessors for specialized serializers
-    /********************************************************
+    //////////////////////////////////////////////////////
+    // Accessors for specialized serializers
+    //////////////////////////////////////////////////////
      */
 
     /**
@@ -235,9 +163,9 @@ public abstract class SerializerProvider
     public abstract JsonSerializer<Object> getUnknownTypeSerializer(Class<?> unknownType);
 
     /*
-    /********************************************************
-    /* Convenience methods
-    /********************************************************
+    //////////////////////////////////////////////////////
+    // Convenience methods
+    //////////////////////////////////////////////////////
      */
 
     /**
@@ -253,11 +181,10 @@ public abstract class SerializerProvider
         if (value == null) {
             getNullValueSerializer().serialize(null, jgen, this);
         } else {
-            Class<?> cls = value.getClass();
-            findTypedValueSerializer(cls, true).serialize(value, jgen, this);
+            findValueSerializer(value.getClass()).serialize(value, jgen, this);
         }
     }
-    
+
     /**
      * Convenience method that will serialize given field with specified
      * value. Value may be null. Serializer is done using the usual
@@ -273,8 +200,7 @@ public abstract class SerializerProvider
              */
             getNullValueSerializer().serialize(null, jgen, this);
         } else {
-            Class<?> cls = value.getClass();
-            findTypedValueSerializer(cls, true).serialize(value, jgen, this);
+            findValueSerializer(value.getClass()).serialize(value, jgen, this);
         }
     }
 
@@ -299,9 +225,9 @@ public abstract class SerializerProvider
         throws IOException, JsonProcessingException;
 
     /*
-    /********************************************************
-    /* Access to caching details
-    /********************************************************
+    //////////////////////////////////////////////////////
+    // Access to caching aspects
+    //////////////////////////////////////////////////////
      */
 
     /**

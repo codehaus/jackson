@@ -6,16 +6,12 @@ import java.lang.reflect.Method;
 import org.codehaus.jackson.map.AnnotationIntrospector;
 import org.codehaus.jackson.map.JsonSerializer;
 import org.codehaus.jackson.map.SerializationConfig;
-import org.codehaus.jackson.map.TypeSerializer;
 import org.codehaus.jackson.map.annotate.JsonSerialize;
 import org.codehaus.jackson.map.annotate.JsonSerialize.Inclusion;
 import org.codehaus.jackson.map.introspect.Annotated;
 import org.codehaus.jackson.map.introspect.AnnotatedField;
-import org.codehaus.jackson.map.introspect.AnnotatedMember;
 import org.codehaus.jackson.map.introspect.AnnotatedMethod;
 import org.codehaus.jackson.map.introspect.BasicBeanDescription;
-import org.codehaus.jackson.map.type.TypeFactory;
-import org.codehaus.jackson.type.JavaType;
 
 /**
  * Helper class for {@link BeanSerializerFactory} that is used to
@@ -47,48 +43,51 @@ public class PropertyBuilder
     }
 
     /*
-    /**********************************************************
-    /* Public API
-    /**********************************************************
+    //////////////////////////////////////////////////
+    // Public API
+    //////////////////////////////////////////////////
      */
 
     /**
-     * @param contentTypeSer Optional explicit type information serializer
-     *    to use for contained values (only used for properties that are
-     *    of container type)
+     * Factory method for constructor a {@link BeanPropertyWriter}
+     * that uses specified method as the accessors.
+     *
+     * @param defaultUseStaticTyping Whether default typing mode is
+     *   'static' or not (if not, it's 'dynamic'); can be overridden
+     *   by annotation related to property itself
      */
-    protected BeanPropertyWriter buildProperty(String name, JsonSerializer<Object> ser,
-            TypeSerializer typeSer, TypeSerializer contentTypeSer,
-            AnnotatedMember am, boolean defaultUseStaticTyping)
+    public BeanPropertyWriter buildProperty(String name, JsonSerializer<Object> ser,
+                                            AnnotatedMethod am,
+                                            boolean defaultUseStaticTyping)
     {
-        Field f;
-        Method m;
-        if (am instanceof AnnotatedField) {
-            m = null;
-            f = ((AnnotatedField) am).getAnnotated();
-        } else {
-            m = ((AnnotatedMethod) am).getAnnotated();
-            f = null;
-        }
+        return _buildProperty(name, ser, defaultUseStaticTyping, am, am.getAnnotated(), null);
+    }
 
-        // do we have annotation that forces type to use (to declared type or its super type)?
-        JavaType serializationType = findSerializationType(am, defaultUseStaticTyping);
-        // Container types can have separate type serializers for content (value / element) type
-        if (contentTypeSer != null) {
-            /* 04-Feb-2010, tatu: Let's force static typing for collection, if there is
-             *    type information for contents. Should work well (for JAXB case); can be
-             *    revisited if this causes problems.
-             */
-            if (serializationType == null) {
-                serializationType = TypeFactory.type(am.getGenericType());
-            }
-            JavaType ct = serializationType.getContentType();
-            ct.setTypeHandler(contentTypeSer);
-        }
+    /**
+     * Factory method for constructor a {@link BeanPropertyWriter}
+     * that uses specified method as the accessors.
+     *
+     * @param defaultUseStaticTyping Whether default typing mode is
+     *   'static' or not (if not, it's 'dynamic'); can be overridden
+     *   by annotation related to property itself
+     */
+    public BeanPropertyWriter buildProperty(String name, JsonSerializer<Object> ser,
+                                            AnnotatedField af,
+                                            boolean defaultUseStaticTyping)
+    {
+        return _buildProperty(name, ser, defaultUseStaticTyping, af, null, af.getAnnotated());
+    }
+
+    protected BeanPropertyWriter _buildProperty(String name, JsonSerializer<Object> ser,
+                                               boolean defaultUseStaticTyping,
+                                               Annotated a, Method m, Field f)
+    {
+        Class<?> serializationType = findSerializationType(a, defaultUseStaticTyping);
+
         Object suppValue = null;
         boolean suppressNulls = false;
 
-        JsonSerialize.Inclusion methodProps = _annotationIntrospector.findSerializationInclusion(am, _outputProps);
+        JsonSerialize.Inclusion methodProps = _annotationIntrospector.findSerializationInclusion(a, _outputProps);
 
         if (methodProps != null) {
             switch (methodProps) {
@@ -103,32 +102,27 @@ public class PropertyBuilder
                 break;
             }
         }
-        return new BeanPropertyWriter(name, ser, typeSer, serializationType, m, f, suppressNulls, suppValue);
+        return new BeanPropertyWriter(name, ser, serializationType, m, f, suppressNulls, suppValue);
     }
 
     /*
-    /**********************************************************
-    /* Helper methods, generic
-    /**********************************************************
+    //////////////////////////////////////////////////
+    // Helper methods, generic
+    //////////////////////////////////////////////////
      */
 
-    /**
-     * Method that will try to determine statically defined type of property
-     * being serialized, based on annotations (for overrides), and alternatively
-     * declared type (if static typing for serialization is enabled).
-     * If neither can be used (no annotations, dynamic typing), returns null.
-     */
-    protected JavaType findSerializationType(Annotated a, boolean useStaticTyping)
+    protected Class<?> findSerializationType(Annotated a,
+                                             boolean useStaticTyping)
     {
         // [JACKSON-120]: Check to see if serialization type is fixed
         Class<?> serializationType = _annotationIntrospector.findSerializationType(a);
         if (serializationType != null) {
             // Must be a super type...
-            Class<?> raw = a.getRawType();
-            if (!serializationType.isAssignableFrom(raw)) {
-                throw new IllegalArgumentException("Illegal concrete-type annotation for method '"+a.getName()+"': class "+serializationType.getName()+" not a super-type of (declared) class "+raw.getName());
+            Class<?> type = a.getType();
+            if (!serializationType.isAssignableFrom(type)) {
+                throw new IllegalArgumentException("Illegal concrete-type annotation for method '"+a.getName()+"': class "+serializationType.getName()+" not a super-type of (declared) class "+type.getName());
             }
-            return TypeFactory.type(serializationType);
+            return serializationType;
         }
         /* [JACKSON-114]: if using static typing, declared type is known
          * to be the type...
@@ -138,7 +132,7 @@ public class PropertyBuilder
             useStaticTyping = (typing == JsonSerialize.Typing.STATIC);
         }
         if (useStaticTyping) {
-            return TypeFactory.type(a.getGenericType());
+            return a.getType();
         }
         return null;
     }

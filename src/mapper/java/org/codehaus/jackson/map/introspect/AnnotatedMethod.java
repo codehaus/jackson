@@ -1,8 +1,9 @@
 package org.codehaus.jackson.map.introspect;
 
-import java.lang.reflect.Member;
 import java.lang.reflect.Method;
 import java.lang.reflect.Type;
+
+import org.codehaus.jackson.map.util.ClassUtil;
 
 public final class AnnotatedMethod
     extends AnnotatedWithParams
@@ -14,9 +15,9 @@ public final class AnnotatedMethod
     public Class<?>[] _paramTypes;
 
     /*
-    /*****************************************************
-    /* Life-cycle
-    /*****************************************************
+    //////////////////////////////////////////////////////
+    // Life-cycle
+    //////////////////////////////////////////////////////
      */
 
     public AnnotatedMethod(Method method,
@@ -27,9 +28,9 @@ public final class AnnotatedMethod
     }
 
     /*
-    /*****************************************************
-    /* Annotated impl
-    /*****************************************************
+    //////////////////////////////////////////////////////
+    // Annotated impl
+    //////////////////////////////////////////////////////
      */
 
     public Method getAnnotated() { return _method; }
@@ -44,34 +45,14 @@ public final class AnnotatedMethod
      * useful with getters (setters do not return anything; hence "void"
      * type is returned here)
      */
-    public Type getGenericType() {
-        return _method.getGenericReturnType();
-    }
-
-    /**
-     * For methods, this returns declared return type, which is only
-     * useful with getters (setters do not return anything; hence "void"
-     * type is returned here)
-     */
-    public Class<?> getRawType() {
-        return _method.getReturnType();
+    public Class<?> getType() {
+        return getReturnType();
     }
 
     /*
-    /********************************************************
-    /* AnnotatedMember impl
-    /********************************************************
-     */
-
-    public Class<?> getDeclaringClass() { return _method.getDeclaringClass(); }
-
-    public Member getMember() { return _method; }
-
-    
-    /*
-    /*****************************************************
-    /* Extended API, generic
-    /*****************************************************
+    //////////////////////////////////////////////////////
+    // Extended API, generic
+    //////////////////////////////////////////////////////
      */
 
     public AnnotatedParameter getParameter(int index) {
@@ -106,23 +87,36 @@ public final class AnnotatedMethod
         return _paramTypes;
     }
 
-    //public Type getGenericReturnType() { return _method.getGenericReturnType(); }
+    public Type getGenericReturnType() { return _method.getGenericReturnType(); }
 
-    //public Class<?> getReturnType() { return _method.getReturnType(); }
+    public Class<?> getReturnType() { return _method.getReturnType(); }
+
+    public Class<?> getDeclaringClass() { return _method.getDeclaringClass(); }
 
     public String getFullName() {
         return getDeclaringClass().getName() + "#" + getName() + "("
             +getParameterCount()+" params)";
     }
 
+    /**
+     * Method that can be called to modify access rights, by calling
+     * {@link java.lang.reflect.AccessibleObject#setAccessible} on
+     * the underlying annotated element.
+     */
+    public void fixAccess()
+    {
+        ClassUtil.checkAndFixAccess(_method);
+    }
+
     /*
-    /********************************************************
-    /* Extended API, specific annotations
-    /********************************************************
+    //////////////////////////////////////////////////////
+    // Extended API, specific annotations
+    //////////////////////////////////////////////////////
      */
 
     public String toString()
     {
-        return "[method "+getName()+", annotations: "+_annotations+"]";
+        return "[method "+getName()+", annotations: "+_classAnnotations+"]";
     }
 }
+

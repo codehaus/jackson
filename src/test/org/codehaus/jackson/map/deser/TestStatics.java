@@ -3,10 +3,6 @@ package org.codehaus.jackson.map.deser;
 import org.codehaus.jackson.annotate.*;
 import org.codehaus.jackson.map.*;
 
-/**
- * Tests for checking that static methods are not recognized as accessors
- * for properties
- */
 public class TestStatics
     extends BaseMapTest
 {

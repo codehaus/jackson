@@ -13,9 +13,9 @@ public class TestMapDeserialization
     extends BaseMapTest
 {
     /*
-    /**********************************************************
-    /* Test classes, enums
-    /**********************************************************
+    ***************************************************
+    * Test classes, enums
+    ***************************************************
      */
 
     enum Key {
@@ -30,13 +30,11 @@ public class TestMapDeserialization
         public BrokenMap(boolean dummy) { super(); }
     }
 
-    @SuppressWarnings("serial")
     @JsonDeserialize(using=MapDeserializer.class)
     static class CustomMap extends LinkedHashMap<String,String> { }
 
-    static class MapDeserializer extends StdDeserializer<CustomMap>
+    static class MapDeserializer extends JsonDeserializer<CustomMap>
     {
-        public MapDeserializer() { super(CustomMap.class); }
         @Override
         public CustomMap deserialize(JsonParser jp, DeserializationContext ctxt)
             throws IOException
@@ -48,9 +46,9 @@ public class TestMapDeserialization
     }
     
     /*
-    /**********************************************************
-    /* Test methods, untyped (Object valued) maps
-    /**********************************************************
+    ***************************************************
+    * Test methods, untyped (Object valued) maps
+    ***************************************************
      */
 
     public void testUntypedMap() throws Exception
@@ -63,7 +61,7 @@ public class TestMapDeserialization
         @SuppressWarnings("unchecked")
         Map<String,Object> result = (Map<String,Object>)mapper.readValue(JSON, Object.class);
         assertNotNull(result);
-        assertTrue(result instanceof Map<?,?>);
+        assertTrue(result instanceof Map);
 
         assertEquals(3, result.size());
 
@@ -89,7 +87,7 @@ public class TestMapDeserialization
         @SuppressWarnings("unchecked")
         HashMap<String,Object> result = /*(HashMap<String,Object>)*/ mapper.readValue(JSON, HashMap.class);
         assertNotNull(result);
-        assertTrue(result instanceof Map<?,?>);
+        assertTrue(result instanceof Map);
 
         assertEquals(1, result.size());
 
@@ -104,7 +102,7 @@ public class TestMapDeserialization
         String JSON = "{\"a\":[{\"a\":\"b\"},\"value\"]}";
         ObjectMapper m = new ObjectMapper();
         Map<?,?> result = m.readValue(JSON, Map.class);
-        assertTrue(result instanceof Map<?,?>);
+        assertTrue(result instanceof Map);
         assertEquals(1, result.size());
         Object ob = result.get("a");
         assertNotNull(ob);
@@ -118,7 +116,7 @@ public class TestMapDeserialization
             +" }"
             ;
         result = m.readValue(JSON, Map.class);
-        assertTrue(result instanceof Map<?,?>);
+        assertTrue(result instanceof Map);
         assertEquals(3, result.size());
     }
 
@@ -158,9 +156,9 @@ public class TestMapDeserialization
     }
 
     /*
-    /**********************************************************
-    /* Test methods, typed maps
-    /**********************************************************
+    ***************************************************
+    * Test methods, typed maps
+    ***************************************************
      */
 
     public void testExactStringIntMap() throws Exception
@@ -235,7 +233,7 @@ public class TestMapDeserialization
         Map<String,Integer> result = mapper.readValue
             (JSON, new TypeReference<Map<String,Integer>>() { });
         assertNotNull(result);
-        assertTrue(result instanceof Map<?,?>);
+        assertTrue(result instanceof Map);
         assertEquals(3, result.size());
 
         assertEquals(Integer.valueOf(-99), result.get("c"));
@@ -246,9 +244,9 @@ public class TestMapDeserialization
     }
 
     /*
-    /**********************************************************
-    /* Test methods, maps with enums
-    /**********************************************************
+    ***************************************************
+    * Test methods, maps with enums
+    ***************************************************
      */
 
     public void testEnumMap() throws Exception
@@ -284,7 +282,7 @@ public class TestMapDeserialization
             (JSON, new TypeReference<Map<Key,Key>>() { });
 
         assertNotNull(result);
-        assertTrue(result instanceof Map<?,?>);
+        assertTrue(result instanceof Map);
         assertEquals(1, result.size());
 
         assertEquals(Key.WHATEVER, result.get(Key.KEY2));
@@ -293,9 +291,9 @@ public class TestMapDeserialization
     }
 
     /*
-    /**********************************************************
-    /* Test methods, annotated Maps
-    /**********************************************************
+    ***************************************************
+    * Test methods, annotated Maps
+    ***************************************************
      */
 
     /**
@@ -311,9 +309,9 @@ public class TestMapDeserialization
     }
 
     /*
-    /**********************************************************
-    /* Error tests
-    /**********************************************************
+    ////////////////////////////////////////////////////////////
+    // Error tests
+    ////////////////////////////////////////////////////////////
      */
 
     public void testMapError() throws Exception
@@ -337,7 +335,7 @@ public class TestMapDeserialization
             assertNull(result);
         } catch (JsonMappingException e) {
             // instead, should get this exception:
-            verifyException(e, "no default constructor found");
+            verifyException(e, "no default/delegating constructor or factory method");
         }
     }
 }

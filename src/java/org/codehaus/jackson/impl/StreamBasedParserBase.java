@@ -18,9 +18,9 @@ public abstract class StreamBasedParserBase
     extends JsonNumericParserBase
 {
     /*
-    /**********************************************************
-    /* Configuration
-    /**********************************************************
+    ////////////////////////////////////////////////////
+    // Configuration
+    ////////////////////////////////////////////////////
      */
 
     /**
@@ -31,9 +31,9 @@ public abstract class StreamBasedParserBase
     protected InputStream _inputStream;
 
     /*
-    /**********************************************************
-    /* Current input data
-    /**********************************************************
+    ////////////////////////////////////////////////////
+    // Current input data
+    ////////////////////////////////////////////////////
      */
 
     /**
@@ -46,16 +46,13 @@ public abstract class StreamBasedParserBase
     /**
      * Flag that indicates whether the input buffer is recycable (and
      * needs to be returned to recycler once we are done) or not.
-     *<p>
-     * If it is not, it also means that parser can NOT modify underlying
-     * buffer.
      */
     protected boolean _bufferRecyclable;
 
     /*
-    /**********************************************************
-    /* Life-cycle
-    /**********************************************************
+    ////////////////////////////////////////////////////
+    // Life-cycle
+    ////////////////////////////////////////////////////
      */
 
     protected StreamBasedParserBase(IOContext ctxt, int features,
@@ -72,18 +69,18 @@ public abstract class StreamBasedParserBase
     }
 
     /*
-    /**********************************************************
-    /* Low-level reading, other
-    /**********************************************************
+    ////////////////////////////////////////////////////
+    // Low-level reading, other
+    ////////////////////////////////////////////////////
      */
 
     @Override
-    protected final boolean loadMore()
+	protected final boolean loadMore()
         throws IOException
     {
         _currInputProcessed += _inputEnd;
         _currInputRowStart -= _inputEnd;
-        
+
         if (_inputStream != null) {
             int count = _inputStream.read(_inputBuffer, 0, _inputBuffer.length);
             if (count > 0) {
@@ -95,57 +92,17 @@ public abstract class StreamBasedParserBase
             _closeInput();
             // Should never return 0, so let's fail
             if (count == 0) {
-                throw new IOException("InputStream.read() returned 0 characters when trying to read "+_inputBuffer.length+" bytes");
+                throw new IOException("Reader returned 0 characters when trying to read "+_inputEnd);
             }
         }
         return false;
     }
 
-    /**
-     * Helper method that will try to load at least specified number bytes in
-     * input buffer, possible moving existing data around if necessary
-     * 
-     * @since 1.6
-     */
-    protected final boolean _loadToHaveAtLeast(int minAvailable)
-        throws IOException
-    {
-        // No input stream, no leading (either we are closed, or have non-stream input source)
-        if (_inputStream == null) {
-            return false;
-        }
-        // Need to move remaining data in front?
-        int amount = _inputEnd - _inputPtr;
-        if (amount > 0 && _inputPtr > 0) {
-            _currInputProcessed += _inputPtr;
-            _currInputRowStart -= _inputPtr;
-            System.arraycopy(_inputBuffer, _inputPtr, _inputBuffer, 0, amount);
-            _inputEnd = amount;
-        } else {
-            _inputEnd = 0;
-        }
-        _inputPtr = 0;
-        while (amount < minAvailable) {
-            int count = _inputStream.read(_inputBuffer, _inputEnd, _inputBuffer.length - _inputEnd);
-            if (count < 1) {
-                // End of input
-                _closeInput();
-                // Should never return 0, so let's fail
-                if (count == 0) {
-                    throw new IOException("InputStream.read() returned 0 characters when trying to read "+amount+" bytes");
-                }
-            }
-            _inputEnd += count;
-            amount = _inputEnd - _inputPtr;
-        }
-        return true;
-    }
-    
     @Override
     protected void _closeInput() throws IOException
     {
         /* 25-Nov-2008, tatus: As per [JACKSON-16] we are not to call close()
-         *   on the underlying InputStream, unless we "own" it, or auto-closing
+         *   on the underlying Reader, unless we "own" it, or auto-closing
          *   feature is enabled.
          */
         if (_inputStream != null) {

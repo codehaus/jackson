@@ -15,7 +15,7 @@ import org.codehaus.jackson.map.DeserializationContext;
  * deserializer calls.
  */
 public class DateDeserializer
-    extends StdScalarDeserializer<Date>
+    extends StdDeserializer<Date>
 {
     public DateDeserializer() { super(Date.class); }
     

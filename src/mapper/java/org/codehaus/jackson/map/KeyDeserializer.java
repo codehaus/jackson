@@ -19,7 +19,8 @@ public abstract class KeyDeserializer
      * indicate that <b>no deserializer is configured</b>.
      *<p>
      * Specifically, this class is to be used as the marker for
-     * annotation {@link org.codehaus.jackson.map.annotate.JsonDeserialize}.
+     * annotation {@link org.codehaus.jackson.map.annotate.JsonDeserialize}
+     * (and deprecated {@link org.codehaus.jackson.annotate.JsonUseDeserializer}).
      *
      * @since 1.3
      */

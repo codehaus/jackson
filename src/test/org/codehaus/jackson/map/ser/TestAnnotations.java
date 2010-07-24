@@ -113,6 +113,7 @@ public class TestAnnotations
         {
             jgen.writeBoolean(true);
         }
+
     }
 
     private final static class StringSerializer extends JsonSerializer<Object>
@@ -173,7 +174,7 @@ public class TestAnnotations
     }
 
     /**
-     * Unit test to verify that {@link JsonSerialize#using} annotation works
+     * Unit test to verify that {@JsonSerialize#using} annotation works
      * when applied to a class
      */
     public void testClassSerializer() throws Exception

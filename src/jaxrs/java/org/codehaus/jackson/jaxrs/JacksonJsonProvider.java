@@ -19,8 +19,6 @@ import org.codehaus.jackson.map.ObjectMapper;
 import org.codehaus.jackson.map.SerializationConfig;
 import org.codehaus.jackson.map.type.ClassKey;
 import org.codehaus.jackson.map.type.TypeFactory;
-import org.codehaus.jackson.map.util.ClassUtil;
-import org.codehaus.jackson.map.util.JSONPObject;
 import org.codehaus.jackson.type.JavaType;
 
 /**
@@ -98,46 +96,21 @@ public class JacksonJsonProvider
         _untouchables.add(new ClassKey(Response.class));
     }
 
-    /**
-     * These are classes that we never use for reading
-     * (never try to deserialize instances of these types).
-     */
     public final static Class<?>[] _unreadableClasses = new Class<?>[] {
         InputStream.class, Reader.class
-    };
+            };
 
-    /**
-     * These are classes that we never use for writing
-     * (never try to serialize instances of these types).
-     */
     public final static Class<?>[] _unwritableClasses = new Class<?>[] {
         OutputStream.class, Writer.class,
-        StreamingOutput.class, Response.class
-    };
+            StreamingOutput.class, Response.class
+            };
 
-    /**
-     * Helper object used for encapsulating configuration aspects
-     * of {@link ObjectMapper}
-     */
     protected final MapperConfigurator _mapperConfig;
 
-    /**
-     * Set of types (classes) that provider should ignore for data binding
-     * 
-     * @since 1.5
-     */
-    protected HashSet<ClassKey> _cfgCustomUntouchables;
-
-    /**
-     * JSONP function name to use for automatic JSONP wrapping, if any;
-     * if null, no JSONP wrapping is done.
-     */
-    protected String _jsonpFunctionName;
-    
     /*
-    /******************************************************
-    /* Context configuration
-    /******************************************************
+    ///////////////////////////////////////////////////////
+    // Context configuration
+    ///////////////////////////////////////////////////////
      */
 
     /**
@@ -149,9 +122,9 @@ public class JacksonJsonProvider
     protected Providers _providers;
 
     /*
-    /******************************************************
-    /* Configuration
-    /******************************************************
+    ///////////////////////////////////////////////////////
+    // Configuration
+    ///////////////////////////////////////////////////////
      */
 
     /**
@@ -171,9 +144,9 @@ public class JacksonJsonProvider
     protected boolean _cfgCheckCanDeserialize = false;
 
     /*
-    /******************************************************
-    /* Construction
-    /******************************************************
+    ///////////////////////////////////////////////////////
+    // Construction
+    ///////////////////////////////////////////////////////
      */
 
     /**
@@ -210,9 +183,9 @@ public class JacksonJsonProvider
     }
 
     /*
-    /******************************************************
-    /* Configuring
-    /******************************************************
+    ///////////////////////////////////////////////////////
+    // Configuring
+    ///////////////////////////////////////////////////////
      */
 
     /**
@@ -310,33 +283,10 @@ public class JacksonJsonProvider
         return this;
     }
 
-    /**
-     * Method for marking specified type as "untouchable", meaning that provider
-     * will not try to read or write values of this type (or its subtypes).
-     * 
-     * @param type Type to consider untouchable; can be any kind of class,
-     *   including abstract class or interface. No instance of this type
-     *   (including subtypes, i.e. types assignable to this type) will
-     *   be read or written by provider
-     * 
-     * @since 1.5
-     */
-    public void addUntouchable(Class<?> type)
-    {
-        if (_cfgCustomUntouchables == null) {
-            _cfgCustomUntouchables = new HashSet<ClassKey>();
-        }
-        _cfgCustomUntouchables.add(new ClassKey(type));
-    }
-
-    public void setJSONPFunctionName(String fname) {
-    	this._jsonpFunctionName = fname;
-    }
-    
     /*
-    /******************************************************
-    /* MessageBodyReader impl
-    /******************************************************
+    ////////////////////////////////////////////////////
+    // MessageBodyReader impl
+    ////////////////////////////////////////////////////
      */
 
     /**
@@ -362,15 +312,11 @@ public class JacksonJsonProvider
         if (_untouchables.contains(new ClassKey(type))) {
             return false;
         }
-        // and there are some other abstract/interface types to exclude too:
+        // but some are interface/abstract classes, so
         for (Class<?> cls : _unreadableClasses) {
             if (cls.isAssignableFrom(type)) {
                 return false;
             }
-        }
-        // as well as possible custom exclusions
-        if (_containedIn(type, _cfgCustomUntouchables)) {
-            return false;
         }
 
         // Finally: if we really want to verify that we can serialize, we'll check:
@@ -399,9 +345,9 @@ public class JacksonJsonProvider
     }
 
     /*
-    /******************************************************
-    /* MessageBodyWriter impl
-    /******************************************************
+    ////////////////////////////////////////////////////
+    // MessageBodyWriter impl
+    ////////////////////////////////////////////////////
      */
 
     /**
@@ -449,10 +395,6 @@ public class JacksonJsonProvider
                 return false;
             }
         }
-        // and finally, may have additional custom types to exclude
-        if (_containedIn(type, _cfgCustomUntouchables)) {
-            return false;
-        }
 
         // Also: if we really want to verify that we can deserialize, we'll check:
         if (_cfgCheckCanSerialize) {
@@ -471,7 +413,7 @@ public class JacksonJsonProvider
         throws IOException
     {
         /* 27-Feb-2009, tatu: Where can we find desired encoding? Within
-         *   HTTP headers?
+         *   http headers?
          */
         ObjectMapper mapper = locateMapper(type, mediaType);
         JsonGenerator jg = mapper.getJsonFactory().createJsonGenerator(entityStream, JsonEncoding.UTF8);
@@ -481,27 +423,13 @@ public class JacksonJsonProvider
         if (mapper.getSerializationConfig().isEnabled(SerializationConfig.Feature.INDENT_OUTPUT)) {
             jg.useDefaultPrettyPrinter();
         }
-        // 04-Mar-2010, tatu: How about type we were given? (if any)
-        JavaType rootType = null;
-        
-        if (genericType != null && value != null) {
-        	if (genericType != value.getClass()) {
-        		rootType = TypeFactory.type(genericType);
-        	}
-        }
-        // [JACKSON-245] Allow automatic JSONP wrapping
-        if (_jsonpFunctionName != null) {
-        	mapper.writeValue(jg, new JSONPObject(_jsonpFunctionName, value, rootType));
-        } else {
-        	// !!! TODO: 04-Mar-2010, tatus: As per [JACKSON-195], use root type!
-        	mapper.writeValue(jg, value);
-        }
+        mapper.writeValue(jg, value);
     }
 
     /*
-    /******************************************************
-    /* Public helper methods
-    /******************************************************
+    ////////////////////////////////////////////////////
+    // Public helper methods
+    ////////////////////////////////////////////////////
      */
 
     /**
@@ -579,9 +507,9 @@ public class JacksonJsonProvider
     }
 
     /*
-    /******************************************************
-    /* Private/sub-class helper methods
-    /******************************************************
+    ////////////////////////////////////////////////////
+    // Private/sub-class helper methods
+    ////////////////////////////////////////////////////
      */
 
     /**
@@ -591,20 +519,5 @@ public class JacksonJsonProvider
     protected JavaType _convertType(Type jdkType)
     {
         return TypeFactory.type(jdkType);
-    }
-
-    protected static boolean _containedIn(Class<?> mainType, HashSet<ClassKey> set)
-    {
-        if (set != null) {
-            ClassKey key = new ClassKey(mainType);
-            // First: type itself?
-            if (set.contains(key)) return true;
-            // Then supertypes (note: will not contain Object.class)
-            for (Class<?> cls : ClassUtil.findSuperTypes(mainType, null)) {
-                key.reset(cls);
-                if (set.contains(key)) return true;
-            }
-        }
-        return false;
     }
 }

@@ -13,9 +13,9 @@ public class TestAnyProperties
     extends BaseMapTest
 {
     /*
-    /*********************************************
-    /* Annotated helper classes
-    /*********************************************
+    //////////////////////////////////////////////
+    // Annotated helper classes
+    //////////////////////////////////////////////
      */
 
     static class MapImitator
@@ -62,9 +62,9 @@ public class TestAnyProperties
     }
 
     /*
-    /*********************************************
-    /* Test methods
-    /*********************************************
+    //////////////////////////////////////////////
+    // Test methods
+    //////////////////////////////////////////////
      */
 
     public void testSimpleMapImitation() throws Exception

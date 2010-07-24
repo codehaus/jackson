@@ -23,26 +23,23 @@ public class JsonNodeDeserializer
 
     protected JsonNodeDeserializer() { super(JsonNode.class); }
 
-    /**
-     * Factory method for accessing deserializer for specific node type
-     */
     public static JsonDeserializer<? extends JsonNode> getDeserializer(Class<?> nodeClass)
     {
-        if (nodeClass == ObjectNode.class) {
+        if (ObjectNode.class.isAssignableFrom(nodeClass)) {
             return ObjectDeserializer.instance;
         }
-        if (nodeClass == ArrayNode.class) {
+        if (ArrayNode.class.isAssignableFrom(nodeClass)) {
             return ArrayDeserializer.instance;
         }
         // For others, generic one works fine
-        return instance;
+        return JsonNodeDeserializer.instance;
     }
-    
+
     /*
-    /**********************************************************
-    /* Actual deserializer implementations
-    /**********************************************************
-     */
+    /////////////////////////////////////////////////////
+    // Actual deserializer implementations
+    /////////////////////////////////////////////////////
+    */
 
     /**
      * Implementation that will produce types of any JSON nodes; not just one
@@ -56,15 +53,15 @@ public class JsonNodeDeserializer
     }
 
     /*
-    /**********************************************************
-    /* Specific instances for more accurate types
-    /**********************************************************
+    /////////////////////////////////////////////////////
+    // Specific instances for more accurate types
+    /////////////////////////////////////////////////////
      */
 
     final static class ObjectDeserializer
         extends BaseNodeDeserializer<ObjectNode>
     {
-        protected final static ObjectDeserializer instance = new ObjectDeserializer();
+        final static ObjectDeserializer instance = new ObjectDeserializer();
 
         protected ObjectDeserializer() {
             super(ObjectNode.class);
@@ -75,10 +72,6 @@ public class JsonNodeDeserializer
             throws IOException, JsonProcessingException
         {
             if (jp.getCurrentToken() == JsonToken.START_OBJECT) {
-                jp.nextToken();
-                return deserializeObject(jp, ctxt);
-            }
-            if (jp.getCurrentToken() == JsonToken.FIELD_NAME) {
                 return deserializeObject(jp, ctxt);
             }
             throw ctxt.mappingException(ObjectNode.class);
@@ -88,7 +81,7 @@ public class JsonNodeDeserializer
     final static class ArrayDeserializer
         extends BaseNodeDeserializer<ArrayNode>
     {
-        protected final static ArrayDeserializer instance = new ArrayDeserializer();
+        final static ArrayDeserializer instance = new ArrayDeserializer();
 
         protected ArrayDeserializer() {
             super(ArrayNode.class);
@@ -113,27 +106,22 @@ public class JsonNodeDeserializer
 abstract class BaseNodeDeserializer<N extends JsonNode>
     extends StdDeserializer<N>
 {
+    protected JsonNodeFactory _nodeFactory;
+    
     public BaseNodeDeserializer(Class<N> nodeClass)
     {
         super(nodeClass);
+        _nodeFactory = JsonNodeFactory.instance;
     }
     
-    @Override
-    public Object deserializeWithType(JsonParser jp, DeserializationContext ctxt,
-            TypeDeserializer typeDeserializer)
-        throws IOException, JsonProcessingException
-    {
-        /* Output can be as JSON Object, Array or scalar: no way to know
-         * a priori. So:
-         */
-        return typeDeserializer.deserializeTypedFromAny(jp, ctxt);
-    }
-
+    public JsonNodeFactory getNodeFactory() { return _nodeFactory; }
+    public void setNodeFactory(JsonNodeFactory nf) { _nodeFactory = nf; }
+    
     /*
-    /**********************************************************
-    /* Overridable methods
-    /**********************************************************
-     */
+    /////////////////////////////////////////////////////
+    // Overridable methods
+    /////////////////////////////////////////////////////
+    */
     
     protected void _reportProblem(JsonParser jp, String msg)
         throws JsonMappingException
@@ -163,20 +151,16 @@ abstract class BaseNodeDeserializer<N extends JsonNode>
     }
     
     /*
-    /**********************************************************
-    /* Helper methods
-    /**********************************************************
-     */
+    /////////////////////////////////////////////////////
+    // Helper methods
+    /////////////////////////////////////////////////////
+    */
     
     protected final ObjectNode deserializeObject(JsonParser jp, DeserializationContext ctxt)
         throws IOException, JsonProcessingException
     {
-        ObjectNode node = ctxt.getNodeFactory().objectNode();
-        JsonToken t = jp.getCurrentToken();
-        if (t == JsonToken.START_OBJECT) {
-            t = jp.nextToken();
-        }
-        for (; t == JsonToken.FIELD_NAME; t = jp.nextToken()) {
+        ObjectNode node = _nodeFactory.objectNode();
+        while (jp.nextToken() != JsonToken.END_OBJECT) {
             String fieldName = jp.getCurrentName();
             jp.nextToken();
             JsonNode value = deserializeAny(jp, ctxt);
@@ -191,7 +175,7 @@ abstract class BaseNodeDeserializer<N extends JsonNode>
     protected final ArrayNode deserializeArray(JsonParser jp, DeserializationContext ctxt)
         throws IOException, JsonProcessingException
     {
-        ArrayNode node = ctxt.getNodeFactory().arrayNode();
+        ArrayNode node = _nodeFactory.arrayNode();
         while (jp.nextToken() != JsonToken.END_ARRAY) {
             node.add(deserializeAny(jp, ctxt));
         }
@@ -201,29 +185,27 @@ abstract class BaseNodeDeserializer<N extends JsonNode>
     protected final JsonNode deserializeAny(JsonParser jp, DeserializationContext ctxt)
         throws IOException, JsonProcessingException
     {
-        final JsonNodeFactory nodeFactory = ctxt.getNodeFactory();
         switch (jp.getCurrentToken()) {
         case START_OBJECT:
-        case FIELD_NAME:
             return deserializeObject(jp, ctxt);
 
         case START_ARRAY:
             return deserializeArray(jp, ctxt);
 
         case VALUE_STRING:
-            return nodeFactory.textNode(jp.getText());
+            return _nodeFactory.textNode(jp.getText());
 
         case VALUE_NUMBER_INT:
             {
                 JsonParser.NumberType nt = jp.getNumberType();
                 if (nt == JsonParser.NumberType.BIG_INTEGER
                     || ctxt.isEnabled(DeserializationConfig.Feature.USE_BIG_INTEGER_FOR_INTS)) {
-                    return nodeFactory.numberNode(jp.getIntValue());
+                    return _nodeFactory.numberNode(jp.getIntValue());
                 }
                 if (nt == JsonParser.NumberType.INT) {
-                    return nodeFactory.numberNode(jp.getIntValue());
+                    return _nodeFactory.numberNode(jp.getIntValue());
                 }
-                return nodeFactory.numberNode(jp.getLongValue());
+                return _nodeFactory.numberNode(jp.getLongValue());
             }
 
         case VALUE_NUMBER_FLOAT:
@@ -231,23 +213,24 @@ abstract class BaseNodeDeserializer<N extends JsonNode>
                 JsonParser.NumberType nt = jp.getNumberType();
                 if (nt == JsonParser.NumberType.BIG_DECIMAL
                     || ctxt.isEnabled(DeserializationConfig.Feature.USE_BIG_DECIMAL_FOR_FLOATS)) {
-                    return nodeFactory.numberNode(jp.getDecimalValue());
+                    return _nodeFactory.numberNode(jp.getDecimalValue());
                 }
-                return nodeFactory.numberNode(jp.getDoubleValue());
+                return _nodeFactory.numberNode(jp.getDoubleValue());
             }
 
         case VALUE_TRUE:
-            return nodeFactory.booleanNode(true);
+            return _nodeFactory.booleanNode(true);
 
         case VALUE_FALSE:
-            return nodeFactory.booleanNode(false);
+            return _nodeFactory.booleanNode(false);
 
         case VALUE_NULL:
-            return nodeFactory.nullNode();
+            return _nodeFactory.nullNode();
 
             // These states can not be mapped; input stream is
             // off by an event or two
 
+        case FIELD_NAME:
         case END_OBJECT:
         case END_ARRAY:
         default:

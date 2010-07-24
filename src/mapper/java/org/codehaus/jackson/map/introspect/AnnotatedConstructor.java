@@ -1,8 +1,9 @@
 package org.codehaus.jackson.map.introspect;
 
 import java.lang.reflect.Constructor;
-import java.lang.reflect.Member;
 import java.lang.reflect.Type;
+
+import org.codehaus.jackson.map.util.ClassUtil;
 
 public final class AnnotatedConstructor
     extends AnnotatedWithParams
@@ -37,11 +38,7 @@ public final class AnnotatedConstructor
 
     public String getName() { return _constructor.getName(); }
 
-    public Type getGenericType() {
-        return getRawType();
-    }
-
-    public Class<?> getRawType() {
+    public Class<?> getType() {
         return _constructor.getDeclaringClass();
     }
 
@@ -71,15 +68,16 @@ public final class AnnotatedConstructor
         return (index >= types.length) ? null : types[index];
     }
 
-    /*
-    //////////////////////////////////////////////////////
-    // AnnotatedMember impl
-    //////////////////////////////////////////////////////
+
+    /**
+     * Method that can be called to modify access rights, by calling
+     * {@link java.lang.reflect.AccessibleObject#setAccessible} on
+     * the underlying annotated element.
      */
-
-    public Class<?> getDeclaringClass() { return _constructor.getDeclaringClass(); }
-
-    public Member getMember() { return _constructor; }
+    public void fixAccess()
+    {
+        ClassUtil.checkAndFixAccess(_constructor);
+    }
 
     /*
     //////////////////////////////////////////////////////
@@ -89,7 +87,7 @@ public final class AnnotatedConstructor
 
     public String toString()
     {
-        return "[constructor for "+getName()+", annotations: "+_annotations+"]";
+        return "[constructor for "+getName()+", annotations: "+_classAnnotations+"]";
     }
 }
 
