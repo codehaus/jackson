@@ -4,6 +4,8 @@ import java.io.*;
 
 import com.sun.japex.*;
 
+import org.codehaus.jackson.*;
+
 /**
  * Shared base class for driver implementations
  *
@@ -32,6 +34,8 @@ public class BaseJsonDriver extends JapexDriverBase
         try {
             // Load XML file to factor out I/O
             _inputData = Util.streamToByteArray(new FileInputStream(new File(xmlFile)));
+            // also, squeeze out white space, unnecessary quoting
+            _inputData = removeWhitespace(_inputData);
             _dataLen = _inputData.length;
             _inputStream = new ByteArrayInputStream(_inputData);
         }        
@@ -59,5 +63,19 @@ public class BaseJsonDriver extends JapexDriverBase
         //getTestSuite().setParam("japex.resultUnit", "tps");
         getTestSuite().setParam("japex.resultUnit", "mbps");
     }
-    
+
+    private byte[] removeWhitespace(byte[] data) throws IOException
+    {
+        JsonFactory f = new JsonFactory();
+        JsonParser jp = f.createJsonParser(data);
+        ByteArrayOutputStream out = new ByteArrayOutputStream(data.length);
+        JsonGenerator jg = f.createJsonGenerator(out, JsonEncoding.UTF8);
+
+        while (jp.nextToken() != null) {
+            jg.copyCurrentEvent(jp);
+        }
+        jp.close();
+        jg.close();
+        return out.toByteArray();
+    }    
 }
