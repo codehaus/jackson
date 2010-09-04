@@ -14,13 +14,14 @@
     <param name="japex.runTime" value="25"/>
     <param name="japex.warmupsPerDriver" value="1"/>
     <param name="japex.runsPerDriver" value="3"/>    
-
+-->
 <!--
-    <param name="japex.warmupTime" value="5"/>
-    <param name="japex.runTime" value="20"/>
+-->
+
+    <param name="japex.warmupTime" value="4"/>
+    <param name="japex.runTime" value="13"/>
     <param name="japex.warmupsPerDriver" value="1"/>
     <param name="japex.runsPerDriver" value="1"/>    
--->
 
 <!-- For quickie testing of correctness etc. of inputs: -->
 <!-- 
