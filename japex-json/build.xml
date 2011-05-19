@@ -36,7 +36,7 @@
     <target name="compile" depends="prepare"
             description="Compile Japex drivers">
         <javac srcdir="src" destdir="dist/classes"
-               debug="on" optimize="on" deprecation="on">
+               debug="on" optimize="on" includeantruntime="false">
             <classpath refid="compile.class.path"/>
         </javac>
     </target>
