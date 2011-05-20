@@ -4,8 +4,7 @@
     
     <description>
         <div xmlns="">
-            <p>Micro-benchmark for JSON processors. <i>(Using HTML, 
-            describe how the benchmark works)</i></p>
+            <p>Micro-benchmark for low-level (non-databinding) JSON parsers</p>
         </div>
     </description>
 
@@ -15,13 +14,13 @@
     <param name="japex.warmupsPerDriver" value="1"/>
     <param name="japex.runsPerDriver" value="3"/>    
 -->
-<!--
--->
 
     <param name="japex.warmupTime" value="4"/>
     <param name="japex.runTime" value="13"/>
     <param name="japex.warmupsPerDriver" value="1"/>
     <param name="japex.runsPerDriver" value="1"/>    
+<!--
+-->
 
 <!-- For quickie testing of correctness etc. of inputs: -->
 <!-- 
@@ -74,4 +73,7 @@
     <testCase name="from-xml-db100">
         <param name="japex.inputFile" value="testcases/db100.xml.jsn"/>
     </testCase>
+<!--    
+-->    
+    
 </testSuite>
