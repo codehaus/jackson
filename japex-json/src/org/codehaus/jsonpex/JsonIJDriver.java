@@ -1,26 +1,21 @@
 package org.codehaus.jsonpex;
 
-import org.json.*;
+import jsonij.json.*;
 
-import com.sun.japex.*;
+import com.sun.japex.TestCase;
 
-/**
- * @author Santiago.PericasGeertsen@sun.com
- * @author Tatu Saloranta
- */
-public class JsonOrgDriver extends BaseJsonDriver
+public class JsonIJDriver extends BaseJsonDriver
 {
-    public JsonOrgDriver() { }
-
+    
     @Override public void initializeDriver() { }
-
+    
     @Override
     public void run(TestCase testCase) {
         try {
+            // no InputStream or byte[] input?
             String input = new String(_inputData, "UTF-8");
-            JSONTokener tok = new JSONTokener(input);
             @SuppressWarnings("unused")
-            Object ob = tok.nextValue();
+            JSON json = JSON.parse(input);
         }
         catch (Exception e) {
             throw new RuntimeException(e);

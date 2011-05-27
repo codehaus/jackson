@@ -15,33 +15,38 @@
     <param name="japex.runsPerDriver" value="3"/>    
 -->
 
+<!--
     <param name="japex.warmupTime" value="4"/>
     <param name="japex.runTime" value="13"/>
     <param name="japex.warmupsPerDriver" value="1"/>
     <param name="japex.runsPerDriver" value="1"/>    
-<!--
 -->
 
 <!-- For quickie testing of correctness etc. of inputs: -->
-<!-- 
     <param name="japex.warmupTime" value="3"/>
     <param name="japex.runTime" value="5"/>
     <param name="japex.warmupsPerDriver" value="1"/>
     <param name="japex.runsPerDriver" value="1"/>    
+<!-- 
 -->
 
     <param name="japex.reportsDirectory" value="reports"/>
     
-    <xi:include href="entities/JacksonSmileDriver.xml"/>    
+    <xi:include href="entities/GsonDriver.xml"/>
     <xi:include href="entities/JacksonDriver.xml"/>    
 <!--    
+    <xi:include href="entities/JacksonSmileDriver.xml"/>    
     <xi:include href="entities/NoggitDriver.xml"/>    
 -->
     <xi:include href="entities/JsonOrgDriver.xml"/>    
     <xi:include href="entities/StringTreeDriver.xml"/>
+<!--    
     <xi:include href="entities/JsonToolsDriver.xml"/>    
-    <xi:include href="entities/JsonSimpleDriver.xml"/>    
+    <xi:include href="entities/JsonSimpleDriver.xml"/>   
+    -->
+
     <xi:include href="entities/JsonSmartDriver.xml"/>    
+    <xi:include href="entities/JsonIJDriver.xml"/>    
 
     <testCase name="json-org-sample1">
         <param name="japex.inputFile" value="testcases/json-org-sample1.jsn"/>
@@ -61,6 +66,7 @@
     <testCase name="twitter-search">
         <param name="japex.inputFile" value="testcases/twitter-search.jsn"/>
     </testCase>
+<!--    
     <testCase name="from-xml-ns-invoice">
         <param name="japex.inputFile" value="testcases/ns-invoice100.xml.jsn"/>
     </testCase>
@@ -73,7 +79,6 @@
     <testCase name="from-xml-db100">
         <param name="japex.inputFile" value="testcases/db100.xml.jsn"/>
     </testCase>
-<!--    
 -->    
     
 </testSuite>
