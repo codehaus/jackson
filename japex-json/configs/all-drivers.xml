@@ -27,11 +27,9 @@
     <param name="japex.runTime" value="5"/>
     <param name="japex.warmupsPerDriver" value="1"/>
     <param name="japex.runsPerDriver" value="1"/>    
-<!-- 
--->
 
     <param name="japex.reportsDirectory" value="reports"/>
-    
+
     <xi:include href="entities/JacksonDriver.xml"/>    
 <!--    
     <xi:include href="entities/JacksonSmileDriver.xml"/>    
@@ -75,5 +73,4 @@
     <testCase name="from-xml-db100">
         <param name="japex.inputFile" value="testcases/db100.xml.jsn"/>
     </testCase>
-    
 </testSuite>

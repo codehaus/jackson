@@ -7,11 +7,11 @@ import com.sun.japex.*;
 /**
  * @author Tatu Saloranta
  */
-public class JacksonJavaTypeDriver extends BaseJsonDriver
+public class JacksonMapperDriver extends BaseJsonDriver
 {
     protected ObjectMapper _mapper;
     
-    public JacksonJavaTypeDriver() { super(); }
+    public JacksonMapperDriver() { super(); }
 
     @Override
     public void initializeDriver() {

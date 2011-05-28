@@ -13,7 +13,7 @@ import org.codehaus.jackson.smile.SmileFactory;
  * @author tatu
  */
 public class JacksonManualSmileDriver
-    extends JacksonDriver
+    extends JacksonManualDriver
 {
     @Override
     public void initializeDriver()

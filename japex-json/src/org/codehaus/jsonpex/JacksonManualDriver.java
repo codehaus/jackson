@@ -15,11 +15,11 @@ import com.sun.japex.*;
  * @author Santiago.PericasGeertsen@sun.com
  * @author Tatu Saloranta (cowtowncoder@yahoo.com)
  */
-public class JacksonDriver extends BaseJsonDriver
+public class JacksonManualDriver extends BaseJsonDriver
 {
     protected JsonFactory _jsonFactory;
     
-    public JacksonDriver() { super(); }
+    public JacksonManualDriver() { super(); }
 
     @Override
     public void initializeDriver()
@@ -63,12 +63,22 @@ public class JacksonDriver extends BaseJsonDriver
          */
         while ((t = jp.nextToken()) != null) {
             switch (t) {
-            case VALUE_STRING:
+            case FIELD_NAME:
                 {
+                    String str = jp.getText();
+                    total += str.length();
+                }
+                break;
+            case VALUE_STRING: // ensure all text is parsed
+                {
+                    String str = jp.getText();
                     //char[] chars = jp.getTextCharacters();
+                    /*
                     int offset = jp.getTextOffset();
                     int len = jp.getTextLength();
                     total += offset + len;
+                    */
+                    total += str.length();
                 }
                 break;
             case VALUE_NUMBER_INT:
