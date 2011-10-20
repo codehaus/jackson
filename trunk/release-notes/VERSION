@@ -144,6 +144,29 @@ Description:
     JsonContentClass (deprecated since 1.1)
   * Move TokenBufferDeserializer to separate class (from inside StdDeserializer)
 
+1.8.6 [04-Oct-2011]
+
+  Fixes:
+
+  * [JACKSON-288] Problems (de)serializing values with JAXB adapters
+  * [JACKSON-668] Problems with 'JsonParser.getDecimalValue' not
+    clearing earlier state
+   (reported by Ransom B)
+  * [JACKSON-677] Inner generic type references not working properly
+   (reported by William B)
+
+1.8.5 [04-Aug-2011]
+
+  Fixes:
+
+  * [JACKSON-401] Further fixes to ensure FLUSH_PASSED_TO_STREAM works
+  * [JACKSON-637] NumberSerializer was missing proper handling of Integer, Long
+   (reported by Paul M)
+  * [JACKSON-640] SmileParser.getTextCharacters() missing value in some
+    cases (value back-references)
+  * [JACKSON-647] ResolvableSerializer.resolve() not called after creating
+    contextual instance
+
 1.8.4 [25-Jul-2011]
 
   Fixes:

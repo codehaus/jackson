@@ -428,7 +428,6 @@ public class BeanSerializerFactory
         
         // First: any detectable (auto-detect, annotations) properties to serialize?
         List<BeanPropertyWriter> props = findBeanProperties(config, beanDesc);
-        AnnotatedMethod anyGetter = beanDesc.findAnyGetter();
 
         if (props == null) {
             props = new ArrayList<BeanPropertyWriter>();
@@ -455,7 +454,11 @@ public class BeanSerializerFactory
         builder.setProperties(props);
         builder.setFilterId(findFilterId(config, beanDesc));
         
+        AnnotatedMethod anyGetter = beanDesc.findAnyGetter();
         if (anyGetter != null) { // since 1.6
+            if (config.isEnabled(SerializationConfig.Feature.CAN_OVERRIDE_ACCESS_MODIFIERS)) {
+                anyGetter.fixAccess();
+            }
             JavaType type = anyGetter.getType(beanDesc.bindingsForBeanType());
             // copied from BasicSerializerFactory.buildMapSerializer():
             boolean staticTyping = config.isEnabled(SerializationConfig.Feature.USE_STATIC_TYPING);
