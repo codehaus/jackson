@@ -8,6 +8,9 @@ Description:
 
   Fixes:
 
+  * [JACKSON-696] Problems accessing "any getter" that is not public
+   (reported by Brian M)
+
 ------------------------------------------------------------------------
 === History: ===
 ------------------------------------------------------------------------
