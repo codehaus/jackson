@@ -38,6 +38,24 @@ public class TestParentChildReferences
         public SimpleTreeNode(String n) { name = n; }
     }
 
+    static class SimpleTreeNode2
+    {
+        public String name;
+        private SimpleTreeNode2 parent;
+        private SimpleTreeNode2 child;
+
+        public SimpleTreeNode2() { this(null); }
+        public SimpleTreeNode2(String n) { name = n; }
+
+        @JsonBackReference
+        public SimpleTreeNode2 getParent() { return parent; }
+        public void setParent(SimpleTreeNode2 p) { parent = p; }
+
+        @JsonBackReference
+        public SimpleTreeNode2 getChild() { return child; }
+        public void setChild(SimpleTreeNode2 c) { child = c; }
+    }
+    
     /**
      * Then nodes with two separate linkages; parent/child
      * and prev/next-sibling
@@ -145,6 +163,25 @@ public class TestParentChildReferences
         assertSame(resultChild.parent, resultNode);
     }
 
+    // [JACKSON-693]
+    public void testSimpleRefsWithGetter() throws Exception
+    {
+        SimpleTreeNode2 root = new SimpleTreeNode2("root");
+        SimpleTreeNode2 child = new SimpleTreeNode2("kid");
+        ObjectMapper mapper = new ObjectMapper();
+        root.child = child;
+        child.parent = root;
+        
+        String json = mapper.writeValueAsString(root);
+        
+        SimpleTreeNode2 resultNode = mapper.readValue(json, SimpleTreeNode2.class);
+        assertEquals("root", resultNode.name);
+        SimpleTreeNode2 resultChild = resultNode.child;
+        assertNotNull(resultChild);
+        assertEquals("kid", resultChild.name);
+        assertSame(resultChild.parent, resultNode);
+    }
+    
     public void testFullRefs() throws Exception
     {
         FullTreeNode root = new FullTreeNode("root");
