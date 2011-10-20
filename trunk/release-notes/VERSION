@@ -12,6 +12,9 @@ Description:
    (reported by Pascal G)  
   * [JACKSON-689] Deserialization of Iterable fails
    (reported by Pascal G)
+  * [JACKSON-693] @JsonBackReference not used during deserialization if it's annotated
+   on a getter method.
+   (reported by Pascal G)
   
 ------------------------------------------------------------------------
 === History: ===

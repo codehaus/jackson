@@ -51,7 +51,7 @@ public class TestParentChildReferences
         public SimpleTreeNode2 getParent() { return parent; }
         public void setParent(SimpleTreeNode2 p) { parent = p; }
 
-        @JsonBackReference
+        @JsonManagedReference
         public SimpleTreeNode2 getChild() { return child; }
         public void setChild(SimpleTreeNode2 c) { child = c; }
     }

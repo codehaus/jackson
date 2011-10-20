@@ -633,7 +633,12 @@ public class JacksonAnnotationIntrospector
          *   that there is a property, although doesn't define name
          */
         // 09-Apr-2010, tatu: Ditto for JsonView
-    	if (am.hasAnnotation(JsonDeserialize.class) || am.hasAnnotation(JsonView.class)) {
+        // 19-Oct-2011, tatu: And JsonBackReference/JsonManagedReference
+    	if (am.hasAnnotation(JsonDeserialize.class)
+    	        || am.hasAnnotation(JsonView.class)
+                || am.hasAnnotation(JsonBackReference.class)
+                || am.hasAnnotation(JsonManagedReference.class)
+    	        ) {
             return "";
         }
         return null;
@@ -683,7 +688,11 @@ public class JacksonAnnotationIntrospector
         }
         // Also: having JsonDeserialize implies it is such a property
         // 09-Apr-2010, tatu: Ditto for JsonView
-        if (af.hasAnnotation(JsonDeserialize.class) || af.hasAnnotation(JsonView.class)) {
+        if (af.hasAnnotation(JsonDeserialize.class)
+                || af.hasAnnotation(JsonView.class)
+                || af.hasAnnotation(JsonBackReference.class)
+                || af.hasAnnotation(JsonManagedReference.class)
+                ) {
             return "";
         }
         return null;
