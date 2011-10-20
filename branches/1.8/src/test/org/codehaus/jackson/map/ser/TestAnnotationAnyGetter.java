@@ -11,9 +11,9 @@ public class TestAnnotationAnyGetter
     extends BaseMapTest
 {
     /*
-    /*********************************************************
+    /**********************************************************
     /* Helper bean classes
-    /*********************************************************
+    /**********************************************************
      */
 
     static class Bean
@@ -38,11 +38,11 @@ public class TestAnnotationAnyGetter
             return map;
         }
     }
-    
+
     /*
-    /*********************************************************
+    /**********************************************************
     /* Test cases
-    /*********************************************************
+    /**********************************************************
      */
 
     public void testSimpleJsonValue() throws Exception
@@ -72,5 +72,4 @@ public class TestAnnotationAnyGetter
         json = serializeAsString(m, new AnyOnlyBean());
         assertEquals("{\"a\":3}", json);
     }
-    
 }
