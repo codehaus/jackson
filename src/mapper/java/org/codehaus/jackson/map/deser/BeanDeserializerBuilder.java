@@ -150,6 +150,10 @@ public class BeanDeserializerBuilder
             _backRefProperties = new HashMap<String, SettableBeanProperty>(4);
         }
         _backRefProperties.put(referenceName, prop);
+        // also: if we had property with same name, actually remove it
+        if (_properties != null) {
+            _properties.remove(prop.getName());
+        }
     }
 
     /**

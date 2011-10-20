@@ -492,29 +492,19 @@ public class BasicBeanDescription extends BeanDescription
     public Map<String,AnnotatedMember> findBackReferenceProperties()
     {
         HashMap<String,AnnotatedMember> result = null;
-        // First, gather setter methods
-        for (AnnotatedMethod am : _classInfo.memberMethods()) {
-            if (am.getParameterCount() == 1) {
-                AnnotationIntrospector.ReferenceProperty prop = _annotationIntrospector.findReferenceType(am);
-                if (prop != null && prop.isBackReference()) {
-                    if (result == null) {
-                        result = new HashMap<String,AnnotatedMember>();
-                    }
-                    if (result.put(prop.getName(), am) != null) {
-                        throw new IllegalArgumentException("Multiple back-reference properties with name '"+prop.getName()+"'");
-                    }
-                }
+        for (BeanPropertyDefinition property : _properties) {
+            AnnotatedMember am = property.getMutator();
+            if (am == null) {
+                continue;
             }
-        }
-        // then settable fields
-        for (AnnotatedField af : _classInfo.fields()) {
-            AnnotationIntrospector.ReferenceProperty prop = _annotationIntrospector.findReferenceType(af);
-            if (prop != null && prop.isBackReference()) {
+            AnnotationIntrospector.ReferenceProperty refDef = _annotationIntrospector.findReferenceType(am);
+            if (refDef != null && refDef.isBackReference()) {
                 if (result == null) {
                     result = new HashMap<String,AnnotatedMember>();
                 }
-                if (result.put(prop.getName(), af) != null) {
-                    throw new IllegalArgumentException("Multiple back-reference properties with name '"+prop.getName()+"'");
+                String refName = refDef.getName();
+                if (result.put(refName, am) != null) {
+                    throw new IllegalArgumentException("Multiple back-reference properties with name '"+refName+"'");
                 }
             }
         }
