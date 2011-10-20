@@ -3,7 +3,6 @@ package org.codehaus.jackson.map.ser;
 import java.util.*;
 
 import org.codehaus.jackson.annotate.JsonAnyGetter;
-import org.codehaus.jackson.annotate.JsonAnySetter;
 import org.codehaus.jackson.map.BaseMapTest;
 import org.codehaus.jackson.map.ObjectMapper;
 import org.codehaus.jackson.map.SerializationConfig;
@@ -40,22 +39,6 @@ public class TestAnnotationAnyGetter
         }
     }
 
-    static class DynaBean {
-        public int id;
-
-        protected HashMap<String,String> other = new HashMap<String,String>();
-        
-        @JsonAnyGetter
-        public Map<String,String> any() {
-            return other;
-        }
-
-        @JsonAnySetter
-        public void set(String name, String value) {
-            other.put(name, value);
-        }
-    }
-    
     /*
     /**********************************************************
     /* Test cases
@@ -88,18 +71,5 @@ public class TestAnnotationAnyGetter
         m.configure(SerializationConfig.Feature.FAIL_ON_EMPTY_BEANS, false);
         json = serializeAsString(m, new AnyOnlyBean());
         assertEquals("{\"a\":3}", json);
-    }
-    
-    public void testDynaBean() throws Exception
-    {
-        ObjectMapper m = new ObjectMapper();
-        DynaBean b = new DynaBean();
-        b.id = 123;
-        b.set("name", "Billy");
-        assertEquals("{\"id\":123,\"name\":\"Billy\"}", m.writeValueAsString(b));
-
-        DynaBean result = m.readValue("{\"id\":2,\"name\":\"Joe\"}", DynaBean.class);
-        assertEquals(2, result.id);
-        assertEquals("Joe", result.other.get("name"));
     }
 }
