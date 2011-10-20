@@ -138,7 +138,30 @@ public class TestParentChildReferences
         public NodeForMap() { this(null); }
         public NodeForMap(String n) { name = n; }
     }
-    
+
+    public static class Parent {
+        @JsonManagedReference
+        private final List<Child> children = new ArrayList<Child>();
+
+        public List<Child> getChildren() { return children; }
+
+        public void addChild(Child child) { children.add(child); child.setParent(this); }
+    }
+
+    public static class Child {
+        private Parent parent;
+        private final String value; // So that the bean is not empty of properties
+
+        public Child(@JsonProperty("value") String value) { this.value = value; }
+
+        public String getValue() { return value; }
+
+        @JsonBackReference
+        public Parent getParent() { return parent; }
+
+        public void setParent(Parent parent) { this.parent = parent; }
+    }    
+
     /*
     /**********************************************************
     /* Unit tests
@@ -271,5 +294,18 @@ public class TestParentChildReferences
         assertEquals("b", kids.get("b2").name);
         assertSame(result, kids.get("a1").parent);
         assertSame(result, kids.get("b2").parent);
+    }
+
+    public void testIssue693() throws Exception
+    {
+        Parent parent = new Parent();
+        parent.addChild(new Child("foo"));
+        parent.addChild(new Child("bar"));
+        ObjectMapper mapper = new ObjectMapper();
+        byte[] bytes = mapper.writeValueAsBytes(parent);
+        Parent value = mapper.readValue(bytes, Parent.class); 
+        for (Child child : value.children) {
+            assertEquals(value, child.getParent());
+        }
     }
 }
