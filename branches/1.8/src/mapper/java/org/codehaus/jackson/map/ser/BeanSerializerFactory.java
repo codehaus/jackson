@@ -434,7 +434,6 @@ public class BeanSerializerFactory
         
         // First: any detectable (auto-detect, annotations) properties to serialize?
         List<BeanPropertyWriter> props = findBeanProperties(config, beanDesc);
-        AnnotatedMethod anyGetter = beanDesc.findAnyGetter();
 
         // [JACKSON-440] Need to allow modification bean properties to serialize:
         if (_factoryConfig.hasSerializerModifiers()) {
@@ -446,6 +445,7 @@ public class BeanSerializerFactory
             }
         }
         
+        AnnotatedMethod anyGetter = beanDesc.findAnyGetter();
         // No properties, no serializer
         // 16-Oct-2010, tatu: Except that @JsonAnyGetter needs to count as getter
         if (props == null || props.size() == 0) {
@@ -476,6 +476,9 @@ public class BeanSerializerFactory
         builder.setFilterId(findFilterId(config, beanDesc));
         
         if (anyGetter != null) { // since 1.6
+	    if (config.isEnabled(SerializationConfig.Feature.CAN_OVERRIDE_ACCESS_MODIFIERS)) {
+		anyGetter.fixAccess();
+	    }
             JavaType type = anyGetter.getType(beanDesc.bindingsForBeanType());
             // copied from BasicSerializerFactory.buildMapSerializer():
             boolean staticTyping = config.isEnabled(SerializationConfig.Feature.USE_STATIC_TYPING);
