@@ -108,28 +108,24 @@ public class POJOPropertyBuilder
     @Override
     public AnnotatedMember getAccessor()
     {
-        if (_getters != null) {
-            return _getters.value;
+        AnnotatedMember m = getGetter();
+        if (m == null) {
+            m = getField();
         }
-        if (_fields != null) {
-            return _fields.value;
-        }
-        return null;
+        return m;
     }
 
     @Override
     public AnnotatedMember getMutator()
     {
-        if (_ctorParameters != null) {
-            return _ctorParameters.value;
+        AnnotatedMember m = getConstructorParameter();
+        if (m == null) {
+            m = getSetter();
+            if (m == null) {
+                m = getField();
+            }
         }
-        if (_setters != null) {
-            return _setters.value;
-        }
-        if (_fields != null) {
-            return _fields.value;
-        }
-        return null;
+        return m;
     }
 
     @Override
@@ -235,30 +231,22 @@ public class POJOPropertyBuilder
         if (_ctorParameters == null) {
             return null;
         }
-        // If multiple, verify that they do not conflict...
-        AnnotatedParameter ctorParam = _ctorParameters.value;
-        Node<AnnotatedParameter> next = _ctorParameters.next;
-        for (; next != null; next = next.next) {
-            /* [JACKSON-255] Allow masking, i.e. report exception only if
-             *   declarations in same class, or there's no inheritance relationship
-             *   (sibling interfaces etc)
-             */
-            AnnotatedParameter nextCtorParam = next.value;
-            Class<?> ctorParamClass = ctorParam.getDeclaringClass();
-            Class<?> nextClass = nextCtorParam.getDeclaringClass();
-            if (ctorParamClass != nextClass) {
-                if (ctorParamClass.isAssignableFrom(nextClass)) { // next is more specific
-                    ctorParam = nextCtorParam;
-                    continue;
-                }
-                if (nextClass.isAssignableFrom(ctorParamClass)) { // getter more specific
-                    continue;
-                }
+        /* Hmmh. Checking for constructor parameters is trickier; for one,
+         * we must allow creator and factory method annotations.
+         * If this is the case, constructor parameter has the precedence.
+         * 
+         * So, for now, just try finding the first constructor parameter;
+         * if none, first factory method. And don't check for dups, if we must,
+         * can start checking for them later on.
+         */
+        Node<AnnotatedParameter> curr = _ctorParameters;
+        do {
+            if (curr.value.getOwner() instanceof AnnotatedConstructor) {
+                return curr.value;
             }
-            throw new IllegalArgumentException("Conflicting constructor-parameter definitions for property \""+getName()+"\": "
-                    +ctorParam+" vs "+nextCtorParam);
-        }
-        return ctorParam;
+            curr = curr.next;
+        } while (curr != null);
+        return _ctorParameters.value;
     }
     
     /*
