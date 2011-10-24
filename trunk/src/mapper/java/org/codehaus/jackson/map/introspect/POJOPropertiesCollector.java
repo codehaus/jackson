@@ -6,13 +6,6 @@ import org.codehaus.jackson.map.*;
 import org.codehaus.jackson.map.util.BeanUtil;
 import org.codehaus.jackson.type.JavaType;
 
-
-/* TODO:
- * 
- * - Naming strategy: probably only after otherwise reconciling (i.e. done by BasicBeanDescription)?
- * 
- */
-
 /**
  * Helper class used for aggregating information about all possible
  * properties of a POJO.

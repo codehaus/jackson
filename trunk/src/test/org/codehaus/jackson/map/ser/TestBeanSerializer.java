@@ -170,11 +170,17 @@ public class TestBeanSerializer extends BaseMapTest
             return beanProperties;
         }
     }
-    
+
+    // For [JACKSON-694]: error message for conflicting getters sub-optimal
+    static class BeanWithConflict
+    {
+        public int getX() { return 3; }
+        public boolean isX() { return false; }
+    }
     
     /*
     /********************************************************
-    /* Unit tests
+    /* Unit tests: success
     /********************************************************
      */
 
@@ -224,4 +230,23 @@ public class TestBeanSerializer extends BaseMapTest
         String json = mapper.writeValueAsString(new EmptyBean());
         assertEquals("{\"bogus\":\"foo\"}", json);
     }
+
+    /*
+    /********************************************************
+    /* Unit tests: failure handling
+    /********************************************************
+     */
+    
+    // for [JACKSON-694]
+    public void testFailWithDupProps() throws Exception
+    {
+        BeanWithConflict bean = new BeanWithConflict();
+        ObjectMapper mapper = new ObjectMapper();
+        try {
+            String json = mapper.writeValueAsString(bean);
+            fail("Should have failed due to conflicting accessor definitions; got JSON = "+json);
+        } catch (JsonProcessingException e) {
+            verifyException(e, "Conflicting getter definitions");
+        }
+    }        
 }
