@@ -8,6 +8,7 @@ import org.codehaus.jackson.JsonProcessingException;
 import org.codehaus.jackson.annotate.JsonPropertyOrder;
 import org.codehaus.jackson.map.*;
 import org.codehaus.jackson.map.annotate.JsonSerialize;
+import org.codehaus.jackson.map.ser.std.NullSerializer;
 
 @SuppressWarnings("serial")
 public class TestAnnotationJsonSerialize2
@@ -105,6 +106,12 @@ public class TestAnnotationJsonSerialize2
         }
     }
 
+    static class NullBean
+    {
+        @JsonSerialize(using=NullSerializer.class)
+        public String value = "abc";
+    }
+    
     /*
     /**********************************************************
     /* Test methods
@@ -202,5 +209,13 @@ public class TestAnnotationJsonSerialize2
         assertEquals("{\"array\":[]}", defMapper.writeValueAsString(array));
         assertEquals("{}", inclMapper.writeValueAsString(array));
         assertEquals("{}", inclMapper.writeValueAsString(new ArrayWrapper<Integer>(null)));
+    }
+
+    // [JACKSON-699]
+    public void testNullSerializer() throws Exception
+    {
+        ObjectMapper mapper = new ObjectMapper();
+        String json = mapper.writeValueAsString(new NullBean());
+        assertEquals("{\"value\":null}", json);
     }
 }
