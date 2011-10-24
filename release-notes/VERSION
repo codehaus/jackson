@@ -1,11 +1,19 @@
-Version: 1.9.1
+Version: 1.9.2
 
 Release date:
-  23-Oct-2011
+  xxx-Nov-2011
 
 Description:
-  The first patch release for 1.9.
+  The second patch release for 1.9.
   
+  Fixes:
+  
+------------------------------------------------------------------------
+=== History: ===
+------------------------------------------------------------------------
+
+1.9.0 [23-Oct-2011]
+
   Fixes:
   
   * [JACKSON-687] Problems with PropertyNamingStrategy, property merging
@@ -15,15 +23,6 @@ Description:
   * [JACKSON-693] @JsonBackReference not used during deserialization if it's annotated
    on a getter method.
    (reported by Pascal G)
-  
-------------------------------------------------------------------------
-=== History: ===
-------------------------------------------------------------------------
-
-Description:
-  Another minor release. Major internal rewrite for property introspection; other
-  big changes to prepare for upcoming 2.0 version, including significant
-  number of newly deprecated methods.
 
 1.9.0 [04-Oct-2011]
 
