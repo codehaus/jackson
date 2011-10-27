@@ -1051,7 +1051,16 @@ public class BeanDeserializerFactory
             if (ignored.contains(name)) { // explicit ignoral using @JsonIgnoreProperties needs to block entries
                 continue;
             }
-            // primary: have a getter?
+            /* [JACKSON-700] If property as passed via constructor parameter, we must
+             *   handle things in special way. Not sure what is the most optimal way...
+             *   for now, let's just call a (new) method in builder, which does nothing.
+             */
+            if (property.hasConstructorParameter()) {
+                // but let's call a method just to allow custom builders to be aware...
+                builder.addCreatorProperty(property);
+                continue;
+            }
+            // primary: have a setter?
             if (property.hasSetter()) {
                 AnnotatedMethod setter = property.getSetter();
                 // [JACKSON-429] Some types are declared as ignorable as well

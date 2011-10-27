@@ -7,6 +7,10 @@ Description:
   The second patch release for 1.9.
   
   Fixes:
+
+  * [JACKSON-700] Type problems with properties that have different types
+    for constructor property, setter and/or field
+   (reported by Ben H)
   
 ------------------------------------------------------------------------
 === History: ===

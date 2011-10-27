@@ -103,6 +103,18 @@ public class TestPOJOPropertiesCollector
         public void setD(int value) { }
         public void setA(int value) { }
     }
+
+    // [JACKSON-700]: test property type detection, selection
+    static class TypeTestBean
+    {
+        protected Long value;
+
+        @JsonCreator
+        public TypeTestBean(@JsonProperty("value") String value) { }
+
+        // If you remove this method, the test will pass
+        public Integer getValue() { return 0; }
+    }
     
     /*
     /**********************************************************
@@ -254,7 +266,29 @@ public class TestPOJOPropertiesCollector
         assertEquals("c", props.get(2).getName());
         assertEquals("d", props.get(3).getName());
     }
-    
+
+    public void testSimpleWithType()
+    {
+        ObjectMapper mapper = new ObjectMapper();
+        // first for serialization; should base choice on getter
+        POJOPropertiesCollector coll = collector(mapper, TypeTestBean.class, true);
+        List<BeanPropertyDefinition> props = coll.getProperties();
+        assertEquals(1, props.size());
+        assertEquals("value", props.get(0).getName());
+        AnnotatedMember m = props.get(0).getAccessor();
+        assertTrue(m instanceof AnnotatedMethod);
+        assertEquals(Integer.class, m.getRawType());
+
+        // then for deserialization; prefer ctor param
+        coll = collector(mapper, TypeTestBean.class, false);
+        props = coll.getProperties();
+        assertEquals(1, props.size());
+        assertEquals("value", props.get(0).getName());
+        m = props.get(0).getMutator();
+        assertEquals(AnnotatedParameter.class, m.getClass());
+        assertEquals(String.class, m.getRawType());
+    }
+
     /*
     /**********************************************************
     /* Helper methods
@@ -271,7 +305,11 @@ public class TestPOJOPropertiesCollector
     {
         BasicClassIntrospector bci = new BasicClassIntrospector();
         // no real difference between serialization, deserialization, at least here
-        return bci.collectProperties(mapper.getSerializationConfig(),
-                mapper.constructType(cls), null, forSerialization);
+        if (forSerialization) {
+            return bci.collectProperties(mapper.getSerializationConfig(),
+                    mapper.constructType(cls), null, true);
+        }
+        return bci.collectProperties(mapper.getDeserializationConfig(),
+                mapper.constructType(cls), null, false);
     }
 }
