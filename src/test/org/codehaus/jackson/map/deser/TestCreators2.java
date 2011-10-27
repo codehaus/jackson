@@ -167,6 +167,18 @@ public class TestCreators2
         }
     }
     
+    static interface Issue700Set extends java.util.Set<Object> { }
+
+    static class Issue700Bean
+    {
+        protected Issue700Set item;
+
+        @JsonCreator
+        public Issue700Bean(@JsonProperty("item") String item) { }
+
+        public String getItem() { return null; }
+    }
+    
     /*
     /**********************************************************
     /* Unit tests
@@ -317,5 +329,13 @@ public class TestCreators2
         // but also with value conversion from String
         bb = m.readValue(quote("true"), BooleanBean.class);
         assertEquals(Boolean.TRUE, bb.value);
+    }
+
+    // [JACKSON-700]
+    public void testCreatorProperties() throws Exception
+    {
+        ObjectMapper mapper = new ObjectMapper();
+        Issue700Bean value = mapper.readValue("{ \"item\" : \"foo\" }", Issue700Bean.class);
+        assertNotNull(value);
     }
 }

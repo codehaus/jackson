@@ -81,7 +81,7 @@ public class BeanDeserializerBuilder
     
     /*
     /**********************************************************
-    /* Construction and setters
+    /* Life-cycle: construction
     /**********************************************************
      */
     
@@ -118,6 +118,12 @@ public class BeanDeserializerBuilder
         return new HashMap<String, SettableBeanProperty>(src);
     }
     
+    /*
+    /**********************************************************
+    /* Life-cycle: state modification (adders, setters)
+    /**********************************************************
+     */
+
     /**
      * Method for adding a new property or replacing a property.
      */
@@ -157,6 +163,20 @@ public class BeanDeserializerBuilder
     }
 
     /**
+     * @since 1.9
+     */
+    public void addInjectable(String propertyName, JavaType propertyType,
+            Annotations contextAnnotations, AnnotatedMember member,
+            Object valueId)
+    {
+        if (_injectables == null) {
+            _injectables = new ArrayList<ValueInjector>();
+        }
+        _injectables.add(new ValueInjector(propertyName, propertyType,
+                contextAnnotations, member, valueId));
+    }
+    
+    /**
      * Method that will add property name as one of properties that can
      * be ignored if not recognized.
      */
@@ -168,6 +188,48 @@ public class BeanDeserializerBuilder
         _ignorableProps.add(propName);
     }
 
+    /**
+     * Method called by deserializer factory, when a "creator property"
+     * (something that is passed via constructor- or factory method argument;
+     * instead of setter or field).
+     *<p>
+     * Default implementation does not do anything; we may need to revisit this
+     * decision if these properties need to be available through accessors.
+     * For now, however, we just have to ensure that we don't try to resolve
+     * types that masked setter/field has (see [JACKSON-700] for details).
+     * 
+     * @since 1.9.2
+     */
+    public void addCreatorProperty(BeanPropertyDefinition propDef)
+    {
+        // do nothing
+    }
+    
+    public void setAnySetter(SettableAnyProperty s)
+    {
+        if (_anySetter != null && s != null) {
+            throw new IllegalStateException("_anySetter already set to non-null");
+        }
+        _anySetter = s;
+    }
+
+    public void setIgnoreUnknownProperties(boolean ignore) {
+        _ignoreAllUnknown = ignore;
+    }
+
+    /**
+     * @since 1.9
+     */
+    public void setValueInstantiator(ValueInstantiator inst) {
+        _valueInstantiator = inst;
+    }
+    
+    /*
+    /**********************************************************
+    /* Public accessors
+    /**********************************************************
+     */
+    
     /**
      * Method that allows accessing all properties that this
      * builder currently contains.
@@ -191,44 +253,11 @@ public class BeanDeserializerBuilder
         return _properties.remove(name);
     }
 
-    public void setAnySetter(SettableAnyProperty s)
-    {
-        if (_anySetter != null && s != null) {
-            throw new IllegalStateException("_anySetter already set to non-null");
-        }
-        _anySetter = s;
-    }
-
-    public void setIgnoreUnknownProperties(boolean ignore) {
-        _ignoreAllUnknown = ignore;
-    }
-
-    /**
-     * @since 1.9
-     */
-    public void setValueInstantiator(ValueInstantiator inst) {
-        _valueInstantiator = inst;
-    }
-
     /**
      * @since 1.9
      */
     public ValueInstantiator getValueInstantiator() {
         return _valueInstantiator;
-    }
-
-    /**
-     * @since 1.9
-     */
-    public void addInjectable(String propertyName, JavaType propertyType,
-            Annotations contextAnnotations, AnnotatedMember member,
-            Object valueId)
-    {
-        if (_injectables == null) {
-            _injectables = new ArrayList<ValueInjector>();
-        }
-        _injectables.add(new ValueInjector(propertyName, propertyType,
-                contextAnnotations, member, valueId));
     }
     
     /*

@@ -620,7 +620,7 @@ Christopher Berner:
   * [JACKSON-508] Type information lost when serializing List<List<X>>
    [1.7.4]
 
-Pascal GŽlinas:
+Pascal GÂŽlinas:
   * Suggested [JACKSON-541] with patch: Remove the need for @JsonCreator on
     multi-arg constructor iff all parameters have @JsonProperty
    [1.7.5]
@@ -782,3 +782,8 @@ Kirill Sukhanov:
   * Suggested [JACKSON-650] Allow dealing with missing filter ids, by adding
     'SimpleFilterProvider.setFailOnUnknownId()' to specify if exception is thrown or not.
    [1.9.0]
+
+Ben Hale:
+  * Reported [JACKSON-700] Type problems with properties that have different
+    types for constructor property, setter and/or field
+   [1.9.1]
