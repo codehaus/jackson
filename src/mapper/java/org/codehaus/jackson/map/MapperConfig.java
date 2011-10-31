@@ -1084,11 +1084,20 @@ public abstract class MapperConfig<T extends MapperConfig<T>>
         /**********************************************************
          */
         
+        /* NOTE: this method was added in 1.9, but should be
+         * removed from 2.0 -- overloads do not work nicely with
+         * enums, so we better not try 
+         *<p>
+         * Also note that we can NOT use type variable CFG here, because
+         * non-generic base class had to use base type.
+         * 
+         * @Deprecated 
+         */
         @Override
         public boolean isEnabled(MapperConfig.ConfigFeature f) {
             return (_featureFlags & f.getMask()) != 0;
         }
-
+        
         /*
         /**********************************************************
         /* Configuration: deprecated methods
@@ -1103,7 +1112,7 @@ public abstract class MapperConfig<T extends MapperConfig<T>>
          *    creating a new one (as the goal is to make this class immutable)
          */
         @Deprecated
-        public final void enable(CFG f) {
+        public void enable(CFG f) {
             _featureFlags |= f.getMask();
         }
 
@@ -1115,7 +1124,7 @@ public abstract class MapperConfig<T extends MapperConfig<T>>
          *    creating a new one (as the goal is to make this class immutable)
          */
         @Deprecated
-        public final void disable(CFG f) {
+        public void disable(CFG f) {
             _featureFlags &= ~f.getMask();
         }
 
@@ -1129,7 +1138,7 @@ public abstract class MapperConfig<T extends MapperConfig<T>>
          */
         @SuppressWarnings("deprecation")
         @Deprecated
-        public final void set(CFG f, boolean state)
+        public void set(CFG f, boolean state)
         {
             if (state) {
                 enable(f);
