@@ -8,6 +8,11 @@ import org.codehaus.jackson.*;
  * Abstract class that defines API used by {@link ObjectMapper} (and
  * other chained {@link JsonSerializer}s too) to serialize Objects of
  * arbitrary types into JSON, using provided {@link JsonGenerator}.
+ *<p>
+ * NOTE: it is recommended that custom serializers extend
+ * {@link org.codehaus.jackson.map.ser.std.SerializerBase} instead
+ * of this class, since it will implement many of optional
+ * methods of this class.
  */
 public abstract class JsonSerializer<T>
 {

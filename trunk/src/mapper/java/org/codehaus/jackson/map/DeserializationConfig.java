@@ -598,7 +598,7 @@ public class DeserializationConfig
     /* MapperConfig implementation
     /**********************************************************
      */
-
+    
     /**
      * Method that checks class annotations that the argument Object has,
      * and modifies settings of this configuration object accordingly,
@@ -728,6 +728,64 @@ public class DeserializationConfig
             vchecker = vchecker.withFieldVisibility(Visibility.NONE);
         }
         return vchecker;
+    }
+
+    /*
+    /**********************************************************
+    /* MapperConfig overrides for 1.8 backwards compatibility
+    /**********************************************************
+     */
+
+    /* NOTE: these are overloads we MUST have, but that were missing
+     * from 1.9.0 and 1.9.1. Type erasure can bite in the ass...
+     *<p>
+     * NOTE: will remove either these variants, or base class one, in 2.0.
+     */
+    
+    /**
+     * An overload for {@link MapperConfig#isEnabled(MapperConfig.ConfigFeature)},
+     * needed for backwards-compatibility.
+     *<p>
+     * NOTE: will remove either this variant, or base class one, in 2.0./
+     * 
+     * @since 1.0 However, note that version 1.9.0 and 1.9.1 accidentally missed
+     *    this overloaded variant
+     */
+    public boolean isEnabled(DeserializationConfig.Feature f) {
+        return (_featureFlags & f.getMask()) != 0;
+    }
+
+    /**
+     * @deprecated Since 1.9, it is preferable to use {@link #with} instead;
+     *    this method is deprecated as it modifies current instance instead of
+     *    creating a new one (as the goal is to make this class immutable)
+     */
+    @Deprecated
+    @Override
+    public void enable(DeserializationConfig.Feature f) {
+        super.enable(f);
+    }
+
+    /** 
+     * @deprecated Since 1.9, it is preferable to use {@link #without} instead;
+     *    this method is deprecated as it modifies current instance instead of
+     *    creating a new one (as the goal is to make this class immutable)
+     */
+    @Deprecated
+    @Override
+    public void disable(DeserializationConfig.Feature f) {
+        super.disable(f);
+    }
+
+    /** 
+     * @deprecated Since 1.9, it is preferable to use {@link #without} and {@link #with} instead;
+     *    this method is deprecated as it modifies current instance instead of
+     *    creating a new one (as the goal is to make this class immutable)
+     */
+    @Deprecated
+    @Override
+    public void set(DeserializationConfig.Feature f, boolean state) {
+        super.set(f, state);
     }
     
     /*

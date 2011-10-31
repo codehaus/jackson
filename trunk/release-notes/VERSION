@@ -11,12 +11,14 @@ Description:
   * [JACKSON-700] Type problems with properties that have different types
     for constructor property, setter and/or field
    (reported by Ben H)
+  * [JACKSON-703] 'SerializationConfig.isEnabled(...)',
+    'DeserializationConfig.isEnabled(...)' incompatible due to signature change
   
 ------------------------------------------------------------------------
 === History: ===
 ------------------------------------------------------------------------
 
-1.9.0 [23-Oct-2011]
+1.9.1 [23-Oct-2011]
 
   Fixes:
   
