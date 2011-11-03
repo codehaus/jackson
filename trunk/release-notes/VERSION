@@ -6,6 +6,11 @@ Release date:
 Description:
   The second patch release for 1.9.
   
+  Improvements:
+  
+  * [JACKSON-706] Joda support: add support for "org.joda.time.Period"
+    (suggested by Dain S)
+  
   Fixes:
 
   * [JACKSON-700] Type problems with properties that have different types
