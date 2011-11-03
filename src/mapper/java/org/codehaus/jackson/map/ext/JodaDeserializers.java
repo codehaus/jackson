@@ -3,13 +3,7 @@ package org.codehaus.jackson.map.ext;
 import java.io.IOException;
 import java.util.*;
 
-import org.joda.time.DateMidnight;
-import org.joda.time.DateTime;
-import org.joda.time.DateTimeZone;
-import org.joda.time.LocalDate;
-import org.joda.time.LocalDateTime;
-import org.joda.time.ReadableDateTime;
-import org.joda.time.ReadableInstant;
+import org.joda.time.*;
 import org.joda.time.format.DateTimeFormatter;
 import org.joda.time.format.ISODateTimeFormat;
 
@@ -37,6 +31,7 @@ public class JodaDeserializers
                 ,new LocalDateDeserializer()
                 ,new LocalDateTimeDeserializer()
                 ,new DateMidnightDeserializer()
+                ,new PeriodDeserializer()
         });
     }
 
@@ -231,4 +226,28 @@ public class JodaDeserializers
             throw ctxt.wrongTokenException(jp, JsonToken.START_ARRAY, "expected JSON Array, Number or String");
         }
     }
+
+    /**
+     * @since 1.9.2
+     */
+    public static class PeriodDeserializer
+        extends JodaDeserializer<ReadablePeriod>
+    {
+       public PeriodDeserializer() { super(ReadablePeriod.class); }
+   
+       @Override
+       public ReadablePeriod deserialize(JsonParser jp, DeserializationContext ctxt)
+           throws IOException, JsonProcessingException
+       {
+           // TODO: perhaps support array of numbers...
+           //if (jp.isExpectedStartArrayToken()) { ]
+           switch (jp.getCurrentToken()) {
+           case VALUE_NUMBER_INT: // assume it's millisecond count
+               return new Period(jp.getLongValue());            
+           case VALUE_STRING:
+               return new Period(jp.getText());
+           }
+           throw ctxt.wrongTokenException(jp, JsonToken.START_ARRAY, "expected JSON Number or String");
+       }
+   }
 }

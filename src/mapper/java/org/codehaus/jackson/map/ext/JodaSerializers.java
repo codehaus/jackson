@@ -10,6 +10,7 @@ import org.joda.time.format.ISODateTimeFormat;
 import org.codehaus.jackson.*;
 import org.codehaus.jackson.map.*;
 import org.codehaus.jackson.map.ser.std.SerializerBase;
+import org.codehaus.jackson.map.ser.std.ToStringSerializer;
 import org.codehaus.jackson.map.util.Provider;
 
 /**
@@ -31,6 +32,8 @@ public class JodaSerializers
         _serializers.put(LocalDateTime.class, new LocalDateTimeSerializer());
         _serializers.put(LocalDate.class, new LocalDateSerializer());
         _serializers.put(DateMidnight.class, new DateMidnightSerializer());
+        // [JACKSON-706]:
+        _serializers.put(Period.class, ToStringSerializer.instance);
     }
 
     public JodaSerializers() { }

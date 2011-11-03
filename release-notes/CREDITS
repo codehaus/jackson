@@ -164,6 +164,8 @@ Dain Sundstrom:
   * Suggested [JACKSON-136] JsonParser and JsonGenerator should implement
     java.io.Closeable (since they already have close() method)
    [1.2.0]
+  * Suggested [JACKSON-706] Joda support: add support for "org.joda.time.Period"
+   [1.9.2]
 
 Gabe Schnaubelt:
   * Reported [JACKSON-155]: Failed to serialize java.io.File (with infinite

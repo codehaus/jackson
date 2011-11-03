@@ -208,4 +208,37 @@ public class TestJodaTime
         // since 1.6.1, for [JACKSON-360]
         assertNull(mapper.readValue(quote(""), LocalDateTime.class));
     }
+
+    /*
+    /**********************************************************
+    /* Tests for Period type
+    /**********************************************************
+     */
+
+    // @since 1.9.2
+    public void testPeriodSer() throws IOException
+    {
+        Period in = new Period(1, 2, 3, 4);
+        String json = new ObjectMapper().writeValueAsString(in);
+        assertEquals(quote("PT1H2M3.004S"), json);
+    }
+
+    // @since 1.9.2
+    public void testPeriodDeser() throws IOException
+    {
+        Period out = new ObjectMapper().readValue(quote("PT1H2M3.004S"), Period.class);
+        assertEquals(1, out.getHours());
+        assertEquals(2, out.getMinutes());
+        assertEquals(3, out.getSeconds());
+        assertEquals(4, out.getMillis());
+
+        // also, should work as number:
+        String json = String.valueOf(1000 * out.toStandardSeconds().getSeconds());
+        out = new ObjectMapper().readValue(json, Period.class);
+        assertEquals(1, out.getHours());
+        assertEquals(2, out.getMinutes());
+        assertEquals(3, out.getSeconds());
+        // but millis are actually truncated...
+        assertEquals(0, out.getMillis());
+    }
 }
