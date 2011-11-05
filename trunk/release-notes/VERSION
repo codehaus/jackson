@@ -1,11 +1,19 @@
-Version: 1.9.2
+Version: 1.9.3
 
 Release date:
-  04-Nov-2011
+  xx-Nov-2011
 
 Description:
-  The second patch release for 1.9.
+  Another patch release for 1.9.
   
+  Improvements:
+  
+------------------------------------------------------------------------
+=== History: ===
+------------------------------------------------------------------------
+
+1.9.2 [04-Nov-2011]
+
   Improvements:
   
   * [JACKSON-706] Joda support: add support for "org.joda.time.Period"
@@ -18,10 +26,6 @@ Description:
    (reported by Ben H)
   * [JACKSON-703] 'SerializationConfig.isEnabled(...)',
     'DeserializationConfig.isEnabled(...)' incompatible due to signature change
-  
-------------------------------------------------------------------------
-=== History: ===
-------------------------------------------------------------------------
 
 1.9.1 [23-Oct-2011]
 
