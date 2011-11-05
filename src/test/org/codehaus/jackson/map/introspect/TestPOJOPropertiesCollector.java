@@ -1,5 +1,7 @@
 package org.codehaus.jackson.map.introspect;
 
+import java.math.BigDecimal;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
@@ -114,6 +116,55 @@ public class TestPOJOPropertiesCollector
 
         // If you remove this method, the test will pass
         public Integer getValue() { return 0; }
+    }
+
+    static class Jackson703
+    {
+        private List<FoodOrgLocation> location = new ArrayList<FoodOrgLocation>();
+
+        {
+            location.add(new FoodOrgLocation());
+        }
+
+        public List<FoodOrgLocation> getLocation() { return location; } 
+    }
+    
+    static class FoodOrgLocation
+    {
+        protected Long id;
+        public String name;
+        protected Location location;
+
+        public FoodOrgLocation() {
+            location = new Location();
+        }
+
+        public FoodOrgLocation(final Location foodOrg) { }
+                
+        public FoodOrgLocation(final Long id, final String name, final Location location) { }
+
+        public Location getLocation() { return location; }
+    }
+
+    static class Location {
+        public BigDecimal lattitude;
+        public BigDecimal longitude;
+
+        public Location() { }
+
+        public Location(final BigDecimal lattitude, final BigDecimal longitude) { }
+    }
+
+    public void testJackson701() throws Exception
+    {
+        ObjectMapper mapper = new ObjectMapper();
+        mapper.configure(SerializationConfig.Feature.USE_ANNOTATIONS, false);
+        BasicBeanDescription beanDesc = mapper.getSerializationConfig().introspect(mapper.constructType(Jackson703.class));
+        assertNotNull(beanDesc);
+
+        Jackson703 bean = new Jackson703();
+        String json = mapper.writeValueAsString(bean);
+        System.err.println("JSON == "+json);
     }
     
     /*
