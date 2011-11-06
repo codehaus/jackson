@@ -162,6 +162,19 @@ public class TestParentChildReferences
         public void setParent(Parent parent) { this.parent = parent; }
     }    
 
+    // [JACKSON-708]
+    static class Model708 { }
+    
+    static class Advertisement708 extends Model708 {
+        public String title;
+        @JsonManagedReference public List<Photo708> photos;
+    }
+
+    static class Photo708 extends Model708 {
+        public int id;
+        @JsonBackReference public Advertisement708 advertisement;
+    }
+    
     /*
     /**********************************************************
     /* Unit tests
@@ -308,4 +321,11 @@ public class TestParentChildReferences
             assertEquals(value, child.getParent());
         }
     }
+
+    public void testIssue708() throws Exception
+    {
+        ObjectMapper mapper = new ObjectMapper();
+        Advertisement708 ad = mapper.readValue("{\"title\":\"Hroch\",\"photos\":[{\"id\":3}]}", Advertisement708.class);      
+        assertNotNull(ad);
+    }   
 }
