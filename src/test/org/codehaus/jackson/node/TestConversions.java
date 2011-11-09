@@ -7,6 +7,7 @@ import static org.junit.Assert.*;
 import org.codehaus.jackson.*;
 import org.codehaus.jackson.map.*;
 import org.codehaus.jackson.map.annotate.JsonDeserialize;
+import org.junit.Assert;
 
 /**
  * Unit tests for verifying functionality of {@link JsonNode} methods that
@@ -122,4 +123,30 @@ public class TestConversions extends BaseMapTest
             }
         }
     }
+
+    static class Issue709Bean {
+        public byte[] data;
+    }
+    
+    /**
+     * Simple test to verify that byte[] values can be handled properly when
+     * converting, as long as there is metadata (from POJO definitions).
+     */
+    public void testIssue709() throws Exception
+    {
+        ObjectMapper mapper = new ObjectMapper();
+        byte[] inputData = new byte[] { 1, 2, 3 };
+        ObjectNode node = mapper.createObjectNode();
+        node.put("data", inputData);
+        Issue709Bean result = mapper.readValue(node, Issue709Bean.class);
+        String json = mapper.writeValueAsString(node);
+        Issue709Bean resultFromString = mapper.readValue(json, Issue709Bean.class);
+        Issue709Bean resultFromConvert = mapper.convertValue(node, Issue709Bean.class);
+        
+        // all methods should work equally well:
+        Assert.assertArrayEquals(inputData, resultFromString.data);
+        Assert.assertArrayEquals(inputData, resultFromConvert.data);
+        Assert.assertArrayEquals(inputData, result.data);
+    }
 }
+
