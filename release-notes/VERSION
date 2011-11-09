@@ -10,6 +10,9 @@ Description:
 
   * [JACKSON-696] Problems accessing "any getter" that is not public
    (reported by Brian M)
+  * [JACKSON-709] Problems converting base64-encoded Strings between
+    JsonNode, POJOs
+   (reported by Tom B)
 
 ------------------------------------------------------------------------
 === History: ===
