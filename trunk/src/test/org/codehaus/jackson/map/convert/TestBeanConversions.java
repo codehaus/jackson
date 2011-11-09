@@ -12,6 +12,14 @@ public class TestBeanConversions
         public int x, y;
 
         public int z = -13;
+
+        public Point() { }
+        public Point(int a, int b, int c)
+        {
+            x = a;
+            y = b;
+            z = c;
+        }
     }
 
     static class PointStrings {
@@ -40,7 +48,7 @@ public class TestBeanConversions
 
         public Object getData() { return data; }
         public void setData(Object data) { this.data = data; }
-    }    
+    }
 
     /*
     /**********************************************************
@@ -86,5 +94,19 @@ public class TestBeanConversions
         ObjectWrapper b2 = mapper.convertValue(b, ObjectWrapper.class);
         ObjectWrapper a2 = mapper.convertValue(b2.getData(), ObjectWrapper.class);
         assertEquals("foo", a2.getData());
+    }
+
+    // [JACKSON-710]: should work regardless of wrapping...
+    public void testWrapping() throws Exception
+    {
+        ObjectMapper wrappingMapper = new ObjectMapper();
+        wrappingMapper.enable(DeserializationConfig.Feature.UNWRAP_ROOT_VALUE);
+        wrappingMapper.enable(SerializationConfig.Feature.WRAP_ROOT_VALUE);
+        Point input = new Point(1, 2, 3);
+        // conversion is ok, even if it's bogus one
+        Point output = wrappingMapper.convertValue(input, Point.class);
+        assertEquals(1, output.x);
+        assertEquals(2, output.y);
+        assertEquals(3, output.z);
     }
 }
