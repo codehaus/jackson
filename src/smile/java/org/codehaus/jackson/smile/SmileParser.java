@@ -1186,7 +1186,11 @@ public class SmileParser
         return _binaryValue;
     }
 
-    @Override
+    /* NOTE: must still implement just because 1.9.0 - 1.9.2 did require
+     * its implementation (and we'll try to avoid introducing binary
+     * incompatibilities); however, should be deleted from 2.0
+     */
+    // @Deprecated
     protected byte[] _decodeBase64(Base64Variant b64variant)
         throws IOException, JsonParseException
     {
