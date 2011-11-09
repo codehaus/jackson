@@ -283,7 +283,7 @@ public class PrimitiveArrayDeserializers
             throws IOException, JsonProcessingException
         {
             JsonToken t = jp.getCurrentToken();
-
+            
             // Most likely case: base64 encoded String?
             if (t == JsonToken.VALUE_STRING) {
                 return jp.getBinaryValue(ctxt.getBase64Variant());

@@ -329,7 +329,13 @@ public final class ReaderBasedParser
              * textual content in error cases
              */
             _tokenIncomplete = false;
-        }        
+        } else { // may actually require conversion...
+            if (_binaryValue == null) {
+                ByteArrayBuilder builder = _getByteArrayBuilder();
+                _decodeBase64(getText(), builder, b64variant);
+                _binaryValue = builder.toByteArray();
+            }
+        }
         return _binaryValue;
     }
     
@@ -1664,7 +1670,10 @@ public final class ReaderBasedParser
     /**********************************************************
      */
 
-    @Override
+    /**
+     * Efficient handling for incremental parsing of base64-encoded
+     * textual content.
+     */
     protected byte[] _decodeBase64(Base64Variant b64variant)
         throws IOException, JsonParseException
     {
@@ -1757,12 +1766,11 @@ public final class ReaderBasedParser
                     bits = _decodeBase64Escape(b64variant, ch, 3);
                 }
                 if (bits == Base64Variant.BASE64_VALUE_PADDING) {
-                    /* With padding we only get 2 bytes; but we have
-                     * to shift it a bit so it is identical to triplet
-                     * case with partial output.
-                     * 3 chars gives 3x6 == 18 bits, of which 2 are
-                     * dummies, need to discard:
-                     */
+                    // With padding we only get 2 bytes; but we have
+                    // to shift it a bit so it is identical to triplet
+                    // case with partial output.
+                    // 3 chars gives 3x6 == 18 bits, of which 2 are
+                    // dummies, need to discard:
                     decodedData >>= 2;
                     builder.appendTwoBytes(decodedData);
                     continue;

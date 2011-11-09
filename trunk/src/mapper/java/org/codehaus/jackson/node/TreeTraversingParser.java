@@ -306,11 +306,17 @@ public class TreeTraversingParser extends JsonParserMinimalBase
     }
 
     @Override
-    public Object getEmbeddedObject() {
+    public Object getEmbeddedObject()
+    {
         if (!_closed) {
             JsonNode n = currentNode();
-            if (n != null && n.isPojo()) {
-                return ((POJONode) n).getPojo();
+            if (n != null) {
+                if (n.isPojo()) {
+                    return ((POJONode) n).getPojo();
+                }
+                if (n.isBinary()) {
+                    return ((BinaryNode) n).getBinaryValue();
+                }
             }
         }
         return null;

@@ -405,7 +405,13 @@ public final class Utf8StreamParser
              * textual content in error cases
              */
             _tokenIncomplete = false;
-        }        
+        } else { // may actually require conversion...
+            if (_binaryValue == null) {
+                ByteArrayBuilder builder = _getByteArrayBuilder();
+                _decodeBase64(getText(), builder, b64variant);
+                _binaryValue = builder.toByteArray();
+            }
+        }
         return _binaryValue;
     }
     
@@ -2827,7 +2833,10 @@ public final class Utf8StreamParser
     /**********************************************************
      */
 
-    @Override
+    /**
+     * Efficient handling for incremental parsing of base64-encoded
+     * textual content.
+     */
     protected byte[] _decodeBase64(Base64Variant b64variant)
         throws IOException, JsonParseException
     {

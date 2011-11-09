@@ -67,11 +67,6 @@ public class TestFormatSchema  extends BaseMapTest
         public void setSchema(FormatSchema schema) {
             throw new SchemaException(schema);
         }
-        
-        @Override
-        protected byte[] _decodeBase64(Base64Variant b64variant) {
-            return null;
-        }
 
         @Override
         protected void _finishString() throws IOException, JsonParseException { }

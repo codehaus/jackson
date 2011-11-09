@@ -432,8 +432,6 @@ public abstract class JsonParserBase
     protected abstract void _finishString() throws IOException, JsonParseException;
 
     protected abstract void _closeInput() throws IOException;
-
-    protected abstract byte[] _decodeBase64(Base64Variant b64variant) throws IOException, JsonParseException;
     
     /*
     /**********************************************************
