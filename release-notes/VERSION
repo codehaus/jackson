@@ -8,6 +8,8 @@ Description:
 
   Fixes:
 
+  * [JACKSON-462] (REGRESSION?) Buffer overflow in Utf8Generator#writeFieldName(String)
+   (reported by Ryan K)
   * [JACKSON-696] Problems accessing "any getter" that is not public
    (reported by Brian M)
   * [JACKSON-709] Problems converting base64-encoded Strings between
