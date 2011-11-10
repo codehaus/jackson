@@ -57,7 +57,7 @@ public class TestAbstractParentChild extends BaseMapTest
         try {
             root = mapper.readValue(json, AbstractNode.class);
         } catch  (IllegalArgumentException e) {
-            fail("Did not expected an exception; got: "+e.getMessage());
+            fail("Did not expect an exception; got: "+e.getMessage());
         }
         assertEquals(ConcreteNode.class, root.getClass());
         assertEquals("p", root.id);

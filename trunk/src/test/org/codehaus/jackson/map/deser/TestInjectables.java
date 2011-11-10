@@ -1,5 +1,6 @@
 package org.codehaus.jackson.map.deser;
 
+import org.codehaus.jackson.annotate.JsonCreator;
 import org.codehaus.jackson.annotate.JsonProperty;
 import org.codehaus.jackson.map.*;
 import org.codehaus.jackson.map.annotate.JacksonInject;

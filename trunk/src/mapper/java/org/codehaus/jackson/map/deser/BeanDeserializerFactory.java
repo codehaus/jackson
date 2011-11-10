@@ -816,26 +816,40 @@ public class BeanDeserializerFactory
             // ... or @JacksonInject (or equivalent)
             // But if it was auto-detected and there's no annotations, keep silent (was not meant to be a creator?)
             boolean annotationFound = false;
-            boolean notAnnotatedParamFound = false;
+            /* [JACKSON-712] One more possibility; can have 1 or more injectables, and
+             * exactly one non-annotated parameter: if so, it's still delegating.
+             */
+            AnnotatedParameter nonAnnotatedParam = null;
+            int namedCount = 0;
+            int injectCount = 0;
             CreatorProperty[] properties = new CreatorProperty[argCount];
             for (int i = 0; i < argCount; ++i) {
                 AnnotatedParameter param = ctor.getParameter(i);
                 String name = (param == null) ? null : intr.findPropertyNameForParam(param);
                 Object injectId = intr.findInjectableValueId(param);
-
-                // If some parameters are annotated and others not, it's invalid.
-                // If the constructor is annotated with @JsonCreator, all params must have annotation
-                boolean hasName = (name != null && name.length() > 0);
-                boolean hasInject = (injectId != null);
-                
-                notAnnotatedParamFound |= (!hasName && !hasInject);
-
-                annotationFound |= !notAnnotatedParamFound;
-                if (notAnnotatedParamFound && (annotationFound || isCreator)) {
-                    throw new IllegalArgumentException("Argument #"+i+" of constructor "+ctor+" has no property name annotation; must have name when multiple-paramater constructor annotated as Creator");
-                }
-                if (!notAnnotatedParamFound) {
+                if (name != null && name.length() > 0) {
+                    ++namedCount;
                     properties[i] = constructCreatorProperty(config, beanDesc, name, i, param, injectId);
+                } else if (injectId != null) {
+                    ++injectCount;
+                    properties[i] = constructCreatorProperty(config, beanDesc, name, i, param, injectId);
+                } else if (nonAnnotatedParam == null) {
+                    nonAnnotatedParam = param;
+                }
+            }
+
+            // Ok: if named or injectable, we have more work to do
+            if (isCreator || namedCount > 0 || injectCount > 0) {
+                // simple case; everything covered:
+                if ((namedCount + injectCount) == argCount) {
+                    creators.addPropertyCreator(ctor, properties);
+                } else if ((namedCount == 0) && ((injectCount + 1) == argCount)) {
+                    // secondary: all but one injectable, one un-annotated (un-named)
+                    // [JACKSON-712] SHOULD support; but we won't yet (tricky to do, not impossible)
+                    throw new IllegalArgumentException("Delegated constructor with Injectables not yet supported (see [JACKSON-712]) for "
+                            +ctor);
+                } else { // otherwise, epic fail
+                    throw new IllegalArgumentException("Argument #"+nonAnnotatedParam.getIndex()+" of constructor "+ctor+" has no property name annotation; must have name when multiple-paramater constructor annotated as Creator");
                 }
             }
             if (annotationFound) {
