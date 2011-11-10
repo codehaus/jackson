@@ -557,11 +557,17 @@ public class Utf8Generator
             _writeLongString(_charBuffer, 0, len);
             return;
         }
-        if ((_outputTail + len + 2) > _outputEnd) {
+        if ((_outputTail + len) >= _outputEnd) {
             _flushBuffer();
         }
         _outputBuffer[_outputTail++] = BYTE_QUOTE;
         _writeStringSegment(_charBuffer, 0, len); // we checked space already above
+        /* [JACKSON-462] But that method may have had to expand multi-byte Unicode
+         *   chars, so we must check again
+         */
+        if (_outputTail >= _outputEnd) {
+            _flushBuffer();
+        }
         _outputBuffer[_outputTail++] = BYTE_QUOTE;
     }
 
