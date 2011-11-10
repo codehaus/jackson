@@ -164,7 +164,7 @@ public class TestPOJOPropertiesCollector
 
         Jackson703 bean = new Jackson703();
         String json = mapper.writeValueAsString(bean);
-        System.err.println("JSON == "+json);
+        assertNotNull(json);
     }
     
     /*
