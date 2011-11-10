@@ -28,6 +28,7 @@ public class CreatorCollector
     protected AnnotatedWithParams _doubleCreator, _booleanCreator;
 
     protected AnnotatedWithParams _delegateCreator;
+    
     protected AnnotatedWithParams _propertyBasedCreator;
     protected CreatorProperty[] _propertyBasedArgs = null;
 
@@ -99,7 +100,7 @@ public class CreatorCollector
     public void addDelegatingCreator(AnnotatedWithParams creator) {
         _delegateCreator = verifyNonDup(creator, _delegateCreator, "delegate");
     }
-
+    
     public void addPropertyCreator(AnnotatedWithParams creator, CreatorProperty[] properties)
     {
         _propertyBasedCreator = verifyNonDup(creator, _propertyBasedCreator, "property-based");
