@@ -804,53 +804,11 @@ public class BeanDeserializerFactory
             boolean isVisible =  vchecker.isCreatorVisible(ctor);
             // some single-arg constructors (String, number) are auto-detected
             if (argCount == 1) {
-                // note: if we do have parameter name, it'll be "property constructor":
-                AnnotatedParameter param = ctor.getParameter(0);
-                String name = intr.findPropertyNameForParam(param);
-                Object injectId = intr.findInjectableValueId(param);
-
-                if ((injectId != null) || (name != null && name.length() > 0)) { // property-based
-                    // We know there's a name and it's only 1 parameter.
-                    CreatorProperty[] properties = new CreatorProperty[1];
-                    properties[0] = constructCreatorProperty(config, beanDesc, name, 0, param, injectId);
-                    creators.addPropertyCreator(ctor, properties);
-                    continue;
-                }
-
-                // otherwise either 'simple' number, String, or general delegate:
-                Class<?> type = ctor.getParameterClass(0);
-                if (type == String.class) {
-                    if (isCreator || isVisible) {
-                        creators.addStringCreator(ctor);
-                    }
-                    continue;
-                }
-                if (type == int.class || type == Integer.class) {
-                    if (isCreator || isVisible) {
-                        creators.addIntCreator(ctor);
-                    }
-                    continue;
-                }
-                if (type == long.class || type == Long.class) {
-                    if (isCreator || isVisible) {
-                        creators.addLongCreator(ctor);
-                    }
-                    continue;
-                }
-                if (type == double.class || type == Double.class) {
-                    if (isCreator || isVisible) {
-                        creators.addDoubleCreator(ctor);
-                    }
-                    continue;
-                }
-
-                // Delegating Creator ok iff it has @JsonCreator (etc)
-                if (isCreator) {
-                    creators.addDelegatingCreator(ctor);
-                }
-                // otherwise just ignored
+                _handleSingleArgumentConstructor(config, beanDesc, vchecker, intr, creators,
+                        ctor, isCreator, isVisible);
                 continue;
-            } else if (!isCreator && !isVisible) {
+            }
+            if (!isCreator && !isVisible) {
             	continue;
             }
             // [JACKSON-541] improved handling a bit so:
@@ -886,6 +844,60 @@ public class BeanDeserializerFactory
         }
     }
 
+    protected boolean _handleSingleArgumentConstructor(DeserializationConfig config,
+            BasicBeanDescription beanDesc, VisibilityChecker<?> vchecker,
+            AnnotationIntrospector intr, CreatorCollector creators,
+            AnnotatedConstructor ctor, boolean isCreator, boolean isVisible)
+        throws JsonMappingException
+    {
+        // note: if we do have parameter name, it'll be "property constructor":
+        AnnotatedParameter param = ctor.getParameter(0);
+        String name = intr.findPropertyNameForParam(param);
+        Object injectId = intr.findInjectableValueId(param);
+    
+        if ((injectId != null) || (name != null && name.length() > 0)) { // property-based
+            // We know there's a name and it's only 1 parameter.
+            CreatorProperty[] properties = new CreatorProperty[1];
+            properties[0] = constructCreatorProperty(config, beanDesc, name, 0, param, injectId);
+            creators.addPropertyCreator(ctor, properties);
+            return true;
+        }
+    
+        // otherwise either 'simple' number, String, or general delegate:
+        Class<?> type = ctor.getParameterClass(0);
+        if (type == String.class) {
+            if (isCreator || isVisible) {
+                creators.addStringCreator(ctor);
+            }
+            return true;
+        }
+        if (type == int.class || type == Integer.class) {
+            if (isCreator || isVisible) {
+                creators.addIntCreator(ctor);
+            }
+            return true;
+        }
+        if (type == long.class || type == Long.class) {
+            if (isCreator || isVisible) {
+                creators.addLongCreator(ctor);
+            }
+            return true;
+        }
+        if (type == double.class || type == Double.class) {
+            if (isCreator || isVisible) {
+                creators.addDoubleCreator(ctor);
+            }
+            return true;
+        }
+    
+        // Delegating Creator ok iff it has @JsonCreator (etc)
+        if (isCreator) {
+            creators.addDelegatingCreator(ctor);
+            return true;
+        }
+        return false;
+    }
+    
     protected void _addDeserializerFactoryMethods
         (DeserializationConfig config, BasicBeanDescription beanDesc, VisibilityChecker<?> vchecker,
          AnnotationIntrospector intr, CreatorCollector creators)
@@ -900,49 +912,13 @@ public class BeanDeserializerFactory
             boolean isCreator = intr.hasCreatorAnnotation(factory);
             // some single-arg factory methods (String, number) are auto-detected
             if (argCount == 1) {
-                /* but as above: if we do have parameter name, it'll be
-                 * "property constructor", and needs to be skipped for now
-                 */
                 AnnotatedParameter param = factory.getParameter(0);
                 String name = intr.findPropertyNameForParam(param);
                 Object injectId = intr.findInjectableValueId(param);
 
                 if ((injectId == null) && (name == null || name.length() == 0)) { // not property based
-                    Class<?> type = factory.getParameterClass(0);
-                    
-                    if (type == String.class) {
-                        if (isCreator || vchecker.isCreatorVisible(factory)) {
-                            creators.addStringCreator(factory);
-                        }
-                        continue;
-                    }
-                    if (type == int.class || type == Integer.class) {
-                        if (isCreator || vchecker.isCreatorVisible(factory)) {
-                            creators.addIntCreator(factory);
-                        }
-                        continue;
-                    }
-                    if (type == long.class || type == Long.class) {
-                        if (isCreator || vchecker.isCreatorVisible(factory)) {
-                            creators.addLongCreator(factory);
-                        }
-                        continue;
-                    }
-                    if (type == double.class || type == Double.class) {
-                        if (isCreator || vchecker.isCreatorVisible(factory)) {
-                            creators.addDoubleCreator(factory);
-                        }
-                        continue;
-                    }
-                    if (type == boolean.class || type == Boolean.class) {
-                        if (isCreator || vchecker.isCreatorVisible(factory)) {
-                            creators.addBooleanCreator(factory);
-                        }
-                        continue;
-                    }
-                    if (intr.hasCreatorAnnotation(factory)) {
-                        creators.addDelegatingCreator(factory);
-                    }
+                    _handleSingleArgumentFactory(config, beanDesc, vchecker, intr, creators,
+                            factory, isCreator);
                     // otherwise just ignored
                     continue;
                 }
@@ -969,6 +945,51 @@ public class BeanDeserializerFactory
         }
     }
 
+    protected boolean _handleSingleArgumentFactory(DeserializationConfig config,
+            BasicBeanDescription beanDesc, VisibilityChecker<?> vchecker,
+            AnnotationIntrospector intr, CreatorCollector creators,
+            AnnotatedMethod factory, boolean isCreator)
+        throws JsonMappingException
+    {
+        Class<?> type = factory.getParameterClass(0);
+        
+        if (type == String.class) {
+            if (isCreator || vchecker.isCreatorVisible(factory)) {
+                creators.addStringCreator(factory);
+            }
+            return true;
+        }
+        if (type == int.class || type == Integer.class) {
+            if (isCreator || vchecker.isCreatorVisible(factory)) {
+                creators.addIntCreator(factory);
+            }
+            return true;
+        }
+        if (type == long.class || type == Long.class) {
+            if (isCreator || vchecker.isCreatorVisible(factory)) {
+                creators.addLongCreator(factory);
+            }
+            return true;
+        }
+        if (type == double.class || type == Double.class) {
+            if (isCreator || vchecker.isCreatorVisible(factory)) {
+                creators.addDoubleCreator(factory);
+            }
+            return true;
+        }
+        if (type == boolean.class || type == Boolean.class) {
+            if (isCreator || vchecker.isCreatorVisible(factory)) {
+                creators.addBooleanCreator(factory);
+            }
+            return true;
+        }
+        if (intr.hasCreatorAnnotation(factory)) {
+            creators.addDelegatingCreator(factory);
+            return true;
+        }
+        return false;
+    }
+    
     /**
      * Method that will construct a property object that represents
      * a logical property passed via Creator (constructor or static
