@@ -838,7 +838,7 @@ public class JaxbAnnotationIntrospector
      * @param includeSuperclasses Whether the annotation can be found on any superclasses of the class of the annotated element.
      * @return The annotation, or null if not found.
      */
-    private <A extends Annotation> A findAnnotation(Class<A> annotationClass, Annotated annotated,
+    protected <A extends Annotation> A findAnnotation(Class<A> annotationClass, Annotated annotated,
             boolean includePackage, boolean includeClass, boolean includeSuperclasses)
     {
         A annotation = annotated.getAnnotation(annotationClass);
