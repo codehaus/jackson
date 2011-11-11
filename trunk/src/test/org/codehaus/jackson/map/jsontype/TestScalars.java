@@ -1,21 +1,32 @@
 package org.codehaus.jackson.map.jsontype;
 
+import java.io.Serializable;
+
 import org.codehaus.jackson.annotate.JsonTypeInfo;
 import org.codehaus.jackson.map.BaseMapTest;
 import org.codehaus.jackson.map.ObjectMapper;
 
 public class TestScalars extends BaseMapTest
 {
-    private static class AbstractWrapper {
+    private static class DynamicWrapper {
         @JsonTypeInfo(use=JsonTypeInfo.Id.CLASS, include=JsonTypeInfo.As.PROPERTY)
         public Object value;
         
         @SuppressWarnings("unused")
-        public AbstractWrapper() { }
-        public AbstractWrapper(Object v) { value = v; }
+        public DynamicWrapper() { }
+        public DynamicWrapper(Object v) { value = v; }
     }
 
     static enum TestEnum { A, B; }
+
+    private static class AbstractWrapper {
+        @JsonTypeInfo(use=JsonTypeInfo.Id.CLASS, include=JsonTypeInfo.As.PROPERTY)
+        public Serializable value;
+        
+        @SuppressWarnings("unused")
+        public AbstractWrapper() { }
+        public AbstractWrapper(Serializable v) { value = v; }
+    }
     
     /*
     /**********************************************************
@@ -27,7 +38,40 @@ public class TestScalars extends BaseMapTest
      * Ensure that per-property dynamic types work, both for "native" types
      * and others
      */
-    public void testScalarsAsAbstract() throws Exception
+    public void testScalarsWithTyping() throws Exception
+    {
+        ObjectMapper m = new ObjectMapper();
+        String json;
+        DynamicWrapper result;
+
+        // first, check "native" types
+        json = m.writeValueAsString(new DynamicWrapper(Integer.valueOf(3)));
+        result = m.readValue(json, DynamicWrapper.class);
+        assertEquals(Integer.valueOf(3), result.value);
+
+        json = m.writeValueAsString(new DynamicWrapper("abc"));
+        result = m.readValue(json, DynamicWrapper.class);
+        assertEquals("abc", result.value);
+
+        json = m.writeValueAsString(new DynamicWrapper("abc"));
+        result = m.readValue(json, DynamicWrapper.class);
+        assertEquals("abc", result.value);
+
+        json = m.writeValueAsString(new DynamicWrapper(Boolean.TRUE));
+        result = m.readValue(json, DynamicWrapper.class);
+        assertEquals(Boolean.TRUE, result.value);
+        
+        // then verify other scalars
+        json = m.writeValueAsString(new DynamicWrapper(Long.valueOf(7L)));
+        result = m.readValue(json, DynamicWrapper.class);
+        assertEquals(Long.valueOf(7), result.value);
+
+        json = m.writeValueAsString(new DynamicWrapper(TestEnum.B));
+        result = m.readValue(json, DynamicWrapper.class);
+        assertEquals(TestEnum.B, result.value);
+    }
+
+    public void testScalarsViaAbstractType() throws Exception
     {
         ObjectMapper m = new ObjectMapper();
         String json;
