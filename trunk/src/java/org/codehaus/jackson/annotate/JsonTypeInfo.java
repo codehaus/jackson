@@ -25,13 +25,15 @@ import java.lang.annotation.*;
  * but starting with 1.7, it is also allowed for properties (fields, methods,
  * constructor parameters).
  *<p>
- * When used for properties (fields, methods), there annotation always defines
- * to <b>values</b>: specifically, when applied to a <code>Collection</code> or
- * <code>Map</code> property, it will <b>not</b> apply to container type but
- * to contained values. This is identical to how JAXB handles type information
- * annotations; and is chosen since it is the dominant use case. There is no
- * per-property way to force type information to be included for type of
- * container itself.
+ * When used for properties (fields, methods), this annotation applies
+ * to <b>values</b>: specifically, when applied to structure types )like
+ * {@link java.util.Collection}, {@link java.util.Map}), it will apply to
+ * contained values, not the container; for non-structured types there
+ * is no difference. For other types it will apply
+ * This is identical to how JAXB handles type information
+ * annotations; and is chosen since it is the dominant use case.
+ * There is no per-property way to force type information to be included
+ * for type of container (structured type) itself.
  * 
  * @see org.codehaus.jackson.map.annotate.JsonTypeResolver
  * 
