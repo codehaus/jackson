@@ -175,7 +175,14 @@ public class ObjectReader
     public Version version() {
         return VersionUtil.versionFor(getClass());
     }
-    
+
+    /**
+     * Method for constructing a new reader instance that is configured
+     * to data bind into specified type.
+     *<p>
+     * Note that the method does NOT change state of this reader, but
+     * rather construct and returns a newly configured instance.
+     */
     public ObjectReader withType(JavaType valueType)
     {
         if (valueType == _valueType) return this;
@@ -184,17 +191,37 @@ public class ObjectReader
                 _schema, _injectableValues);
     }    
 
+    /**
+     * Method for constructing a new reader instance that is configured
+     * to data bind into specified type.
+     *<p>
+     * Note that the method does NOT change state of this reader, but
+     * rather construct and returns a newly configured instance.
+     */
     public ObjectReader withType(Class<?> valueType)
     {
         return withType(_config.constructType(valueType));
     }    
 
+    /**
+     * Method for constructing a new reader instance that is configured
+     * to data bind into specified type.
+     *<p>
+     * Note that the method does NOT change state of this reader, but
+     * rather construct and returns a newly configured instance.
+     */
     public ObjectReader withType(java.lang.reflect.Type valueType)
     {
         return withType(_config.getTypeFactory().constructType(valueType));
     }    
 
     /**
+     * Method for constructing a new reader instance that is configured
+     * to data bind into specified type.
+     *<p>
+     * Note that the method does NOT change state of this reader, but
+     * rather construct and returns a newly configured instance.
+     * 
      * @since 1.8
      */
     public ObjectReader withType(TypeReference<?> valueTypeRef)
@@ -202,6 +229,14 @@ public class ObjectReader
         return withType(_config.getTypeFactory().constructType(valueTypeRef.getType()));
     }    
     
+    /**
+     * Method for constructing a new reader instance with configuration that uses
+     * passed {@link JsonNodeFactory} for constructing {@link JsonNode}
+     * instances.
+     *<p>
+     * Note that the method does NOT change state of this reader, but
+     * rather construct and returns a newly configured instance.
+     */
     public ObjectReader withNodeFactory(JsonNodeFactory f)
     {
         // node factory is stored within config, so need to copy that first
@@ -209,7 +244,15 @@ public class ObjectReader
         return new ObjectReader(this, _config.withNodeFactory(f), _valueType, _valueToUpdate,
                 _schema, _injectableValues);
     }
-    
+
+    /**
+     * Method for constructing a new instance with configuration that
+     * updates passed Object (as root value), instead of constructing 
+     * a new value.
+     *<p>
+     * Note that the method does NOT change state of this reader, but
+     * rather construct and returns a newly configured instance.
+     */
     public ObjectReader withValueToUpdate(Object value)
     {
         if (value == _valueToUpdate) return this;
@@ -222,6 +265,13 @@ public class ObjectReader
     }    
 
     /**
+     * Method for constructing a new instance with configuration that
+     * passes specified {@link FormatSchema} to {@link JsonParser} that
+     * is constructed for parsing content.
+     *<p>
+     * Note that the method does NOT change state of this reader, but
+     * rather construct and returns a newly configured instance.
+     * 
      * @since 1.8
      */
     public ObjectReader withSchema(FormatSchema schema)
@@ -234,6 +284,12 @@ public class ObjectReader
     }
 
     /**
+     * Method for constructing a new instance with configuration that uses
+     * passed {@link InjectableValues} to provide injectable values.
+     *<p>
+     * Note that the method does NOT change state of this reader, but
+     * rather construct and returns a newly configured instance.
+     * 
      * @since 1.9
      */
     public ObjectReader withInjectableValues(InjectableValues injectableValues)
@@ -252,7 +308,12 @@ public class ObjectReader
     /**********************************************************
      */
 
-    // not part of ObjectCodec, actually
+    /**
+     * Method that binds content read using given parser, using
+     * configuration of this reader, including expected result type.
+     * Value return is either newly constructed, or root value that
+     * was specified with {@link #withValueToUpdate(Object)}.
+     */
     @SuppressWarnings("unchecked")
     public <T> T readValue(JsonParser jp)
         throws IOException, JsonProcessingException
@@ -260,6 +321,13 @@ public class ObjectReader
         return (T) _bind(jp);
     }
 
+    /**
+     * Convenience method that binds content read using given parser, using
+     * configuration of this reader, except that expected value type
+     * is specified with the call (instead of currently configured root type).
+     * Value return is either newly constructed, or root value that
+     * was specified with {@link #withValueToUpdate(Object)}.
+     */
     @SuppressWarnings("unchecked")
     @Override
     public <T> T readValue(JsonParser jp, Class<T> valueType)
@@ -268,19 +336,42 @@ public class ObjectReader
         return (T) withType(valueType).readValue(jp);
     }
 
+    /**
+     * Convenience method that binds content read using given parser, using
+     * configuration of this reader, except that expected value type
+     * is specified with the call (instead of currently configured root type).
+     * Value return is either newly constructed, or root value that
+     * was specified with {@link #withValueToUpdate(Object)}.
+     */
     @SuppressWarnings("unchecked")
     @Override
-    public <T> T readValue(JsonParser jp, TypeReference<?> valueTypeRef) throws IOException, JsonProcessingException
-    {            
+    public <T> T readValue(JsonParser jp, TypeReference<?> valueTypeRef)
+        throws IOException, JsonProcessingException
+    {
         return (T) withType(valueTypeRef).readValue(jp);
     }
 
+    /**
+     * Convenience method that binds content read using given parser, using
+     * configuration of this reader, except that expected value type
+     * is specified with the call (instead of currently configured root type).
+     * Value return is either newly constructed, or root value that
+     * was specified with {@link #withValueToUpdate(Object)}.
+     */
     @SuppressWarnings("unchecked")
     @Override
     public <T> T readValue(JsonParser jp, JavaType valueType) throws IOException, JsonProcessingException {
         return (T) withType(valueType).readValue(jp);
     }
     
+    /**
+     * Convenience method that binds content read using given parser, using
+     * configuration of this reader, except that content is bound as
+     * JSON tree instead of configured root value type.
+     *<p>
+     * Note: if an object was specified with {@link #withValueToUpdate}, it
+     * will be ignored.
+     */
     @Override
     public JsonNode readTree(JsonParser jp)
         throws IOException, JsonProcessingException
@@ -288,18 +379,36 @@ public class ObjectReader
         return _bindAsTree(jp);
     }
 
+    /**
+     * Convenience method that is equivalent to:
+     *<pre>
+     *   withType(valueType).readValues(jp);
+     *</pre>
+     */
     @Override
     public <T> Iterator<T> readValues(JsonParser jp, Class<T> valueType)
         throws IOException, JsonProcessingException {
         return withType(valueType).readValues(jp);
     }
 
+    /**
+     * Convenience method that is equivalent to:
+     *<pre>
+     *   withType(valueTypeRef).readValues(jp);
+     *</pre>
+     */
     @Override
     public <T> Iterator<T> readValues(JsonParser jp, TypeReference<?> valueTypeRef)
         throws IOException, JsonProcessingException {
         return withType(valueTypeRef).readValues(jp);
     }
     
+    /**
+     * Convenience method that is equivalent to:
+     *<pre>
+     *   withType(valueType).readValues(jp);
+     *</pre>
+     */
     @Override
     public <T> Iterator<T> readValues(JsonParser jp, JavaType valueType)
         throws IOException, JsonProcessingException {
@@ -312,6 +421,12 @@ public class ObjectReader
     /**********************************************************
      */
 
+    /**
+     * Method that binds content read from given input source,
+     * using configuration of this reader.
+     * Value return is either newly constructed, or root value that
+     * was specified with {@link #withValueToUpdate(Object)}.
+     */
     @SuppressWarnings("unchecked")
     public <T> T readValue(InputStream src)
         throws IOException, JsonProcessingException
@@ -319,6 +434,12 @@ public class ObjectReader
         return (T) _bindAndClose(_jsonFactory.createJsonParser(src));
     }
 
+    /**
+     * Method that binds content read from given input source,
+     * using configuration of this reader.
+     * Value return is either newly constructed, or root value that
+     * was specified with {@link #withValueToUpdate(Object)}.
+     */
     @SuppressWarnings("unchecked")
     public <T> T readValue(Reader src)
         throws IOException, JsonProcessingException
@@ -326,6 +447,12 @@ public class ObjectReader
         return (T) _bindAndClose(_jsonFactory.createJsonParser(src));
     }
 
+    /**
+     * Method that binds content read from given JSON string,
+     * using configuration of this reader.
+     * Value return is either newly constructed, or root value that
+     * was specified with {@link #withValueToUpdate(Object)}.
+     */
     @SuppressWarnings("unchecked")
     public <T> T readValue(String src)
         throws IOException, JsonProcessingException
@@ -333,6 +460,12 @@ public class ObjectReader
         return (T) _bindAndClose(_jsonFactory.createJsonParser(src));
     }
 
+    /**
+     * Method that binds content read from given byte array,
+     * using configuration of this reader.
+     * Value return is either newly constructed, or root value that
+     * was specified with {@link #withValueToUpdate(Object)}.
+     */
     @SuppressWarnings("unchecked")
     public <T> T readValue(byte[] src)
         throws IOException, JsonProcessingException
@@ -340,6 +473,12 @@ public class ObjectReader
         return (T) _bindAndClose(_jsonFactory.createJsonParser(src));
     }
 
+    /**
+     * Method that binds content read from given byte array,
+     * using configuration of this reader.
+     * Value return is either newly constructed, or root value that
+     * was specified with {@link #withValueToUpdate(Object)}.
+     */
     @SuppressWarnings("unchecked")
     public <T> T readValue(byte[] src, int offset, int length)
         throws IOException, JsonProcessingException
@@ -354,6 +493,12 @@ public class ObjectReader
         return (T) _bindAndClose(_jsonFactory.createJsonParser(src));
     }
 
+    /**
+     * Method that binds content read from given input source,
+     * using configuration of this reader.
+     * Value return is either newly constructed, or root value that
+     * was specified with {@link #withValueToUpdate(Object)}.
+     */
     @SuppressWarnings("unchecked")
     public <T> T readValue(URL src)
         throws IOException, JsonProcessingException
@@ -375,18 +520,45 @@ public class ObjectReader
         return (T) _bindAndClose(treeAsTokens(src));
     }
     
+    /**
+     * Method that reads content from given input source,
+     * using configuration of this reader, and binds it as JSON Tree.
+     *<p>
+     * Note that if an object was specified with a call to
+     * {@link #withValueToUpdate(Object)}
+     * it will just be ignored; result is always a newly constructed
+     * {@link JsonNode} instance.
+     */
     public JsonNode readTree(InputStream in)
         throws IOException, JsonProcessingException
     {
         return _bindAndCloseAsTree(_jsonFactory.createJsonParser(in));
     }
     
+    /**
+     * Method that reads content from given input source,
+     * using configuration of this reader, and binds it as JSON Tree.
+     *<p>
+     * Note that if an object was specified with a call to
+     * {@link #withValueToUpdate(Object)}
+     * it will just be ignored; result is always a newly constructed
+     * {@link JsonNode} instance.
+     */
     public JsonNode readTree(Reader r)
         throws IOException, JsonProcessingException
     {
         return _bindAndCloseAsTree(_jsonFactory.createJsonParser(r));
     }
 
+    /**
+     * Method that reads content from given JSON input String,
+     * using configuration of this reader, and binds it as JSON Tree.
+     *<p>
+     * Note that if an object was specified with a call to
+     * {@link #withValueToUpdate(Object)}
+     * it will just be ignored; result is always a newly constructed
+     * {@link JsonNode} instance.
+     */
     public JsonNode readTree(String content)
         throws IOException, JsonProcessingException
     {
