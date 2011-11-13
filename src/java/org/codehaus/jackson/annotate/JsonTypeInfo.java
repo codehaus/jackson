@@ -26,18 +26,19 @@ import java.lang.annotation.*;
  * constructor parameters).
  *<p>
  * When used for properties (fields, methods), this annotation applies
- * to <b>values</b>: specifically, when applied to structure types )like
- * {@link java.util.Collection}, {@link java.util.Map}), it will apply to
- * contained values, not the container; for non-structured types there
- * is no difference. For other types it will apply
+ * to <b>values</b>: so when applied to structure types
+ * (like {@link java.util.Collection}, {@link java.util.Map}, arrays),
+ * will apply to contained values, not the container;
+ * for non-structured types there is no difference.
  * This is identical to how JAXB handles type information
  * annotations; and is chosen since it is the dominant use case.
  * There is no per-property way to force type information to be included
- * for type of container (structured type) itself.
+ * for type of container (structured type); for container types one has
+ * to use annotation for type declaration.
  * 
  * @see org.codehaus.jackson.map.annotate.JsonTypeResolver
  * 
- * @since 1.5 (but available to fields, methods and constructor params since 1.7)
+ * @since 1.5 (but available to fields, methods and constructor parameters since 1.7)
  * 
  * @author tatu
  */
