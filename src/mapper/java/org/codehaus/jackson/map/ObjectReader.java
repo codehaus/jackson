@@ -259,7 +259,7 @@ public class ObjectReader
         if (value == null) {
             throw new IllegalArgumentException("cat not update null value");
         }
-        JavaType t = _config.constructType(value.getClass());
+        JavaType t = (_valueType == null) ? _config.constructType(value.getClass()) : _valueType;
         return new ObjectReader(this, _config, t, value,
                 _schema, _injectableValues);
     }    
