@@ -7,6 +7,10 @@ Description:
   Another patch release for 1.9.
   
   Improvements:
+
+  * [JACKSON-717] ObjectReader.updateValues(): use configured 'valueToUpdate'
+
+  Fixes:
   
 ------------------------------------------------------------------------
 === History: ===

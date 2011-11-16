@@ -1352,7 +1352,9 @@ public class ObjectMapper
         DeserializationConfig config = copyDeserializationConfig();
         DeserializationContext ctxt = _createDeserializationContext(jp, config);
         JsonDeserializer<?> deser = _findRootDeserializer(config, valueType);
-        return new MappingIterator<T>(valueType, jp, ctxt, deser);
+        // false -> do NOT close JsonParser (since caller passed it)
+        return new MappingIterator<T>(valueType, jp, ctxt, deser,
+                false, null);
     }
 
     /**
