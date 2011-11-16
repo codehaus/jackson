@@ -580,7 +580,10 @@ public class ObjectReader
         throws IOException, JsonProcessingException
     {
         DeserializationContext ctxt = _createDeserializationContext(jp, _config);
-        return new MappingIterator<T>(_valueType, jp, ctxt, _findRootDeserializer(_config, _valueType));
+        // false -> do not close as caller gave parser instance
+        return new MappingIterator<T>(_valueType, jp, ctxt,
+                _findRootDeserializer(_config, _valueType),
+                false, _valueToUpdate);
     }
     
     /**
@@ -596,7 +599,9 @@ public class ObjectReader
             jp.setSchema(_schema);
         }
         DeserializationContext ctxt = _createDeserializationContext(jp, _config);
-        return new MappingIterator<T>(_valueType, jp, ctxt, _findRootDeserializer(_config, _valueType));
+        return new MappingIterator<T>(_valueType, jp, ctxt, 
+                _findRootDeserializer(_config, _valueType),
+                true, _valueToUpdate);
     }
 
     /**
@@ -612,7 +617,8 @@ public class ObjectReader
             jp.setSchema(_schema);
         }
         DeserializationContext ctxt = _createDeserializationContext(jp, _config);
-        return new MappingIterator<T>(_valueType, jp, ctxt, _findRootDeserializer(_config, _valueType));
+        return new MappingIterator<T>(_valueType, jp, ctxt,
+                _findRootDeserializer(_config, _valueType), true, _valueToUpdate);
     }
     
     /**
@@ -628,7 +634,8 @@ public class ObjectReader
             jp.setSchema(_schema);
         }
         DeserializationContext ctxt = _createDeserializationContext(jp, _config);
-        return new MappingIterator<T>(_valueType, jp, ctxt, _findRootDeserializer(_config, _valueType));
+        return new MappingIterator<T>(_valueType, jp, ctxt,
+                _findRootDeserializer(_config, _valueType), true, _valueToUpdate);
     }
 
     /**
@@ -644,7 +651,8 @@ public class ObjectReader
             jp.setSchema(_schema);
         }
         DeserializationContext ctxt = _createDeserializationContext(jp, _config);
-        return new MappingIterator<T>(_valueType, jp, ctxt, _findRootDeserializer(_config, _valueType));
+        return new MappingIterator<T>(_valueType, jp, ctxt,
+                _findRootDeserializer(_config, _valueType), true, _valueToUpdate);
     }
 
     /**
@@ -660,7 +668,8 @@ public class ObjectReader
             jp.setSchema(_schema);
         }
         DeserializationContext ctxt = _createDeserializationContext(jp, _config);
-        return new MappingIterator<T>(_valueType, jp, ctxt, _findRootDeserializer(_config, _valueType));
+        return new MappingIterator<T>(_valueType, jp, ctxt,
+                _findRootDeserializer(_config, _valueType), true, _valueToUpdate);
     }
 
     /**
@@ -676,7 +685,8 @@ public class ObjectReader
             jp.setSchema(_schema);
         }
         DeserializationContext ctxt = _createDeserializationContext(jp, _config);
-        return new MappingIterator<T>(_valueType, jp, ctxt, _findRootDeserializer(_config, _valueType));
+        return new MappingIterator<T>(_valueType, jp, ctxt,
+                _findRootDeserializer(_config, _valueType), true, _valueToUpdate);
     }
     
     /*

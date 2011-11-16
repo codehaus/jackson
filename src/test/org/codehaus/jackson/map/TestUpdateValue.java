@@ -20,6 +20,10 @@ public class TestUpdateValue extends BaseMapTest
 
         public Bean child = null;
     }
+
+    static class XYBean {
+        public int x, y;
+    }
     
     /*
     /********************************************************
@@ -78,5 +82,34 @@ public class TestUpdateValue extends BaseMapTest
         assertEquals("z", strs.get("a"));
         assertEquals("b", strs.get("b"));
         assertEquals("c", strs.get("c"));
+    }
+
+    // Test for [JACKSON-717] -- ensure 'readValues' also does update
+    public void testUpdateSequence() throws Exception
+    {
+        ObjectMapper m = new ObjectMapper();
+        XYBean toUpdate = new XYBean();
+        Iterator<XYBean> it = m.readerForUpdating(toUpdate).readValues(
+                "{\"x\":1,\"y\":2}\n{\"x\":16}{\"y\":37}");
+
+        assertTrue(it.hasNext());
+        XYBean value = it.next();
+        assertSame(toUpdate, value);
+        assertEquals(1, value.x);
+        assertEquals(2, value.y);
+
+        assertTrue(it.hasNext());
+        value = it.next();
+        assertSame(toUpdate, value);
+        assertEquals(16, value.x);
+        assertEquals(2, value.y); // unchanged
+
+        assertTrue(it.hasNext());
+        value = it.next();
+        assertSame(toUpdate, value);
+        assertEquals(16, value.x); // unchanged
+        assertEquals(37, value.y);
+        
+        assertFalse(it.hasNext());
     }
 }

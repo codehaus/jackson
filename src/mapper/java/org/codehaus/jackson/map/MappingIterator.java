@@ -15,7 +15,8 @@ import org.codehaus.jackson.type.JavaType;
  */
 public class MappingIterator<T> implements Iterator<T>
 {
-    protected final static MappingIterator<?> EMPTY_ITERATOR = new MappingIterator<Object>(null, null, null, null);
+    protected final static MappingIterator<?> EMPTY_ITERATOR =
+        new MappingIterator<Object>(null, null, null, null, false, null);
     
     protected final JavaType _type;
 
@@ -23,11 +24,39 @@ public class MappingIterator<T> implements Iterator<T>
     
     protected final JsonDeserializer<T> _deserializer;
 
-    protected final JsonParser _parser;
+    protected JsonParser _parser;
     
-    @SuppressWarnings("unchecked")
+    /**
+     * Flag that indicates whether input {@link JsonParser} should be closed
+     * when we are done or not; generally only called when caller did not
+     * pass JsonParser.
+     */
+    protected final boolean _closeParser;
+
+    /**
+     * Flag that is set when we have determined what {@link #hasNextValue()}
+     * should value; reset when {@link #nextValue} is called
+     */
+    protected boolean _hasNextChecked;
+    
+    /**
+     * If not null, "value to update" instead of creating a new instance
+     * for each call.
+     */
+    protected final T _updatedValue;
+
     protected MappingIterator(JavaType type, JsonParser jp, DeserializationContext ctxt,
             JsonDeserializer<?> deser)
+    {
+        this(type, jp, ctxt, deser, true, null);
+    }
+    
+    /**
+     * @since 1.9.3
+     */
+    @SuppressWarnings("unchecked")
+    protected MappingIterator(JavaType type, JsonParser jp, DeserializationContext ctxt, JsonDeserializer<?> deser,
+            boolean closeParser, Object valueToUpdate)
     {
         _type = type;
         _parser = jp;
@@ -43,6 +72,12 @@ public class MappingIterator<T> implements Iterator<T>
             if (!sc.inRoot()) {
                 jp.clearCurrentToken();
             }
+        }
+        _closeParser = closeParser;
+        if (valueToUpdate == null) {
+            _updatedValue = null;
+        } else {
+            _updatedValue = (T) valueToUpdate;
         }
     }
 
@@ -102,10 +137,16 @@ public class MappingIterator<T> implements Iterator<T>
         }
         JsonToken t = _parser.getCurrentToken();
         if (t == null) { // un-initialized or cleared; find next
-            t = _parser.nextToken();
+            if (!_hasNextChecked) {
+                t = _parser.nextToken();
+                _hasNextChecked = true;
+            }
             // If EOF, no more
             if (t == null) {
-                _parser.close();
+                if (_closeParser) {
+                    _parser.close();
+                }
+                _parser = null;
                 return false;
             }
             // And similarly if we hit END_ARRAY; except that we won't close parser
@@ -118,7 +159,18 @@ public class MappingIterator<T> implements Iterator<T>
     
     public T nextValue() throws IOException
     {
-        T result = _deserializer.deserialize(_parser, _context);
+        if (_parser == null) {
+            throw new NoSuchElementException();
+        }
+        _hasNextChecked = false;
+        T result;
+        
+        if (_updatedValue == null) {
+            result = _deserializer.deserialize(_parser, _context);
+        } else{
+            _deserializer.deserialize(_parser, _context, _updatedValue);
+            result = _updatedValue;
+        }
         // Need to consume the token too
         _parser.clearCurrentToken();
         return result;
