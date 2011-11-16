@@ -627,8 +627,9 @@ public class BeanDeserializer
         }
         for (; t == JsonToken.FIELD_NAME; t = jp.nextToken()) {
             String propName = jp.getCurrentName();
+            // Skip field name:
+            jp.nextToken();
             SettableBeanProperty prop = _beanProperties.find(propName);
-            jp.nextToken(); // skip field, returns value token
             
             if (prop != null) { // normal case
                 try {
@@ -643,14 +644,13 @@ public class BeanDeserializer
              */
             if (_ignorableProps != null && _ignorableProps.contains(propName)) {
                 jp.skipChildren();
-                continue;
-            }
-            if (_anySetter != null) {
+            } else if (_anySetter != null) {
                 _anySetter.deserializeAndSet(jp, ctxt, bean, propName);
                 continue;
+            } else {
+                // Unknown: let's call handler method
+                handleUnknownProperty(jp, ctxt, bean, propName);
             }
-            // Unknown: let's call handler method
-            handleUnknownProperty(jp, ctxt, bean, propName);
         }
         return bean;
     }
