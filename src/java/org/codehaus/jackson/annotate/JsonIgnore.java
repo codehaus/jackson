@@ -6,24 +6,31 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 /**
- * Marker annotation
-* that indicates that the annotated method or field is to be ignored by
-* introspection-based
+ * Marker annotation that indicates that the annotated method or field is to be
+ * ignored by introspection-based
  * serialization and deserialization functionality. That is, it should
  * not be consider a "getter", "setter" or "creator".
+ *<p>
+ * In addition, starting with Jackson 1.9, if this is the only annotation
+ * associated with a property, it will also cause cause the whole
+ * property to be ignored: that is, if setter has this annotation and
+ * getter has no annotations, getter is also effectively ignored.
+ * It is still possible for different accessors to use different
+ * annotations; so if only "getter" is to be ignored, other accessors
+ * (setter or field) would need explicit annotation to prevent
+ * ignoral (usually {@link JsonProperty}).
  * <p>
- * For example,
- * a "getter" method that would otherwise denote
+ * For example, a "getter" method that would otherwise denote
  * a property (like, say, "getValue" to suggest property "value")
  * to serialize, would be ignored and no such property would
- * be output unless another annotation defines alternative method
- * to use.
+ * be output unless another annotation defines alternative method to use.
  *<p>
- * This annotation works purely on method-by-method (or field-by-field) basis;
- * annotation on one method or field does not imply ignoring other methods
- * or fields.
- * Specifically, marking a "setter" candidate does not change handling
- * of matching "getter" method (or vice versa).
+ * Before version 1.9, this annotation worked purely on method-by-method (or field-by-field)
+ * basis; annotation on one method or field does not imply ignoring other methods
+ * or fields. However, with version 1.9 and above, annotations associated
+ * with various accessors (getter, setter, field, constructor parameter) of
+ * a logical property are combined; meaning that annotations may be effectly
+ * combined.
  *<p>
  * Annotation is usually used just a like a marker annotation, that
  * is, without explicitly defining 'value' argument (which defaults
