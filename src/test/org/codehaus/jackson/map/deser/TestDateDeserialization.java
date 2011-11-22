@@ -28,13 +28,12 @@ public class TestDateDeserialization
      */
     public void testDateUtilWithStringTimestamp() throws Exception
     {
-        long now = 123456789L;
-
+        long now = 1321992375446L;
         /* As of 1.5.0, should be ok to pass as JSON String, as long
          * as it is plain timestamp (all numbers, 64-bit)
          */
-        java.util.Date value = new ObjectMapper().readValue
-            (quote(String.valueOf(now)), java.util.Date.class);
+        String json = quote(String.valueOf(now));
+        java.util.Date value = new ObjectMapper().readValue(json, java.util.Date.class);
         assertEquals(now, value.getTime());
     }
 
