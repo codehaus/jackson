@@ -38,6 +38,8 @@ public class StdKeyDeserializers
         add(new StdKeyDeserializer.LongKD());
         add(new StdKeyDeserializer.FloatKD());
         add(new StdKeyDeserializer.DoubleKD());
+        add(new StdKeyDeserializer.DateKD());
+        add(new StdKeyDeserializer.CalendarKD());
     }
 
     private void add(StdKeyDeserializer kdeser)

@@ -557,7 +557,7 @@ public class BeanSerializerFactory
         // [JACKSON-429]: ignore specified types
         removeIgnorableTypes(config, beanDesc, properties);
         
-        // and possible remove ones without matching mutator...
+        // and possibly remove ones without matching mutator...
         if (config.isEnabled(SerializationConfig.Feature.REQUIRE_SETTERS_FOR_GETTERS)) {
             removeSetterlessGetters(config, beanDesc, properties);
         }
