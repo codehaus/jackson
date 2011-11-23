@@ -248,5 +248,36 @@ public abstract class StdKeyDeserializer
             return _factoryMethod.invoke(null, key);
         }
     }
+
+    // as per [JACKSON-657]
+    final static class DateKD extends StdKeyDeserializer
+    {
+        protected DateKD() {
+            super(java.util.Date.class);
+        }
+
+        @Override
+        public java.util.Date _parse(String key, DeserializationContext ctxt)
+            throws IllegalArgumentException, JsonMappingException
+        {
+            return ctxt.parseDate(key);
+        }
+    }
+        
+    // as per [JACKSON-657]
+    final static class CalendarKD extends StdKeyDeserializer
+    {
+        protected CalendarKD() {
+            super(java.util.Calendar.class);
+        }
+
+        @Override
+        public java.util.Calendar _parse(String key, DeserializationContext ctxt)
+            throws IllegalArgumentException, JsonMappingException
+        {
+            java.util.Date date = ctxt.parseDate(key);
+            return (date == null)  ? null : ctxt.constructCalendar(date);
+        }
+    }
 }
 

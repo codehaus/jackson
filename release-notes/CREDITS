@@ -809,3 +809,8 @@ Ben Hale:
   * Reported [JACKSON-700] Type problems with properties that have different
     types for constructor property, setter and/or field
    [1.9.1]
+
+Andreas Knoepfle, Tobias Schmid:
+  * Contributed implementation for [JACKSON-657], key deserializers for
+    java.util.Date and java.util.Calendar types
+   [1.9.3]

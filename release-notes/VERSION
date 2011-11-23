@@ -9,6 +9,8 @@ Description:
   Improvements:
 
   * [JACKSON-717] ObjectReader.updateValues(): use configured 'valueToUpdate'
+  * [JACKSON-657] Add Date/Calendar key deserializers
+   (contributed by Andreas K, Tobias S)
 
   Fixes:
   
