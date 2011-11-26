@@ -692,8 +692,7 @@ public abstract class JsonParserBase
         }
         return _numberBigDecimal;
     }
-    
-    
+
     /*
     /**********************************************************
     /* Conversion from textual to numeric representation
@@ -963,7 +962,6 @@ public abstract class JsonParserBase
     {
         _reportError("Invalid numeric value: "+msg);
     }
-    
     
     protected void reportOverflowInt()
         throws IOException, JsonParseException

@@ -831,6 +831,11 @@ public class ObjectReader
     protected JsonDeserializer<Object> _findRootDeserializer(DeserializationConfig cfg, JavaType valueType)
         throws JsonMappingException
     {
+        // Sanity check: must have actual type...
+        if (valueType == null) {
+            throw new JsonMappingException("No value type configured for ObjectReader");
+        }
+        
         // First: have we already seen it?
         JsonDeserializer<Object> deser = _rootDeserializers.get(valueType);
         if (deser != null) {
