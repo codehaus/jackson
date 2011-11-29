@@ -571,6 +571,8 @@ Steven Schlansker:
    [1.7.7]
   * Reported [JACKSON-572] Problems serializing generic non-static inner classes
    [1.7.7]
+  * Suggested [JACKSON-726] Add java.util.UUID key deserializer
+   [1.9.3]
 
 Elliot Barlas:
   * Reported [JACKSON-491]: Bug in NumberInput.inLongRange, causing false overflows

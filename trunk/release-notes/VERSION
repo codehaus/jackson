@@ -1,16 +1,18 @@
 Version: 1.9.3
 
 Release date:
-  xx-Nov-2011
+  x-Nov-2011
 
 Description:
   Another patch release for 1.9.
   
   Improvements:
 
-  * [JACKSON-717] ObjectReader.updateValues(): use configured 'valueToUpdate'
   * [JACKSON-657] Add Date/Calendar key deserializers
    (contributed by Andreas K, Tobias S)
+  * [JACKSON-717] ObjectReader.updateValues(): use configured 'valueToUpdate'
+  * [JACKSON-726] Add java.util.UUID key deserializer
+   (suggested by Steven S)
 
   Fixes:
   

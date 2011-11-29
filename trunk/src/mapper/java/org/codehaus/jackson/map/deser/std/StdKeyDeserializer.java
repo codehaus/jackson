@@ -3,6 +3,7 @@ package org.codehaus.jackson.map.deser.std;
 import java.io.IOException;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Method;
+import java.util.UUID;
 
 import org.codehaus.jackson.JsonProcessingException;
 import org.codehaus.jackson.io.NumberInput;
@@ -277,6 +278,21 @@ public abstract class StdKeyDeserializer
         {
             java.util.Date date = ctxt.parseDate(key);
             return (date == null)  ? null : ctxt.constructCalendar(date);
+        }
+    }
+
+    // as per [JACKSON-726]
+    final static class UuidKD extends StdKeyDeserializer
+    {
+        protected UuidKD() {
+            super(UUID.class);
+        }
+
+        @Override
+        public UUID _parse(String key, DeserializationContext ctxt)
+            throws IllegalArgumentException, JsonMappingException
+        {
+            return UUID.fromString(key);
         }
     }
 }
