@@ -40,6 +40,7 @@ public class StdKeyDeserializers
         add(new StdKeyDeserializer.DoubleKD());
         add(new StdKeyDeserializer.DateKD());
         add(new StdKeyDeserializer.CalendarKD());
+        add(new StdKeyDeserializer.UuidKD());
     }
 
     private void add(StdKeyDeserializer kdeser)

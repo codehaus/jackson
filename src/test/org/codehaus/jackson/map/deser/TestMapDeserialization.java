@@ -334,9 +334,10 @@ public class TestMapDeserialization
     
     /*
     /**********************************************************
-    /* Test methods, maps with Calendar
+    /* Test methods, maps with various alternative key types
     /**********************************************************
      */
+
     public void testCalendarMap() throws Exception
     {
     	 ObjectMapper mapper = new ObjectMapper();
@@ -356,10 +357,23 @@ public class TestMapDeserialization
     	 c.setTimeInMillis(0);
     	 assertTrue(result.containsKey(c));
     	 assertNull(result.get(c));
-    	
-    	 
     }
 
+    // [JACKSON-726]
+    public void testUUIDKeyMap() throws Exception
+    {
+         ObjectMapper mapper = new ObjectMapper();
+         UUID key = UUID.nameUUIDFromBytes("foobar".getBytes("UTF-8"));
+         String JSON = "{ \""+key+"\":4}";
+         Map<UUID,Object> result = mapper.readValue(JSON, new TypeReference<Map<UUID,Object>>() { });
+         assertNotNull(result);
+         assertEquals(1, result.size());
+         Object ob = result.keySet().iterator().next();
+         assertNotNull(ob);
+         assertEquals(UUID.class, ob.getClass());
+         assertEquals(key, ob);
+    }
+    
     /*
     /**********************************************************
     /* Test methods, annotated Maps
