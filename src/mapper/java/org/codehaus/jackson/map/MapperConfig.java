@@ -31,7 +31,8 @@ import org.codehaus.jackson.type.TypeReference;
  * instance are deprecated in favor of methods that create new instances
  * with different configuration ("fluent factories").
  * One major remaining issue is that of handling mix-in annotations, which
- * still represent bit of mutable state.
+ * still represent a bit of mutable state; may need to implement a
+ * functional-style immutable map for storing those.
  *
  * @since 1.2 -- major change in 1.8, changed from interface to
  *   abstract class
@@ -731,6 +732,9 @@ public abstract class MapperConfig<T extends MapperConfig<T>>
      * Instance is used as is, without creating a clone.
      * Format object in use can be accessed using {@link #getDateFormat}.
      * 
+     * @param df Date format to use, if not null; if null, the default format
+     *   will be used
+     * 
      * @deprecated As of version 1.8, it is preferable to call method in
      *   {@link ObjectMapper} instead; or construct new instance with
      *   {@link #withDateFormat(DateFormat)}
@@ -738,7 +742,7 @@ public abstract class MapperConfig<T extends MapperConfig<T>>
     @Deprecated
     public void setDateFormat(DateFormat df) {
         if (df == null) {
-            df = StdDateFormat.instance;
+            df = DEFAULT_DATE_FORMAT;
         }
         _base = _base.withDateFormat(df);
     }

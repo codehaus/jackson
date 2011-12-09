@@ -656,6 +656,14 @@ public class ObjectReader
     }
 
     /**
+     * Since 1.9.3
+     */
+    public final <T> MappingIterator<T> readValues(byte[] src)
+            throws IOException, JsonProcessingException {
+        return readValues(src, 0, src.length);
+    }
+    
+    /**
      * Method for reading sequence of Objects from parser stream.
      * 
      * @since 1.8
