@@ -13,6 +13,7 @@ Description:
   * [JACKSON-717] ObjectReader.updateValues(): use configured 'valueToUpdate'
   * [JACKSON-726] Add java.util.UUID key deserializer
    (suggested by Steven S)
+  * [JACKSON-729] Add 'ObjectMapper.readValues(byte[])' convenience method
 
   Fixes:
   

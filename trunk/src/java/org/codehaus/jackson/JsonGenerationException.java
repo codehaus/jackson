@@ -8,6 +8,7 @@ package org.codehaus.jackson;
 public class JsonGenerationException
     extends JsonProcessingException
 {
+    @SuppressWarnings("hiding")
     final static long serialVersionUID = 123; // Stupid eclipse...
     
     public JsonGenerationException(Throwable rootCause)

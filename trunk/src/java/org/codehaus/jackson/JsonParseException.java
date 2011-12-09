@@ -8,6 +8,7 @@ package org.codehaus.jackson;
 public class JsonParseException
     extends JsonProcessingException
 {
+    @SuppressWarnings("hiding")
     final static long serialVersionUID = 123; // Stupid eclipse...
 
     public JsonParseException(String msg, JsonLocation loc)
