@@ -29,43 +29,43 @@ public class StdDateFormat
      * to ISO-8601 date formatting standard, when it includes basic undecorated
      * timezone definition
      */
-    final static String DATE_FORMAT_STR_ISO8601 = "yyyy-MM-dd'T'HH:mm:ss.SSSZ";
+    protected final static String DATE_FORMAT_STR_ISO8601 = "yyyy-MM-dd'T'HH:mm:ss.SSSZ";
 
     /**
      * Same as 'regular' 8601, but handles 'Z' as an alias for "+0000"
      * (or "GMT")
      */
-    final static String DATE_FORMAT_STR_ISO8601_Z = "yyyy-MM-dd'T'HH:mm:ss.SSS'Z'";
+    protected final static String DATE_FORMAT_STR_ISO8601_Z = "yyyy-MM-dd'T'HH:mm:ss.SSS'Z'";
 
     /**
      * ISO-8601 with just the Date part, no time
      *
      * @since 1.3.1
      */
-    final static String DATE_FORMAT_STR_PLAIN = "yyyy-MM-dd";
+    protected final static String DATE_FORMAT_STR_PLAIN = "yyyy-MM-dd";
 
     /**
      * This constant defines the date format specified by
      * RFC 1123.
      */
-    final static String DATE_FORMAT_STR_RFC1123 = "EEE, dd MMM yyyy HH:mm:ss zzz";
+    protected final static String DATE_FORMAT_STR_RFC1123 = "EEE, dd MMM yyyy HH:mm:ss zzz";
 
     /**
      * For error messages we'll also need a list of all formats.
      */
-    final static String[] ALL_FORMATS = new String[] {
+    protected final static String[] ALL_FORMATS = new String[] {
         DATE_FORMAT_STR_ISO8601,
         DATE_FORMAT_STR_ISO8601_Z,
         DATE_FORMAT_STR_RFC1123,
         DATE_FORMAT_STR_PLAIN
     };
 
-    final static SimpleDateFormat DATE_FORMAT_RFC1123;
+    protected final static DateFormat DATE_FORMAT_RFC1123;
 
-    final static SimpleDateFormat DATE_FORMAT_ISO8601;
-    final static SimpleDateFormat DATE_FORMAT_ISO8601_Z;
+    protected final static DateFormat DATE_FORMAT_ISO8601;
+    protected final static DateFormat DATE_FORMAT_ISO8601_Z;
 
-    final static SimpleDateFormat DATE_FORMAT_PLAIN;
+    protected final static DateFormat DATE_FORMAT_PLAIN;
 
     /* Let's construct "blueprint" date format instances: can not be used
      * as is, due to thread-safety issues, but can be used for constructing
@@ -91,10 +91,10 @@ public class StdDateFormat
      */
     public final static StdDateFormat instance = new StdDateFormat();
 
-    transient SimpleDateFormat _formatRFC1123;
-    transient SimpleDateFormat _formatISO8601;
-    transient SimpleDateFormat _formatISO8601_z;
-    transient SimpleDateFormat _formatPlain;
+    protected transient DateFormat _formatRFC1123;
+    protected transient DateFormat _formatISO8601;
+    protected transient DateFormat _formatISO8601_z;
+    protected transient DateFormat _formatPlain;
 
     /*
     /**********************************************************
@@ -128,7 +128,7 @@ public class StdDateFormat
      * compliant date format.
      */
     public static DateFormat getISO8601Format(TimeZone tz) {
-        DateFormat df = (SimpleDateFormat) DATE_FORMAT_ISO8601.clone();
+        DateFormat df = (DateFormat) DATE_FORMAT_ISO8601.clone();
         df.setTimeZone(tz);
         return df;
     }
@@ -150,7 +150,7 @@ public class StdDateFormat
      */
     public static DateFormat getRFC1123Format(TimeZone tz)
     {
-        DateFormat df = (SimpleDateFormat) DATE_FORMAT_RFC1123.clone();
+        DateFormat df = (DateFormat) DATE_FORMAT_RFC1123.clone();
         df.setTimeZone(tz);
         return df;
     }
@@ -214,7 +214,7 @@ public class StdDateFormat
                                FieldPosition fieldPosition)
     {
         if (_formatISO8601 == null) {
-            _formatISO8601 = (SimpleDateFormat) DATE_FORMAT_ISO8601.clone();
+            _formatISO8601 = (DateFormat) DATE_FORMAT_ISO8601.clone();
         }
         return _formatISO8601.format(date, toAppendTo, fieldPosition);
     }
@@ -243,7 +243,7 @@ public class StdDateFormat
 
     protected Date parseAsISO8601(String dateStr, ParsePosition pos)
     {
-        /* 21-May-2009, tatu: SimpleDateFormat has very strict handling of
+        /* 21-May-2009, tatu: DateFormat has very strict handling of
          * timezone  modifiers for ISO-8601. So we need to do some scrubbing.
          */
 
@@ -253,18 +253,18 @@ public class StdDateFormat
          */
         int len = dateStr.length();
         char c = dateStr.charAt(len-1);
-        SimpleDateFormat df;
+        DateFormat df;
 
         // [JACKSON-200]: need to support "plain" date...
         if (len <= 10 && Character.isDigit(c)) {
            df = _formatPlain;
             if (df == null) {
-                df = _formatPlain = (SimpleDateFormat) DATE_FORMAT_PLAIN.clone();
+                df = _formatPlain = (DateFormat) DATE_FORMAT_PLAIN.clone();
             }
         } else if (c == 'Z') {
             df = _formatISO8601_z;
             if (df == null) {
-                df = _formatISO8601_z = (SimpleDateFormat) DATE_FORMAT_ISO8601_Z.clone();
+                df = _formatISO8601_z = (DateFormat) DATE_FORMAT_ISO8601_Z.clone();
             }
             // [JACKSON-334]: may be missing milliseconds... if so, add
             if (dateStr.charAt(len-4) == ':') {
@@ -297,7 +297,7 @@ public class StdDateFormat
                 
                 df = _formatISO8601;
                 if (_formatISO8601 == null) {
-                    df = _formatISO8601 = (SimpleDateFormat) DATE_FORMAT_ISO8601.clone();
+                    df = _formatISO8601 = (DateFormat) DATE_FORMAT_ISO8601.clone();
                 }
             } else {
                 /* 24-Nov-2009, tatu: Ugh. This is getting pretty
@@ -315,7 +315,7 @@ public class StdDateFormat
                 dateStr = sb.toString();
                 df = _formatISO8601_z;
                 if (df == null) {
-                    df = _formatISO8601_z = (SimpleDateFormat) DATE_FORMAT_ISO8601_Z.clone();
+                    df = _formatISO8601_z = (DateFormat) DATE_FORMAT_ISO8601_Z.clone();
                 }
             }
         }
@@ -325,7 +325,7 @@ public class StdDateFormat
     protected Date parseAsRFC1123(String dateStr, ParsePosition pos)
     {
         if (_formatRFC1123 == null) {
-            _formatRFC1123 = (SimpleDateFormat) DATE_FORMAT_RFC1123.clone();
+            _formatRFC1123 = (DateFormat) DATE_FORMAT_RFC1123.clone();
         }
         return _formatRFC1123.parse(dateStr, pos);
     }
