@@ -16,6 +16,8 @@ Description:
   * [JACKSON-729] Add 'ObjectMapper.readValues(byte[])' convenience method
 
   Fixes:
+
+  (all fixes up to 1.8.7)
   
 ------------------------------------------------------------------------
 === History: ===

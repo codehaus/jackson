@@ -1186,6 +1186,19 @@ public class SmileParser
         return _binaryValue;
     }
 
+    @Override
+    public Object getEmbeddedObject()
+        throws IOException, JsonParseException
+    {
+        if (_tokenIncomplete) {
+            _finishToken();
+        }
+        if (_currToken == JsonToken.VALUE_EMBEDDED_OBJECT ) {
+            return _binaryValue;
+        }
+        return super.getEmbeddedObject();
+    }
+    
     /* NOTE: must still implement just because 1.9.0 - 1.9.2 did require
      * its implementation (and we'll try to avoid introducing binary
      * incompatibilities); however, should be deleted from 2.0
