@@ -682,6 +682,19 @@ public class SmileParser
     }
 
     @Override
+    public Object getEmbeddedObject()
+        throws IOException, JsonParseException
+    {
+        if (_tokenIncomplete) {
+            _finishToken();
+        }
+        if (_currToken == JsonToken.VALUE_EMBEDDED_OBJECT ) {
+            return _binaryValue;
+        }
+        return super.getEmbeddedObject();
+    }
+
+    @Override
     protected byte[] _decodeBase64(Base64Variant b64variant)
         throws IOException, JsonParseException
     {
