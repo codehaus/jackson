@@ -135,23 +135,26 @@ public class MappingIterator<T> implements Iterator<T>
         if (_parser == null) {
             return false;
         }
-        JsonToken t = _parser.getCurrentToken();
-        if (t == null) { // un-initialized or cleared; find next
-            if (!_hasNextChecked) {
+        if (!_hasNextChecked) {
+            JsonToken t = _parser.getCurrentToken();
+            _hasNextChecked = true;
+            if (t == null) { // un-initialized or cleared; find next
                 t = _parser.nextToken();
-                _hasNextChecked = true;
-            }
-            // If EOF, no more
-            if (t == null) {
-                if (_closeParser) {
-                    _parser.close();
+                // If EOF, no more
+                if (t == null) {
+                    JsonParser jp = _parser;
+                    _parser = null;
+                    if (_closeParser) {
+                        jp.close();
+                    }
+                    return false;
                 }
-                _parser = null;
-                return false;
-            }
-            // And similarly if we hit END_ARRAY; except that we won't close parser
-            if (t == JsonToken.END_ARRAY) {
-                return false;
+                /* And similarly if we hit END_ARRAY; except that we won't close parser
+                 * (because it's not a root-level iterator)
+                 */
+                if (t == JsonToken.END_ARRAY) {
+                    return false;
+                }
             }
         }
         return true;
@@ -159,6 +162,12 @@ public class MappingIterator<T> implements Iterator<T>
     
     public T nextValue() throws IOException
     {
+        // caller should always call 'hasNext[Value]' first; but let's ensure:
+        if (!_hasNextChecked) {
+            if (!hasNextValue()) {
+                throw new NoSuchElementException();
+            }
+        }
         if (_parser == null) {
             throw new NoSuchElementException();
         }
