@@ -238,11 +238,11 @@ public class StdDeserializationContext
      * some String values are acceptable, but the one encountered is not
      */
     @Override
-	public JsonMappingException weirdStringException(Class<?> instClass, String msg)
+    public JsonMappingException weirdStringException(Class<?> instClass, String msg)
     {
         return JsonMappingException.from(_parser, "Can not construct instance of "+instClass.getName()+" from String value '"+_valueDesc()+"': "+msg);
     }
-
+    
     @Override
     public JsonMappingException weirdNumberException(Class<?> instClass, String msg)
     {
