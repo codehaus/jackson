@@ -6,10 +6,25 @@ import java.io.IOException;
 import org.junit.Assert;
 
 import org.codehaus.jackson.*;
+import org.codehaus.jackson.map.ObjectMapper;
 
 abstract class SmileTestBase
     extends main.BaseTest
 {
+    protected ObjectMapper smileMapper() {
+        return smileMapper(false);
+    }
+    
+    protected ObjectMapper smileMapper(boolean requireHeader) {
+        return smileMapper(requireHeader, false, false);
+    }
+    
+    protected ObjectMapper smileMapper(boolean requireHeader,
+            boolean writeHeader, boolean writeEndMarker)
+    {
+        return new ObjectMapper(smileFactory(requireHeader, writeHeader, writeEndMarker));
+    }
+
     protected SmileParser _smileParser(byte[] input) throws IOException {
         return _smileParser(input, false);
     }
@@ -28,7 +43,6 @@ abstract class SmileTestBase
     
     protected SmileFactory smileFactory(boolean requireHeader,
             boolean writeHeader, boolean writeEndMarker)
-        throws IOException
     {
         SmileFactory f = new SmileFactory();
         f.configure(SmileParser.Feature.REQUIRE_HEADER, requireHeader);
