@@ -7,6 +7,7 @@ import static org.junit.Assert.*;
 import org.codehaus.jackson.*;
 import org.codehaus.jackson.map.*;
 import org.codehaus.jackson.map.annotate.JsonDeserialize;
+import org.codehaus.jackson.util.TokenBuffer;
 import org.junit.Assert;
 
 /**
@@ -147,6 +148,47 @@ public class TestConversions extends BaseMapTest
         Assert.assertArrayEquals(inputData, resultFromString.data);
         Assert.assertArrayEquals(inputData, resultFromConvert.data);
         Assert.assertArrayEquals(inputData, result.data);
+    }
+
+    public void testEmbeddedObject() throws Exception
+    {
+        ObjectMapper mapper = new ObjectMapper();
+        TokenBuffer buf = new TokenBuffer(mapper);
+        buf.writeObject(new byte[0]);
+        JsonNode node = mapper.readTree(buf.asParser());
+        assertTrue(node.isPojo());
+        assertEquals(byte[].class, ((POJONode) node).getPojo().getClass());
+    }
+
+    public void testEmbeddedObjectInArray() throws Exception
+    {
+        ObjectMapper mapper = new ObjectMapper();
+        TokenBuffer buf = new TokenBuffer(mapper);
+        buf.writeStartArray();
+        buf.writeObject(new byte[0]);
+        buf.writeEndArray();
+        JsonNode node = mapper.readTree(buf.asParser());
+        assertTrue(node.isArray());
+        assertEquals(1, node.size());
+        JsonNode n = node.get(0);
+        assertTrue(n.isPojo());
+        assertEquals(byte[].class, ((POJONode) n).getPojo().getClass());
+    }
+
+    public void testEmbeddedObjectInObject() throws Exception
+    {
+        ObjectMapper mapper = new ObjectMapper();
+        TokenBuffer buf = new TokenBuffer(mapper);
+        buf.writeStartObject();
+        buf.writeFieldName("pojo");
+        buf.writeObject(new byte[0]);
+        buf.writeEndObject();
+        JsonNode node = mapper.readTree(buf.asParser());
+        assertTrue(node.isObject());
+        assertEquals(1, node.size());
+        JsonNode n = node.get("pojo");
+        assertTrue(n.isPojo());
+        assertEquals(byte[].class, ((POJONode) n).getPojo().getClass());
     }
 }
 
