@@ -2029,7 +2029,7 @@ public final class Utf8StreamParser
             if (c == INT_QUOTE) {
                 break main_loop;
             }
-
+            
             switch (codes[c]) {
             case 1: // backslash
                 _decodeEscaped();
@@ -2732,6 +2732,7 @@ public final class Utf8StreamParser
         if (_inputPtr >= _inputEnd) {
             loadMoreGuaranteed();
         }
+        d = (int) _inputBuffer[_inputPtr++];
         if ((d & 0xC0) != 0x080) {
             _reportInvalidOther(d & 0xFF, _inputPtr);
         }
