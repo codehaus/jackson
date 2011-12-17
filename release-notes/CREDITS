@@ -742,3 +742,8 @@ Jacques-Olivier Goussard:
   * Reported [JACKSON-733] Smile-based mapper could not properly bind
    byte[] values
    [1.8.7]
+
+Alex Temnokhod:
+  * Reported [JACKSON-738] Parsing fails for Unicode 1Fxxx symbols when
+    skipping
+   [1.8.7]
