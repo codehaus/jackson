@@ -253,6 +253,10 @@ abstract class BaseNodeDeserializer<N extends JsonNode>
             // These states can not be mapped; input stream is
             // off by an event or two
 
+
+        case VALUE_EMBEDDED_OBJECT:
+            return nodeFactory.POJONode(jp.getEmbeddedObject());
+
         case END_OBJECT:
         case END_ARRAY:
         default:
