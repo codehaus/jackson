@@ -11,6 +11,8 @@ Description:
   * [JACKSON-701] ArrayIndexOutOfBoundsException when trying to serialize
     non-static inner classes with annotations on last ctor param
    (reported Lloyd S)
+  * [JACKSON-741] Add missing linkage from ObjectMapper to JsonFactory
+   by calling 'JsonFactory.setCodec()' from ObjectMapper constructor
 
 ------------------------------------------------------------------------
 === History: ===
