@@ -747,3 +747,8 @@ Alex Temnokhod:
   * Reported [JACKSON-738] Parsing fails for Unicode 1Fxxx symbols when
     skipping
    [1.8.7]
+
+Lloyd Smith:
+  * Reported [JACKSON-701] ArrayIndexOutOfBoundsException when trying to serialize
+    non-static inner classes with annotations on last ctor param
+   [1.8.8]
