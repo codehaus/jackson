@@ -155,16 +155,13 @@ public class TestPOJOPropertiesCollector
         public Location(final BigDecimal lattitude, final BigDecimal longitude) { }
     }
 
-    public void testJackson701() throws Exception
-    {
-        ObjectMapper mapper = new ObjectMapper();
-        mapper.configure(SerializationConfig.Feature.USE_ANNOTATIONS, false);
-        BasicBeanDescription beanDesc = mapper.getSerializationConfig().introspect(mapper.constructType(Jackson703.class));
-        assertNotNull(beanDesc);
+    class Issue701Bean { // important: non-static!
+        private int i;
 
-        Jackson703 bean = new Jackson703();
-        String json = mapper.writeValueAsString(bean);
-        assertNotNull(json);
+        // annotation does not matter -- just need one on the last argument
+        public Issue701Bean(@JsonProperty int i) { this.i = i; }
+
+        public int getX() { return i; }
     }
     
     /*
@@ -340,6 +337,31 @@ public class TestPOJOPropertiesCollector
         assertEquals(String.class, m.getRawType());
     }
 
+    // for [JACKSON-701]
+    public void testInnerClassWithAnnotationsInCreator() throws Exception
+    {
+        ObjectMapper mapper = new ObjectMapper();
+        BasicBeanDescription beanDesc;
+        // first with serialization
+        beanDesc = mapper.getSerializationConfig().introspect(mapper.constructType(Issue701Bean.class));
+        assertNotNull(beanDesc);
+        // then with deserialization
+        beanDesc = mapper.getDeserializationConfig().introspect(mapper.constructType(Issue701Bean.class));
+        assertNotNull(beanDesc);
+    }
+
+    public void testJackson703() throws Exception
+    {
+        ObjectMapper mapper = new ObjectMapper();
+        mapper.configure(SerializationConfig.Feature.USE_ANNOTATIONS, false);
+        BasicBeanDescription beanDesc = mapper.getSerializationConfig().introspect(mapper.constructType(Jackson703.class));
+        assertNotNull(beanDesc);
+
+        Jackson703 bean = new Jackson703();
+        String json = mapper.writeValueAsString(bean);
+        assertNotNull(json);
+    }
+    
     /*
     /**********************************************************
     /* Helper methods
