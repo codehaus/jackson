@@ -766,8 +766,34 @@ public final class AnnotatedClass
         if (_annotationIntrospector == null) { // when annotation processing is disabled
             return new AnnotatedConstructor(ctor, _emptyAnnotationMap(), _emptyAnnotationMaps(ctor.getParameterTypes().length));
         }
+        if (defaultCtor) {
+            return new AnnotatedConstructor(ctor, _collectRelevantAnnotations(ctor.getDeclaredAnnotations()), null);
+        }
+        Annotation[][] paramAnns = ctor.getParameterAnnotations();
+        int paramCount = ctor.getParameterTypes().length;
+        /* [JACKSON-701]: Looks like JDK has discrepancy, whereas annotations for implicit 'this'
+         * (for non-static inner classes) are NOT included, but type is? Strange, sounds like
+         * a bug. Alas, we can't really fix that...
+         */
+        AnnotationMap[] resolvedAnnotations;
+        if (paramCount != paramAnns.length) {
+            // only cover one "missing" annotation, and only for member classes; to try to avoid
+            // false "fixes" for possible other error cases
+            if (ctor.getDeclaringClass().isMemberClass() &&  paramCount == (paramAnns.length + 1)) {
+                // hack attack: prepend a null entry to make things match
+                Annotation[][] old = paramAnns;
+                paramAnns = new Annotation[old.length+1][];
+                System.arraycopy(old, 0, paramAnns, 1, old.length);
+                resolvedAnnotations = _collectRelevantAnnotations(paramAnns);
+            } else {
+                throw new IllegalStateException("Internal error: constructor for "+ctor.getDeclaringClass().getName()
+                        +" has mismatch: "+paramCount+" parameters; "+paramAnns.length+" sets of annotations");
+            }
+        } else {
+            resolvedAnnotations = _collectRelevantAnnotations(paramAnns);
+        }
         return new AnnotatedConstructor(ctor, _collectRelevantAnnotations(ctor.getDeclaredAnnotations()),
-                                        defaultCtor ? null :  _collectRelevantAnnotations(ctor.getParameterAnnotations()));
+                resolvedAnnotations);
     }
 
     protected AnnotatedMethod _constructCreatorMethod(Method m)

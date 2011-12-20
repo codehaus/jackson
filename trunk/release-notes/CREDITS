@@ -755,6 +755,26 @@ Tom Boettcher:
     between JsonNode, POJOs
    [1.8.7]
 
+Ryan Kennedy:
+  * Reported [JACKSON-462] (REGRESSION?) Buffer overflow in
+   Utf8Generator#writeFieldName(String)
+   [1.8.7]
+
+Jacques-Olivier Goussard:
+  * Reported [JACKSON-733] Smile-based mapper could not properly bind
+   byte[] values
+   [1.8.7]
+
+Alex Temnokhod:
+  * Reported [JACKSON-738] Parsing fails for Unicode 1Fxxx symbols when
+    skipping
+   [1.8.7]
+
+Lloyd Smith:
+  * Reported [JACKSON-701] ArrayIndexOutOfBoundsException when trying to serialize
+    non-static inner classes with annotations on last ctor param
+   [1.8.8]
+
 Anand Hatrwalne:
   * Requested [JACKSON-558] Add 'DeserializationConfig.Feature.UNWRAP_ROOT_VALUE' as
     matching counterpart for 'SerializationConfig.Feature.WRAP_ROOT_VALUE'
