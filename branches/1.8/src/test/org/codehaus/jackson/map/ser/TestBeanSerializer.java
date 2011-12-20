@@ -7,6 +7,7 @@ import java.util.*;
 
 import org.codehaus.jackson.*;
 import org.codehaus.jackson.annotate.JsonIgnore;
+import org.codehaus.jackson.annotate.JsonProperty;
 import org.codehaus.jackson.annotate.JsonPropertyOrder;
 import org.codehaus.jackson.io.SerializedString;
 import org.codehaus.jackson.map.*;
@@ -182,6 +183,15 @@ public class TestBeanSerializer extends BaseMapTest
         public int getX() { return 3; }
         public boolean isX() { return false; }
     }
+
+    class Issue701Bean { // important: non-static!
+        private int i;
+
+        // annotation does not matter -- just need one on the last argument
+        public Issue701Bean(@JsonProperty int i) { this.i = i; }
+
+        public int getI() { return i; }
+    }
     
     /*
     /********************************************************
@@ -234,6 +244,14 @@ public class TestBeanSerializer extends BaseMapTest
         });
         String json = mapper.writeValueAsString(new EmptyBean());
         assertEquals("{\"bogus\":\"foo\"}", json);
+    }
+
+    // for [JACKSON-701]
+    public void testInnerClassWithAnnotationsInCreator() throws Exception
+    {
+        ObjectMapper mapper = new ObjectMapper();
+        String json = mapper.writeValueAsString(new Issue701Bean(3));
+        assertEquals("{}", json);
     }
 
     /*
