@@ -378,7 +378,14 @@ public class ObjectMapper
          * 03-Jan-2010, tatu: and obviously we also must pass 'this',
          *    to create actual linking.
          */
-        _jsonFactory = (jf == null) ? new MappingJsonFactory(this) : jf;
+        if (jf == null) {
+            _jsonFactory = new MappingJsonFactory(this);
+        } else {
+            _jsonFactory = jf;
+            if (jf.getCodec() == null) { // as per [JACKSON-741]
+                _jsonFactory.setCodec(this);
+            }
+        }
         // and default type factory is shared one
         _typeFactory = TypeFactory.defaultInstance();
         _serializationConfig = (sconfig != null) ? sconfig :

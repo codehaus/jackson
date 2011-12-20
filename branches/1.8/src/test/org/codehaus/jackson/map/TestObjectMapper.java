@@ -2,6 +2,7 @@ package org.codehaus.jackson.map;
 
 import java.io.*;
 
+import org.codehaus.jackson.JsonFactory;
 import org.codehaus.jackson.JsonNode;
 import org.codehaus.jackson.map.type.TypeFactory;
 import org.codehaus.jackson.node.*;
@@ -38,5 +39,19 @@ public class TestObjectMapper extends BaseMapTest
 
         n = m.readTree(new ByteArrayInputStream(JSON.getBytes("UTF-8")));
         assertTrue(n instanceof ObjectNode);
+    }
+
+
+    public void testJsonFactoryLinkage()
+    {
+        // first, implicit factory, giving implicit linkage
+        ObjectMapper m = new ObjectMapper();
+        assertSame(m, m.getJsonFactory().getCodec());
+
+        // and then explicit factory, which should also be implicitly linked
+        JsonFactory f = new JsonFactory();
+        m = new ObjectMapper(f);
+        assertSame(f, m.getJsonFactory());
+        assertSame(m, f.getCodec());
     }
 }
