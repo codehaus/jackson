@@ -251,7 +251,7 @@ public class TestBeanSerializer extends BaseMapTest
     {
         ObjectMapper mapper = new ObjectMapper();
         String json = mapper.writeValueAsString(new Issue701Bean(3));
-        assertEquals("{}", json);
+        assertEquals("{\"i\":3}", json);
     }
 
     /*
