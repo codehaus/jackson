@@ -453,6 +453,19 @@ public class POJOPropertyBuilder
         ;
     }
 
+    public boolean anyDeserializeIgnorals() {
+        return _anyIgnorals(_fields)
+            || _anyIgnorals(_setters)
+            || _anyIgnorals(_ctorParameters)
+        ;
+    }
+
+    public boolean anySerializeIgnorals() {
+        return _anyIgnorals(_fields)
+            || _anyIgnorals(_getters)
+        ;
+    }
+    
     private <T> boolean _anyIgnorals(Node<T> n)
     {
         for (; n != null; n = n.next) {

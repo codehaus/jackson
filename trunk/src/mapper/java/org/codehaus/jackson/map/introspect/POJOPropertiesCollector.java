@@ -73,8 +73,18 @@ public class POJOPropertiesCollector
      * ignored during serialization; only updated when collecting
      * information for deserialization purposes
      */
-    protected HashSet<String> _ignoredPropertyNames;
+    protected Set<String> _ignoredPropertyNames;
 
+    /**
+     * Alternate set of property names that have been marked for
+     * explicit ignoral for deserialization: needed to deal with
+     * 1.x definition of ignorable with respect to "any setter"
+     * (see [JACKSON-313], [JACKSON-383])
+     * 
+     * @since 1.9.4
+     */
+    protected Set<String> _ignoredPropertyNamesForDeser;
+    
     /**
      * Lazily collected list of members that were annotated to
      * indicate that they represent mutators for deserializer
@@ -176,6 +186,13 @@ public class POJOPropertiesCollector
 
     public Set<String> getIgnoredPropertyNames() {
         return _ignoredPropertyNames;
+    }
+
+    /**
+     * @since 1.9.4
+     */
+    public Set<String> getIgnoredPropertyNamesForDeser() {
+        return _ignoredPropertyNamesForDeser;
     }
     
     // for unit tests:
@@ -553,30 +570,35 @@ public class POJOPropertiesCollector
             }
             // Otherwise, check ignorals
             if (prop.anyIgnorals()) {
+                _addIgnored(prop);
                 // first: if one or more ignorals, and no explicit markers, remove the whole thing
                 if (!prop.anyExplicitNames()) {
                     it.remove();
-                    _addIgnored(prop.getName());
                     continue;
                 }
-                // otherwise just remove ones marked to be ignored
+                // otherwise just remove explicitly ignored (and retain others)
                 prop.removeIgnored();
-                if (!_forSerialization && !prop.couldDeserialize()) {
-                    _addIgnored(prop.getName());
-                }
             }
             // and finally, handle removal of individual non-visible elements
             prop.removeNonVisible();
         }
     }
     
-    private void _addIgnored(String name)
+    private void _addIgnored(POJOPropertyBuilder prop)
     {
-        if (!_forSerialization) {
-            if (_ignoredPropertyNames == null) {
-                _ignoredPropertyNames = new HashSet<String>();
-            }
-            _ignoredPropertyNames.add(name);
+        // not used in any way for serialization side:
+        if (_forSerialization) {
+            return;
+        }
+        /* and with deserialization, two aspects: whether it's ok to see
+         * property ('ignore for failure reporting') and whether we forcifully
+         * ignore it even if there was "any setter" available.
+         */
+        // but do not add unless ignoral was for field, setter or ctor param
+        String name = prop.getName();
+        _ignoredPropertyNames = addToSet(_ignoredPropertyNames, name);
+        if (prop.anyDeserializeIgnorals()) {
+            _ignoredPropertyNamesForDeser = addToSet(_ignoredPropertyNamesForDeser, name);
         }
     }
 
@@ -679,4 +701,13 @@ public class POJOPropertiesCollector
         }
         return prop;
     }
+
+    private Set<String> addToSet(Set<String> set, String str)
+    {
+        if (set == null) {
+            set = new HashSet<String>();
+        }
+        set.add(str);
+        return set;
+    }        
 }

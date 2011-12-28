@@ -1067,10 +1067,16 @@ public class BeanDeserializerFactory
         for (String propName : ignored) {
             builder.addIgnorable(propName);
         }
+        AnnotatedMethod anySetter = beanDesc.findAnySetter();
         // Implicit ones via @JsonIgnore and equivalent?
+        /* 26-Dec-2011, tatu: As per [JACKSON-744], it probably does NOT make
+         *   sense to consider ignorable, esp. now that both getters and setters
+         *   can induce ignoral.
+         */
         {
-            Collection<String> ignored2 = beanDesc.getIgnoredPropertyNames();
-            if (ignored2 != null) {
+            Collection<String> ignored2 = (anySetter == null) ?
+                    beanDesc.getIgnoredPropertyNames() : beanDesc.getIgnoredPropertyNamesForDeser();
+                    if (ignored2 != null) {
                 for (String propName : ignored2) {
                     // allow ignoral of similarly named JSON property, but do not force;
                     // latter means NOT adding this to 'ignored':
@@ -1127,7 +1133,6 @@ public class BeanDeserializerFactory
             }
         }
         // Also, do we have a fallback "any" setter?
-        AnnotatedMethod anySetter = beanDesc.findAnySetter();
         if (anySetter != null) {
             builder.setAnySetter(constructAnySetter(config, beanDesc, anySetter));
         }

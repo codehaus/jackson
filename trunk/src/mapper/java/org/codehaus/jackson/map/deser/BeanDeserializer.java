@@ -700,26 +700,32 @@ public class BeanDeserializer
                 }
                 continue;
             }
-            /* As per [JACKSON-313], things marked as ignorable should not be
-             * passed to any setter
-             */
-            if (_ignorableProps != null && _ignorableProps.contains(propName)) {
-                jp.skipChildren();
-            } else if (_anySetter != null) {
-                try {
-                    _anySetter.deserializeAndSet(jp, ctxt, bean, propName);
-                } catch (Exception e) {
-                    wrapAndThrow(e, bean, propName, ctxt);
-                }
-                continue;
-            } else {
-                // Unknown: let's call handler method
-                handleUnknownProperty(jp, ctxt, bean, propName);         
-            }
+            _handleUnknown(jp, ctxt, bean, propName);
         }
         return bean;
     }
 
+    private final void _handleUnknown(JsonParser jp, DeserializationContext ctxt,
+            Object bean, String propName)
+                    throws IOException, JsonProcessingException
+    {
+        /* As per [JACKSON-313], things marked as ignorable should not be
+         * passed to any setter
+         */
+        if (_ignorableProps != null && _ignorableProps.contains(propName)) {
+            jp.skipChildren();
+        } else if (_anySetter != null) {
+            try {
+                _anySetter.deserializeAndSet(jp, ctxt, bean, propName);
+            } catch (Exception e) {
+                wrapAndThrow(e, bean, propName, ctxt);
+            }
+        } else {
+            // Unknown: let's call handler method
+            handleUnknownProperty(jp, ctxt, bean, propName);         
+        }
+    }
+    
     /**
      * @since 1.9
      */

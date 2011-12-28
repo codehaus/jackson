@@ -61,6 +61,11 @@ public class BasicBeanDescription extends BeanDescription
      */
     protected Set<String> _ignoredPropertyNames;
 
+    /**
+     * @since 1.9.4
+     */
+    protected Set<String> _ignoredPropertyNamesForDeser;
+    
     // // for serialization
     
     protected AnnotatedMethod _jsonValueMethod;
@@ -108,6 +113,7 @@ public class BasicBeanDescription extends BeanDescription
                 coll.getType(), coll.getClassDef(), coll.getProperties());
         desc._anySetterMethod = coll.getAnySetterMethod();
         desc._ignoredPropertyNames = coll.getIgnoredPropertyNames();
+        desc._ignoredPropertyNamesForDeser = coll.getIgnoredPropertyNamesForDeser();
         desc._injectables = coll.getInjectables();
         return desc;
     }
@@ -176,6 +182,10 @@ public class BasicBeanDescription extends BeanDescription
             return Collections.emptySet();
         }
         return _ignoredPropertyNames;
+    }
+
+    public Set<String> getIgnoredPropertyNamesForDeser() {
+        return _ignoredPropertyNamesForDeser;
     }
     
     /**
