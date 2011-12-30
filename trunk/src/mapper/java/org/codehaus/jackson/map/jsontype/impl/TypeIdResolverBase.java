@@ -26,4 +26,12 @@ public abstract class TypeIdResolverBase
          * only useful for custom ones.
          */
     }
+
+    /**
+     * @since 1.9.4
+     */
+    public String idFromBaseType()
+    {
+        return idFromValueAndType(null, _baseType.getRawClass());
+    }
 }
