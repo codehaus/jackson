@@ -45,7 +45,7 @@ public class AbstractDeserializer
         throws IOException, JsonProcessingException
     {
         // First: support "natural" values (which are always serialized without type info!)
-        Object result = _deserializeIfNative(jp, ctxt);
+        Object result = _deserializeIfNatural(jp, ctxt);
         if (result != null) {
             return result;
         }
@@ -56,16 +56,11 @@ public class AbstractDeserializer
     public Object deserialize(JsonParser jp, DeserializationContext ctxt)
             throws IOException, JsonProcessingException
     {
-        // First: support "natural" values (which are always serialized without type info!)
-        Object result = _deserializeIfNative(jp, ctxt);
-        if (result != null) {
-            return result;
-        }
-        // otherwise we should fail gracefully
+        // This method should never be called...
         throw ctxt.instantiationException(_baseType.getRawClass(), "abstract types can only be instantiated with additional type information");
     }
 
-    protected Object _deserializeIfNative(JsonParser jp, DeserializationContext ctxt)
+    protected Object _deserializeIfNatural(JsonParser jp, DeserializationContext ctxt)
         throws IOException, JsonProcessingException
     {
         /* As per [JACKSON-417], there is a chance we might be "natular" types
