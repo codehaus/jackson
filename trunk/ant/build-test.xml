@@ -178,6 +178,7 @@ test.run.interop, test.run.jaxrs, test.run.failing, test.run.versions"
 
     <!-- failing tests run during dev, disabled for maintenance versions -->
     <target name="test.run.failing" depends="test.compile">
+<!--
         <junit fork="no" printsummary="yes" haltonfailure="no" showoutput="yes">
             <batchtest fork="no" todir="${dir.test.xmlresults}">
                 <fileset dir="${dir.test.classes}">
@@ -200,6 +201,7 @@ test.run.interop, test.run.jaxrs, test.run.failing, test.run.versions"
                 </fileset>
             </classpath>
         </junit>
+-->
     </target>
 
     <target name="test.run.versions" depends="test.compile">
