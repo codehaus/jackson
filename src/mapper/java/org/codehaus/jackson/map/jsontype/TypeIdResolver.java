@@ -53,7 +53,7 @@ public interface TypeIdResolver
      * @since 1.8
      */
     public String idFromValueAndType(Object value, Class<?> suggestedType);
-    
+
     /**
      * Method called to resolve type from given type identifier.
      */
