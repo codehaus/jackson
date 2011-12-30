@@ -8,6 +8,8 @@ Description:
   
   Fixes:
 
+  * [JACKSON-712] Issue with @JsonCreator + DefaultImpl
+   (suggested by Eric T)
   * [JACKSON-744] @JsonAnySetter problems with 1.9
 
   (all fixes up to 1.8.8)

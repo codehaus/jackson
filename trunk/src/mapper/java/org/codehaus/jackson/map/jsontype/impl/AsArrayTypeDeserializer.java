@@ -83,10 +83,11 @@ public class AsArrayTypeDeserializer extends TypeDeserializerBase
     private final Object _deserialize(JsonParser jp, DeserializationContext ctxt)
         throws IOException, JsonProcessingException
     {
+        boolean hadStartArray = jp.isExpectedStartArrayToken();
         JsonDeserializer<Object> deser = _findDeserializer(ctxt, _locateTypeId(jp, ctxt));
         Object value = deser.deserialize(jp, ctxt);
         // And then need the closing END_ARRAY
-        if (jp.nextToken() != JsonToken.END_ARRAY) {
+        if (hadStartArray && jp.nextToken() != JsonToken.END_ARRAY) {
             throw ctxt.wrongTokenException(jp, JsonToken.END_ARRAY,
                     "expected closing END_ARRAY after type information and deserialized value");
         }
@@ -97,11 +98,24 @@ public class AsArrayTypeDeserializer extends TypeDeserializerBase
         throws IOException, JsonProcessingException
     {
         if (!jp.isExpectedStartArrayToken()) {
+            // Add instanceof check because we cannot add method to TypeIdResolver interface due to backwards
+            // compatibility issues.  We can however add it to the base method, which gets at least some of
+            // the functionality we want.  Falls back to old exception for other types of TypeIdResolvers
+            if (_idResolver instanceof TypeIdResolverBase) {
+                if (_defaultImpl != null) { // but let's require existence of default impl, as a safeguard
+                    return ((TypeIdResolverBase) _idResolver).idFromBaseType();
+                }
+            }
             throw ctxt.wrongTokenException(jp, JsonToken.START_ARRAY,
                     "need JSON Array to contain As.WRAPPER_ARRAY type information for class "+baseTypeName());
         }
         // And then type id as a String
         if (jp.nextToken() != JsonToken.VALUE_STRING) {
+            if (_idResolver instanceof TypeIdResolverBase) {
+                if (_defaultImpl != null) { // but let's require existence of default impl, as a safeguard
+                    return ((TypeIdResolverBase) _idResolver).idFromBaseType();
+                }
+            }
             throw ctxt.wrongTokenException(jp, JsonToken.VALUE_STRING,
                     "need JSON String that contains type id (for subtype of "+baseTypeName()+")");
         }
