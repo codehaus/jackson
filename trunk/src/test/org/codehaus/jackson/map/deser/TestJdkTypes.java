@@ -7,6 +7,8 @@ import java.util.List;
 import java.util.Locale;
 import java.util.regex.Pattern;
 
+import org.codehaus.jackson.annotate.JsonCreator;
+import org.codehaus.jackson.annotate.JsonProperty;
 import org.codehaus.jackson.map.*;
 
 public class TestJdkTypes
@@ -48,23 +50,36 @@ public class TestJdkTypes
              this.name = name;
              clazz = String.class;
          }
-    }    
+    }
 
+    static class BooleanBean {
+        public Boolean wrapper;
+        public boolean primitive;
+        
+        protected Boolean ctor;
+        
+        @JsonCreator
+        public BooleanBean(@JsonProperty("ctor") Boolean foo) {
+            ctor = foo;
+        }
+    }
+    
     /*
     /**********************************************************
     /* Test methods
     /**********************************************************
      */
     
+    private final ObjectMapper mapper = new ObjectMapper();
+
     /**
      * Related to issue [JACKSON-155].
      */
     public void testFile() throws Exception
     {
-        ObjectMapper m = new ObjectMapper();
         // Not portable etc... has to do:
         File src = new File("/test").getAbsoluteFile();
-        File result = m.readValue("\""+src.getAbsolutePath()+"\"", File.class);
+        File result = mapper.readValue("\""+src.getAbsolutePath()+"\"", File.class);
         assertEquals(src.getAbsolutePath(), result.getAbsolutePath());
     }
 
@@ -75,9 +90,8 @@ public class TestJdkTypes
         /* Ok: easiest way is to just serialize first; problem
          * is the backslash
          */
-        ObjectMapper m = new ObjectMapper();
-        String json = m.writeValueAsString(exp);
-        Pattern result = m.readValue(json, Pattern.class);
+        String json = mapper.writeValueAsString(exp);
+        Pattern result = mapper.readValue(json, Pattern.class);
         assertEquals(exp.pattern(), result.pattern());
     }
 
@@ -94,7 +108,6 @@ public class TestJdkTypes
      */
     public void testLocale() throws IOException
     {
-        ObjectMapper mapper = new ObjectMapper();
         assertEquals(new Locale("en"), mapper.readValue(quote("en"), Locale.class));
         assertEquals(new Locale("es", "ES"), mapper.readValue(quote("es_ES"), Locale.class));
         assertEquals(new Locale("FI", "fi", "savo"), mapper.readValue(quote("fi_FI_savo"), Locale.class));
@@ -107,8 +120,6 @@ public class TestJdkTypes
      */
     public void testNullForPrimitives() throws IOException
     {
-        ObjectMapper mapper = new ObjectMapper();
-
         // by default, ok to rely on defaults
         PrimitivesBean bean = mapper.readValue("{\"intValue\":null, \"booleanValue\":null, \"doubleValue\":null}",
                 PrimitivesBean.class);
@@ -125,43 +136,43 @@ public class TestJdkTypes
         assertEquals(0.0f, bean.floatValue);
         
         // but not when enabled
-        mapper = new ObjectMapper();
-        mapper.configure(DeserializationConfig.Feature.FAIL_ON_NULL_FOR_PRIMITIVES, true);
+        final ObjectMapper mapper2 = new ObjectMapper();
+        mapper2.configure(DeserializationConfig.Feature.FAIL_ON_NULL_FOR_PRIMITIVES, true);
 
         // boolean
         try {
-            mapper.readValue("{\"booleanValue\":null}", PrimitivesBean.class);
+            mapper2.readValue("{\"booleanValue\":null}", PrimitivesBean.class);
             fail("Expected failure for boolean + null");
         } catch (JsonMappingException e) {
             verifyException(e, "Can not map JSON null into type boolean");
         }
         // byte/char/short/int/long
         try {
-            mapper.readValue("{\"byteValue\":null}", PrimitivesBean.class);
+            mapper2.readValue("{\"byteValue\":null}", PrimitivesBean.class);
             fail("Expected failure for byte + null");
         } catch (JsonMappingException e) {
             verifyException(e, "Can not map JSON null into type byte");
         }
         try {
-            mapper.readValue("{\"charValue\":null}", PrimitivesBean.class);
+            mapper2.readValue("{\"charValue\":null}", PrimitivesBean.class);
             fail("Expected failure for char + null");
         } catch (JsonMappingException e) {
             verifyException(e, "Can not map JSON null into type char");
         }
         try {
-            mapper.readValue("{\"shortValue\":null}", PrimitivesBean.class);
+            mapper2.readValue("{\"shortValue\":null}", PrimitivesBean.class);
             fail("Expected failure for short + null");
         } catch (JsonMappingException e) {
             verifyException(e, "Can not map JSON null into type short");
         }
         try {
-            mapper.readValue("{\"intValue\":null}", PrimitivesBean.class);
+            mapper2.readValue("{\"intValue\":null}", PrimitivesBean.class);
             fail("Expected failure for int + null");
         } catch (JsonMappingException e) {
             verifyException(e, "Can not map JSON null into type int");
         }
         try {
-            mapper.readValue("{\"longValue\":null}", PrimitivesBean.class);
+            mapper2.readValue("{\"longValue\":null}", PrimitivesBean.class);
             fail("Expected failure for long + null");
         } catch (JsonMappingException e) {
             verifyException(e, "Can not map JSON null into type long");
@@ -169,13 +180,13 @@ public class TestJdkTypes
 
         // float/double
         try {
-            mapper.readValue("{\"floatValue\":null}", PrimitivesBean.class);
+            mapper2.readValue("{\"floatValue\":null}", PrimitivesBean.class);
             fail("Expected failure for float + null");
         } catch (JsonMappingException e) {
             verifyException(e, "Can not map JSON null into type float");
         }
         try {
-            mapper.readValue("{\"doubleValue\":null}", PrimitivesBean.class);
+            mapper2.readValue("{\"doubleValue\":null}", PrimitivesBean.class);
             fail("Expected failure for double + null");
         } catch (JsonMappingException e) {
             verifyException(e, "Can not map JSON null into type double");
@@ -187,7 +198,6 @@ public class TestJdkTypes
      */
     public void testCharSequence() throws IOException
     {
-        ObjectMapper mapper = new ObjectMapper();
         CharSequence cs = mapper.readValue("\"abc\"", CharSequence.class);
         assertEquals(String.class, cs.getClass());
         assertEquals("abc", cs.toString());
@@ -196,7 +206,6 @@ public class TestJdkTypes
     // [JACKSON-484]
     public void testInetAddress() throws IOException
     {
-        ObjectMapper mapper = new ObjectMapper();
         InetAddress address = mapper.readValue(quote("127.0.0.1"), InetAddress.class);
         assertEquals("127.0.0.1", address.getHostAddress());
 
@@ -227,7 +236,6 @@ public class TestJdkTypes
     // [JACKSON-605]
     public void testClassWithParams() throws IOException
     {
-        ObjectMapper mapper = new ObjectMapper();
         String json = mapper.writeValueAsString(new ParamClassBean("Foobar"));
 
         ParamClassBean result = mapper.readValue(json, ParamClassBean.class);
@@ -238,7 +246,6 @@ public class TestJdkTypes
     // by default, should return nulls, n'est pas?
     public void testEmptyStringForWrappers() throws IOException
     {
-        ObjectMapper mapper = new ObjectMapper();
         WrappersBean bean;
 
         // by default, ok to rely on defaults
@@ -267,7 +274,6 @@ public class TestJdkTypes
     // @since 1.9
     public void testEmptyStringForPrimitives() throws IOException
     {
-        ObjectMapper mapper = new ObjectMapper();
         PrimitivesBean bean;
         bean = mapper.readValue("{\"booleanValue\":\"\"}", PrimitivesBean.class);
         assertFalse(bean.booleanValue);
@@ -291,7 +297,6 @@ public class TestJdkTypes
     // @since 1.9
     public void testUntypedWithJsonArrays() throws Exception
     {
-        ObjectMapper mapper = new ObjectMapper();
         // by default we get:
         Object ob = mapper.readValue("[1]", Object.class);
         assertTrue(ob instanceof List<?>);
@@ -300,5 +305,16 @@ public class TestJdkTypes
         mapper.configure(DeserializationConfig.Feature.USE_JAVA_ARRAY_FOR_JSON_ARRAY, true);
         ob = mapper.readValue("[1]", Object.class);
         assertEquals(Object[].class, ob.getClass());
+    }
+
+    // Test for verifying that Long values are coerced to boolean correctly as well
+    public void testLongToBoolean() throws Exception
+    {
+        long value = 1L + Integer.MAX_VALUE;
+        BooleanBean b = mapper.readValue("{\"primitive\" : "+value+", \"wrapper\":"+value+", \"ctor\":"+value+"}",
+                    BooleanBean.class);
+        assertEquals(Boolean.TRUE, b.wrapper);
+        assertTrue(b.primitive);
+        assertEquals(Boolean.TRUE, b.ctor);
     }
 }
