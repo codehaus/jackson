@@ -756,8 +756,12 @@ public class JacksonAnnotationIntrospector
              */
             b = config.typeResolverBuilderInstance(ann, resAnn.value());
         } else { // if not, use standard one, if indicated by annotations
-            if (info == null || info.use() == JsonTypeInfo.Id.NONE) {
+            if (info == null) {
                 return null;
+            }
+            // bit special; must return 'marker' to block use of default typing:
+            if (info.use() == JsonTypeInfo.Id.NONE) {
+                return _constructNoTypeResolverBuilder();
             }
             b = _constructStdTypeResolverBuilder();
         }
@@ -797,4 +801,13 @@ public class JacksonAnnotationIntrospector
         return new StdTypeResolverBuilder();
     }
 
+    /**
+     * Helper method for dealing with "no type info" marker; can't be null
+     * (as it'd be replaced by default typing)
+     * 
+     * @since 1.9.4
+     */
+    protected StdTypeResolverBuilder _constructNoTypeResolverBuilder() {
+        return StdTypeResolverBuilder.noTypeInfoBuilder();
+    }    
 }

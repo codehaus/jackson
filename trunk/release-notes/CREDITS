@@ -836,3 +836,9 @@ Andreas Knoepfle, Tobias Schmid:
   * Contributed implementation for [JACKSON-657], key deserializers for
     java.util.Date and java.util.Calendar types
    [1.9.3]
+
+Steve Loeppky:
+  * Reported [JACKSON-746] Problems with JsonTypeInfo.Id.NONE, default typing
+   [1.9.4]
+   
+   
