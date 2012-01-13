@@ -162,12 +162,15 @@ public class JsonParserDelegate extends JsonParser
         return delegate.getTextOffset();
     }
 
-
     /*
     /**********************************************************
     /* Public API, access to token information, numeric
     /**********************************************************
      */
+
+    public boolean getBooleanValue() throws IOException, JsonParseException {
+        return delegate.getBooleanValue();
+    }
     
     @Override
     public BigInteger getBigIntegerValue() throws IOException,JsonParseException {
@@ -224,6 +227,11 @@ public class JsonParserDelegate extends JsonParser
         return delegate.getBinaryValue(b64variant);
     }
 
+    @Override
+    public Object getEmbeddedObject() throws IOException, JsonParseException {
+        return delegate.getEmbeddedObject();
+    }
+    
     @Override
     public JsonLocation getTokenLocation() {
         return delegate.getTokenLocation();
