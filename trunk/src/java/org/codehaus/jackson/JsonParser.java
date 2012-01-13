@@ -1094,8 +1094,8 @@ public abstract class JsonParser
     public boolean getBooleanValue()
         throws IOException, JsonParseException
     {
-        if (_currToken == JsonToken.VALUE_TRUE) return true;
-        if (_currToken == JsonToken.VALUE_FALSE) return false;
+        if (getCurrentToken() == JsonToken.VALUE_TRUE) return true;
+        if (getCurrentToken() == JsonToken.VALUE_FALSE) return false;
         throw new JsonParseException("Current token ("+_currToken+") not of boolean type", getCurrentLocation());
     }
 
