@@ -13,6 +13,9 @@ Description:
    (reported Lloyd S)
   * [JACKSON-741] Add missing linkage from ObjectMapper to JsonFactory
    by calling 'JsonFactory.setCodec()' from ObjectMapper constructor
+  * [JACKSON-753] JsonParserDelegate missing delegation of getBooleanValue(),
+    getEmbeddedObject()
+   (reported by Sebastian T)
 
 ------------------------------------------------------------------------
 === History: ===
