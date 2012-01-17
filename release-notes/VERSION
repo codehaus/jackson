@@ -16,6 +16,8 @@ Description:
   * [JACKSON-753] JsonParserDelegate missing delegation of getBooleanValue(),
     getEmbeddedObject()
    (reported by Sebastian T)
+  * [JACKSON-757] Problems with Enum values, annotations on constructors
+   (reported by Stephan B)
 
   (all fixes up to 1.8.8)
   
