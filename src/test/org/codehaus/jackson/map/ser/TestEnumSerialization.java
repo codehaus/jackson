@@ -97,25 +97,17 @@ public class TestEnumSerialization
     }
 
     // [JACKSON-757]
-    static enum NOK {
+    static enum NOT_OK {
         V1("v1"); 
         protected String key;
         // any runtime-persistent annotation is fine
-        NOK(@JsonProperty String key) { this.key = key; }
+        NOT_OK(@JsonProperty String key) { this.key = key; }
     }
 
     static enum OK {
         V1("v1");
         protected String key;
         OK(String key) { this.key = key; }
-    }
-
-    // problems with annotations on enum value constructors
-    public void testIssue757() throws Exception
-    {
-        ObjectMapper mapper = new ObjectMapper();
-        mapper.writeValueAsString(OK.V1);
-        mapper.writeValueAsString(NOK.V1);
     }
     
     /*
@@ -258,5 +250,13 @@ public class TestEnumSerialization
         // but we can change (dynamically, too!) it to be number-based
         mapper.enable(SerializationConfig.Feature.WRITE_ENUMS_USING_INDEX);
         assertEquals("1", mapper.writeValueAsString(TestEnum.B));
+    }
+
+    // [JACKSON-757]
+    public void testAnnotationsOnEnumCtor() throws Exception
+    {
+        ObjectMapper mapper = new ObjectMapper();
+        mapper.writeValueAsString(OK.V1);
+        mapper.writeValueAsString(NOT_OK.V1);
     }
 }
