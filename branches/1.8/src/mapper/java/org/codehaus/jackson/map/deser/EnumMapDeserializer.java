@@ -21,15 +21,26 @@ import org.codehaus.jackson.map.TypeDeserializer;
 public final class EnumMapDeserializer
     extends StdDeserializer<EnumMap<?,?>>
 {
-    final EnumResolver<?> _enumResolver;
+    protected final Class<?> _enumClass;
 
-    final JsonDeserializer<Object> _valueDeserializer;
+    protected final JsonDeserializer<Enum<?>> _keyDeserializer;
 
-    public EnumMapDeserializer(EnumResolver<?> enumRes, JsonDeserializer<Object> valueDes)
+    protected final JsonDeserializer<Object> _valueDeserializer;
+
+    @Deprecated
+    public EnumMapDeserializer(EnumResolver<?> enumRes, JsonDeserializer<Object> valueDeser)
+    {
+        this(enumRes.getEnumClass(), new EnumDeserializer(enumRes), valueDeser);
+    }
+
+    @SuppressWarnings("unchecked")
+    public EnumMapDeserializer(Class<?> enumClass, JsonDeserializer<?> keyDeserializer,
+            JsonDeserializer<Object> valueDeser)
     {
         super(EnumMap.class);
-        _enumResolver = enumRes;
-        _valueDeserializer = valueDes;
+        _enumClass = enumClass;
+        _keyDeserializer = (JsonDeserializer<Enum<?>>) keyDeserializer;
+        _valueDeserializer = valueDeser;
     }
 
     @SuppressWarnings("unchecked")
@@ -45,9 +56,9 @@ public final class EnumMapDeserializer
 
         while ((jp.nextToken()) != JsonToken.END_OBJECT) {
             String fieldName = jp.getCurrentName();
-            Enum<?> key = _enumResolver.findEnum(fieldName);
+            Enum<?> key = _keyDeserializer.deserialize(jp, ctxt);
             if (key == null) {
-                throw ctxt.weirdStringException(_enumResolver.getEnumClass(), "value not one of declared Enum instance names");
+                throw ctxt.weirdStringException(_enumClass, "value not one of declared Enum instance names");
             }
             // And then the value...
             JsonToken t = jp.nextToken();
@@ -73,8 +84,7 @@ public final class EnumMapDeserializer
     @SuppressWarnings("unchecked") 
     private EnumMap<?,?> constructMap()
     {
-        Class<? extends Enum<?>> enumCls = _enumResolver.getEnumClass();
-    	return new EnumMap(enumCls);
+    	return new EnumMap(_enumClass);
     }
 }
 

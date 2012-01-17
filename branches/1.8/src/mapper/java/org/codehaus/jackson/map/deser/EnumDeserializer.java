@@ -68,7 +68,7 @@ public class EnumDeserializer
         JsonToken curr = jp.getCurrentToken();
         
         // Usually should just get string value:
-        if (curr == JsonToken.VALUE_STRING) {
+        if (curr == JsonToken.VALUE_STRING || curr == JsonToken.FIELD_NAME) {
             String name = jp.getText();
             Enum<?> result = _resolver.findEnum(name);
             if (result == null) {
@@ -125,7 +125,7 @@ public class EnumDeserializer
             JsonToken curr = jp.getCurrentToken();
             
             // Usually should just get string value:
-            if (curr != JsonToken.VALUE_STRING) {
+            if (curr != JsonToken.VALUE_STRING && curr != JsonToken.FIELD_NAME) {
                 throw ctxt.mappingException(_enumClass);
             }
             String value = jp.getText();
