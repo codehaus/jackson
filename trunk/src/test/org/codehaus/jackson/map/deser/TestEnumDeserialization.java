@@ -1,6 +1,7 @@
 package org.codehaus.jackson.map.deser;
 
 import java.util.EnumMap;
+import java.util.EnumSet;
 import java.util.concurrent.TimeUnit;
 
 import org.codehaus.jackson.*;
@@ -49,7 +50,7 @@ public class TestEnumDeserialization
             return null;
         }
     }
-
+    
     protected enum LowerCaseEnum {
         A, B, C;
         private LowerCaseEnum() { }
@@ -195,5 +196,31 @@ public class TestEnumDeserialization
         assertEquals(String.valueOf(TestEnum.RULES.ordinal()), json);
         TestEnum result = mapper.readValue(json, TestEnum.class);
         assertSame(TestEnum.RULES, result);
-    }        
+    }
+
+   // [JACKSON-756]
+   public void testEnumWithCreatorEnumMaps() throws Exception
+   {
+	 ObjectMapper mapper = new ObjectMapper();
+	 EnumMap<EnumWithCreator,String> value = mapper.readValue("{\"enumA\":\"value\"}",
+		 new TypeReference<EnumMap<EnumWithCreator,String>>() {});
+	 assertEquals("value", value.get(EnumWithCreator.A));
+   }
+
+   // [JACKSON-756]
+   public void testEnumWithCreatorMaps() throws Exception
+   {
+	 ObjectMapper mapper = new ObjectMapper();
+	 java.util.HashMap<EnumWithCreator,String> value = mapper.readValue("{\"enumA\":\"value\"}",
+		 new TypeReference<java.util.HashMap<EnumWithCreator,String>>() {});
+	 assertEquals("value", value.get(EnumWithCreator.A));
+   }
+
+   public void testEnumWithCreatorEnumSets() throws Exception
+   {
+         ObjectMapper mapper = new ObjectMapper();
+         EnumSet<EnumWithCreator> value = mapper.readValue("[\"enumA\"]",
+                 new TypeReference<EnumSet<EnumWithCreator>>() {});
+         assertTrue(value.contains(EnumWithCreator.A));
+   }
 }
