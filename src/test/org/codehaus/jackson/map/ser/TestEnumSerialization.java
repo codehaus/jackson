@@ -5,6 +5,7 @@ import java.util.*;
 
 import org.codehaus.jackson.JsonGenerator;
 import org.codehaus.jackson.JsonProcessingException;
+import org.codehaus.jackson.annotate.JsonProperty;
 import org.codehaus.jackson.annotate.JsonValue;
 import org.codehaus.jackson.map.*;
 import org.codehaus.jackson.map.annotate.JsonSerialize;
@@ -73,7 +74,6 @@ public class TestEnumSerialization
             serialize(jgen, provider);
         }
 
-        @SuppressWarnings("deprecation")
         @Override
         public void serialize(JsonGenerator jgen, SerializerProvider provider) throws IOException, JsonProcessingException
         {
@@ -94,6 +94,28 @@ public class TestEnumSerialization
         public void add(TestEnum key, int value) {
             map.put(key, Integer.valueOf(value));
         }
+    }
+
+    // [JACKSON-757]
+    static enum NOK {
+        V1("v1"); 
+        protected String key;
+        // any runtime-persistent annotation is fine
+        NOK(@JsonProperty String key) { this.key = key; }
+    }
+
+    static enum OK {
+        V1("v1");
+        protected String key;
+        OK(String key) { this.key = key; }
+    }
+
+    // problems with annotations on enum value constructors
+    public void testIssue757() throws Exception
+    {
+        ObjectMapper mapper = new ObjectMapper();
+        mapper.writeValueAsString(OK.V1);
+        mapper.writeValueAsString(NOK.V1);
     }
     
     /*
