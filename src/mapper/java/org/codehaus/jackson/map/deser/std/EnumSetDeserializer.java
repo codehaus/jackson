@@ -7,6 +7,7 @@ import org.codehaus.jackson.JsonProcessingException;
 import org.codehaus.jackson.JsonParser;
 import org.codehaus.jackson.JsonToken;
 import org.codehaus.jackson.map.DeserializationContext;
+import org.codehaus.jackson.map.JsonDeserializer;
 import org.codehaus.jackson.map.TypeDeserializer;
 import org.codehaus.jackson.map.util.EnumResolver;
 
@@ -26,17 +27,24 @@ public class EnumSetDeserializer
 {
     protected final Class<Enum> _enumClass;
 
-    protected final EnumDeserializer _enumDeserializer;
+    protected final JsonDeserializer<Enum<?>> _enumDeserializer;
 
     @SuppressWarnings("unchecked" )
     public EnumSetDeserializer(EnumResolver enumRes)
     {
-        super(EnumSet.class);
-        _enumDeserializer = new EnumDeserializer(enumRes);
-        // this is fugly, but not sure of a better way...
-        _enumClass = (Class<Enum>) ((Class<?>) enumRes.getEnumClass());
+        // fugly, but what we can we do...
+        this((Class<Enum>) ((Class<?>) enumRes.getEnumClass()),
+                new EnumDeserializer(enumRes));
     }
 
+    @SuppressWarnings("unchecked" )
+    public EnumSetDeserializer(Class<?> enumClass, JsonDeserializer<?> deser)
+    {
+        super(EnumSet.class);
+        _enumClass = (Class<Enum>) enumClass;
+        _enumDeserializer = (JsonDeserializer<Enum<?>>) deser;
+    }
+    
     @SuppressWarnings("unchecked") 
     @Override
     public EnumSet<?> deserialize(JsonParser jp, DeserializationContext ctxt)
