@@ -846,5 +846,6 @@ Sebastian Thelen:
     getEmbeddedObject()
    [1.9.4]
 
-   
-   
+Stephan Bailliez:
+  * Reported [JACKSON-757] Problems with Enum values, annotations on constructors
+   [1.9.4]
