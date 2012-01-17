@@ -267,7 +267,8 @@ public abstract class BasicDeserializerFactory
         if (contentDeser == null) { // not defined by annotation
             // One special type: EnumSet:
             if (EnumSet.class.isAssignableFrom(collectionClass)) {
-                return new EnumSetDeserializer(constructEnumResolver(contentType.getRawClass(), config));
+                return new EnumSetDeserializer(contentType.getRawClass(),
+                        createEnumDeserializer(config, p, contentType, property));
             }
             // But otherwise we can just use a generic value deserializer:
             // 'null' -> collections have no referring fields
