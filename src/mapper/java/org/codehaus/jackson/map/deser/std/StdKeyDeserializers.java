@@ -7,6 +7,7 @@ import java.util.*;
 import org.codehaus.jackson.map.DeserializationConfig;
 import org.codehaus.jackson.map.KeyDeserializer;
 import org.codehaus.jackson.map.type.*;
+import org.codehaus.jackson.map.introspect.AnnotatedMethod;
 import org.codehaus.jackson.map.introspect.BasicBeanDescription;
 import org.codehaus.jackson.map.util.ClassUtil;
 import org.codehaus.jackson.map.util.EnumResolver;
@@ -67,11 +68,14 @@ public class StdKeyDeserializers
     {
         return StdKeyDeserializer.StringKD.forType(type.getClass());
     }
-    
-    public static KeyDeserializer constructEnumKeyDeserializer(DeserializationConfig config, JavaType type)
-    {
-        EnumResolver<?> er = EnumResolver.constructUnsafe(type.getRawClass(), config.getAnnotationIntrospector());
-        return new StdKeyDeserializer.EnumKD(er);
+
+    public static KeyDeserializer constructEnumKeyDeserializer(EnumResolver<?> enumResolver) {
+        return new StdKeyDeserializer.EnumKD(enumResolver, null);
+    }
+
+    public static KeyDeserializer constructEnumKeyDeserializer(EnumResolver<?> enumResolver,
+            AnnotatedMethod factory) {
+        return new StdKeyDeserializer.EnumKD(enumResolver, factory);
     }
 
     public static KeyDeserializer findStringBasedKeyDeserializer(DeserializationConfig config, JavaType type)

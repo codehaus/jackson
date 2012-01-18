@@ -8,6 +8,8 @@ import java.util.UUID;
 import org.codehaus.jackson.JsonProcessingException;
 import org.codehaus.jackson.io.NumberInput;
 import org.codehaus.jackson.map.*;
+import org.codehaus.jackson.map.introspect.AnnotatedMethod;
+import org.codehaus.jackson.map.util.ClassUtil;
 import org.codehaus.jackson.map.util.EnumResolver;
 
 /**
@@ -223,15 +225,24 @@ public abstract class StdKeyDeserializer
     {
         protected final EnumResolver<?> _resolver;
 
-        protected EnumKD(EnumResolver<?> er)
-        {
+        protected final AnnotatedMethod _factory;
+
+        protected EnumKD(EnumResolver<?> er, AnnotatedMethod factory) {
             super(er.getEnumClass());
             _resolver = er;
+            _factory = factory;
         }
 
         @Override
-        public Enum<?> _parse(String key, DeserializationContext ctxt) throws JsonMappingException
+        public Object _parse(String key, DeserializationContext ctxt) throws JsonMappingException
         {
+            if (_factory != null) {
+                try {
+                    return _factory.call1(key);
+                } catch (Exception e) {
+                    ClassUtil.unwrapAndThrowAsIAE(e);
+                }
+            }
             Enum<?> e = _resolver.findEnum(key);
             if (e == null) {
                 throw ctxt.weirdKeyException(_keyClass, key, "not one of values for Enum class");

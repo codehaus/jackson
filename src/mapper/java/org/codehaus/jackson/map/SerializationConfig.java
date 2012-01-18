@@ -934,7 +934,6 @@ public class SerializationConfig
      * @deprecated since 1.9 should either use {@link #withSerializationInclusion}
      *    to construct new instance, or configure through {@link ObjectMapper}
      */
-    @SuppressWarnings("deprecation")
     @Deprecated
     public void setSerializationInclusion(JsonSerialize.Inclusion props)
     {

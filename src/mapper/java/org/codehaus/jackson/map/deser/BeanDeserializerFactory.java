@@ -12,6 +12,7 @@ import org.codehaus.jackson.map.introspect.*;
 import org.codehaus.jackson.map.type.*;
 import org.codehaus.jackson.map.util.ArrayBuilders;
 import org.codehaus.jackson.map.util.ClassUtil;
+import org.codehaus.jackson.map.util.EnumResolver;
 import org.codehaus.jackson.type.JavaType;
 
 /**
@@ -316,11 +317,44 @@ public class BeanDeserializerFactory
         }
         // And then other one-offs; first, Enum:
         if (type.isEnumType()) {
-            return StdKeyDeserializers.constructEnumKeyDeserializer(config, type);
+            return _createEnumKeyDeserializer(config, type, property);
         }
         // One more thing: can we find ctor(String) or valueOf(String)?
         kdes = StdKeyDeserializers.findStringBasedKeyDeserializer(config, type);
         return kdes;
+    }
+
+    private KeyDeserializer _createEnumKeyDeserializer(DeserializationConfig config, JavaType type,
+            BeanProperty property)
+        throws JsonMappingException
+    {
+        BasicBeanDescription beanDesc = config.introspect(type);
+        Class<?> enumClass = type.getRawClass();
+        EnumResolver<?> enumRes = constructEnumResolver(enumClass, config);
+        // [JACKSON-193] May have @JsonCreator for static factory method:
+        for (AnnotatedMethod factory : beanDesc.getFactoryMethods()) {
+            if (config.getAnnotationIntrospector().hasCreatorAnnotation(factory)) {
+                int argCount = factory.getParameterCount();
+                if (argCount == 1) {
+                    Class<?> returnType = factory.getRawType();
+                    // usually should be class, but may be just plain Enum<?> (for Enum.valueOf()?)
+                    if (returnType.isAssignableFrom(enumClass)) {
+                        // note: mostly copied from 'EnumDeserializer.deserializerForCreator(...)'
+                        if (factory.getParameterType(0) != String.class) {
+                            throw new IllegalArgumentException("Parameter #0 type for factory method ("+factory+") not suitable, must be java.lang.String");
+                        }
+                        if (config.canOverrideAccessModifiers()) {
+                            ClassUtil.checkAndFixAccess(factory.getMember());
+                        }
+                        return StdKeyDeserializers.constructEnumKeyDeserializer(enumRes, factory);
+                    }
+                }
+                throw new IllegalArgumentException("Unsuitable method ("+factory+") decorated with @JsonCreator (for Enum type "
+                        +enumClass.getName()+")");
+            }
+        }
+        // [JACKSON-749] Also, need to consider @JsonValue, if one found
+        return StdKeyDeserializers.constructEnumKeyDeserializer(enumRes);
     }
     
     @Override
