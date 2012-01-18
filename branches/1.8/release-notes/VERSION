@@ -16,6 +16,9 @@ Description:
   * [JACKSON-753] JsonParserDelegate missing delegation of getBooleanValue(),
     getEmbeddedObject()
    (reported by Sebastian T)
+  * Partial fix for [JACSON-756]: EnumMap, EnumSet work with enums that use
+   @JsonCreator; regular Maps only with 1.9
+   (reported by Mika M)
 
 ------------------------------------------------------------------------
 === History: ===
