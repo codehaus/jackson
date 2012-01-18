@@ -49,7 +49,7 @@ public class StdKeyDeserializers
         /* As with other cases involving primitive types, we can use
          * default TypeFactory ok, even if it's not our first choice:
          */
-        _keyDeserializers.put(TypeFactory.defaultInstance().constructType(keyClass), kdeser);
+        _keyDeserializers.put(TypeFactory.defaultInstance().uncheckedSimpleType(keyClass), kdeser);
     }
 
     public static HashMap<JavaType, KeyDeserializer> constructAll()
@@ -59,10 +59,15 @@ public class StdKeyDeserializers
 
     /*
     /**********************************************************
-    /* Dynamic factory methods
+    /* Factory methods
     /**********************************************************
      */
 
+    public static KeyDeserializer constructStringKeyDeserializer(DeserializationConfig config, JavaType type)
+    {
+        return StdKeyDeserializer.StringKD.forType(type.getClass());
+    }
+    
     public static KeyDeserializer constructEnumKeyDeserializer(DeserializationConfig config, JavaType type)
     {
         EnumResolver<?> er = EnumResolver.constructUnsafe(type.getRawClass(), config.getAnnotationIntrospector());

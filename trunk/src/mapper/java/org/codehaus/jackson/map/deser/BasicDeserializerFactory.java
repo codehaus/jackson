@@ -15,6 +15,7 @@ import org.codehaus.jackson.map.deser.std.JsonNodeDeserializer;
 import org.codehaus.jackson.map.deser.std.MapDeserializer;
 import org.codehaus.jackson.map.deser.std.ObjectArrayDeserializer;
 import org.codehaus.jackson.map.deser.std.PrimitiveArrayDeserializers;
+import org.codehaus.jackson.map.deser.std.StdKeyDeserializers;
 import org.codehaus.jackson.map.deser.std.StringCollectionDeserializer;
 import org.codehaus.jackson.map.ext.OptionalHandlerFactory;
 import org.codehaus.jackson.map.introspect.*;
@@ -43,6 +44,13 @@ public abstract class BasicDeserializerFactory
      * types. These need not go through factory.
      */
     final static HashMap<ClassKey, JsonDeserializer<Object>> _simpleDeserializers = StdDeserializers.constructAll();
+
+    /**
+     * Set of available key deserializers is currently limited
+     * to standard types; and all known instances are storing
+     * in this map.
+     */
+    final static HashMap<JavaType, KeyDeserializer> _keyDeserializers = StdKeyDeserializers.constructAll();
     
     /* We do some defaulting for abstract Map classes and
      * interfaces, to avoid having to use exact types or annotations in

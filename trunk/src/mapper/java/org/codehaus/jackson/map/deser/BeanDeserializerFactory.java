@@ -6,6 +6,7 @@ import org.codehaus.jackson.JsonNode;
 import org.codehaus.jackson.map.*;
 import org.codehaus.jackson.map.deser.impl.CreatorCollector;
 import org.codehaus.jackson.map.deser.impl.CreatorProperty;
+import org.codehaus.jackson.map.deser.std.StdKeyDeserializers;
 import org.codehaus.jackson.map.deser.std.ThrowableDeserializer;
 import org.codehaus.jackson.map.introspect.*;
 import org.codehaus.jackson.map.type.*;
@@ -292,6 +293,7 @@ public class BeanDeserializerFactory
             BeanProperty property)
         throws JsonMappingException
     {
+        // First: possible custom deserializers
         if (_factoryConfig.hasKeyDeserializers()) {
             BasicBeanDescription beanDesc = config.introspectClassAnnotations(type.getRawClass());
             for (KeyDeserializers d  : _factoryConfig.keyDeserializers()) {
@@ -301,7 +303,24 @@ public class BeanDeserializerFactory
                 }
             }
         }
-        return null;
+        // and if none found, standard ones:
+        // No serializer needed if it's plain old String, or Object/untyped
+        Class<?> raw = type.getRawClass();
+        if (raw == String.class || raw == Object.class) {
+            return StdKeyDeserializers.constructStringKeyDeserializer(config, type);
+        }
+        // Most other keys are of limited number of static types
+        KeyDeserializer kdes = _keyDeserializers.get(type);
+        if (kdes != null) {
+            return kdes;
+        }
+        // And then other one-offs; first, Enum:
+        if (type.isEnumType()) {
+            return StdKeyDeserializers.constructEnumKeyDeserializer(config, type);
+        }
+        // One more thing: can we find ctor(String) or valueOf(String)?
+        kdes = StdKeyDeserializers.findStringBasedKeyDeserializer(config, type);
+        return kdes;
     }
     
     @Override
