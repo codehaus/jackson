@@ -849,3 +849,8 @@ Sebastian Thelen:
 Stephan Bailliez:
   * Reported [JACKSON-757] Problems with Enum values, annotations on constructors
    [1.9.4]
+
+Mika Mannermaa:
+  * Reported [JACKSON-756] Problems with enums, @JsonCreator, when used as keys
+    of EnumMap, regular  Map, or contents of EnumSet
+   [1.9.4]
