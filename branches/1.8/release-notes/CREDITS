@@ -752,3 +752,9 @@ Lloyd Smith:
   * Reported [JACKSON-701] ArrayIndexOutOfBoundsException when trying to serialize
     non-static inner classes with annotations on last ctor param
    [1.8.8]
+
+Erik Gorset:
+  * Reported [JACKSON-763] State of base64/byte[] decoding not reset when
+    using 'convertValue()' for list of byte[] values.
+   [1.8.9]
+
