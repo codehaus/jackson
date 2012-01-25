@@ -8,6 +8,8 @@ Description:
   
   Fixes:
 
+  * [JACKSON-757]: further fixing (1.9.4 had partial fix)
+
 ------------------------------------------------------------------------
 === History: ===
 ------------------------------------------------------------------------
@@ -28,6 +30,7 @@ Description:
     of EnumMap, regular Map, or contents of EnumSet
    (reported by Mika M)
   * [JACKSON-757] Problems with Enum values, annotations on constructors
+     -- but note, some issues remained for 1.9.5 to tackle
    (reported by Stephan B)
 
   (all fixes up to 1.8.8)
