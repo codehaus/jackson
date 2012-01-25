@@ -5,10 +5,10 @@ import java.util.*;
 
 import org.codehaus.jackson.JsonGenerator;
 import org.codehaus.jackson.JsonProcessingException;
+import org.codehaus.jackson.annotate.JsonProperty;
 import org.codehaus.jackson.annotate.JsonValue;
 import org.codehaus.jackson.map.*;
 import org.codehaus.jackson.map.annotate.JsonSerialize;
-import org.codehaus.jackson.map.ser.ToStringSerializer;
 
 /**
  * Unit tests for verifying serialization of simple basic non-structured
@@ -56,6 +56,7 @@ public class TestEnumSerialization
     }
 
     protected static interface ToStringMixin {
+        @Override
         @JsonValue public String toString();
     }
 
@@ -65,12 +66,14 @@ public class TestEnumSerialization
 
         private SerializableEnum() { }
         
+        @Override
         public void serializeWithType(JsonGenerator jgen, SerializerProvider provider, TypeSerializer typeSer)
                 throws IOException, JsonProcessingException
         {
             serialize(jgen, provider);
         }
 
+        @Override
         public void serialize(JsonGenerator jgen, SerializerProvider provider) throws IOException, JsonProcessingException
         {
             jgen.writeString("foo");
@@ -90,6 +93,20 @@ public class TestEnumSerialization
         public void add(TestEnum key, int value) {
             map.put(key, Integer.valueOf(value));
         }
+    }
+
+    // [JACKSON-757]
+    static enum NOT_OK {
+        V1("v1"); 
+        protected String key;
+        // any runtime-persistent annotation is fine
+        NOT_OK(@JsonProperty String key) { this.key = key; }
+    }
+
+    static enum OK {
+        V1("v1");
+        protected String key;
+        OK(String key) { this.key = key; }
     }
     
     /*
@@ -220,4 +237,22 @@ public class TestEnumSerialization
         String json = new ObjectMapper().writeValueAsString(bean);
         assertEquals("{\"map\":{\"b\":3}}", json);
     }
+
+    // [JACKSON-757]
+    public void testAnnotationsOnEnumCtor() throws Exception
+    {
+        ObjectMapper mapper = new ObjectMapper();
+        assertEquals(quote("V1"), mapper.writeValueAsString(OK.V1));
+        assertEquals(quote("V1"), mapper.writeValueAsString(NOT_OK.V1));
+        assertEquals(quote("V2"), mapper.writeValueAsString(NOT_OK2.V2));
+    }
+}
+
+
+// [JACKSON-757], non-inner enum
+enum NOT_OK2 {
+    V2("v2"); 
+    protected String key;
+    // any runtime-persistent annotation is fine
+    NOT_OK2(@JsonProperty String key) { this.key = key; }
 }
