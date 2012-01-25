@@ -256,7 +256,17 @@ public class TestEnumSerialization
     public void testAnnotationsOnEnumCtor() throws Exception
     {
         ObjectMapper mapper = new ObjectMapper();
-        mapper.writeValueAsString(OK.V1);
-        mapper.writeValueAsString(NOT_OK.V1);
+        assertEquals(quote("V1"), mapper.writeValueAsString(OK.V1));
+        assertEquals(quote("V1"), mapper.writeValueAsString(NOT_OK.V1));
+        assertEquals(quote("V2"), mapper.writeValueAsString(NOT_OK2.V2));
     }
+}
+
+
+// [JACKSON-757], non-inner enum
+enum NOT_OK2 {
+    V2("v2"); 
+    protected String key;
+    // any runtime-persistent annotation is fine
+    NOT_OK2(@JsonProperty String key) { this.key = key; }
 }
