@@ -9,6 +9,8 @@ Description:
   Fixes:
 
   * [JACKSON-757]: further fixing (1.9.4 had partial fix)
+  * [JACKSON-773]: Bug in SimpleFilterProvider constructor
+   (reported by Kenny M)
 
 ------------------------------------------------------------------------
 === History: ===
