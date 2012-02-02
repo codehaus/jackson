@@ -34,7 +34,7 @@ public final class PropertyBasedCreator
      * If some property values must always have a non-null value (like
      * primitive types do), this array contains such default values.
      */
-    protected final Object[]  _defaultValues;
+    protected Object[]  _defaultValues;
 
     /**
      * Array that contains properties that expect value to inject, if any;
@@ -84,6 +84,13 @@ public final class PropertyBasedCreator
     public void assignDeserializer(SettableBeanProperty prop, JsonDeserializer<Object> deser) {
         prop = prop.withValueDeserializer(deser);
         _properties.put(prop.getName(), prop);
+        Object nullValue = deser.getNullValue();
+        if (nullValue != null) {
+            if (_defaultValues == null) {
+                _defaultValues = new Object[_properties.size()];
+            }
+            _defaultValues[prop.getPropertyIndex()] = nullValue;
+        }
     }
     
     /**
