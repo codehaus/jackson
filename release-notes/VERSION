@@ -11,6 +11,8 @@ Description:
   * [JACKSON-757]: further fixing (1.9.4 had partial fix)
   * [JACKSON-773]: Bug in SimpleFilterProvider constructor
    (reported by Kenny M)
+  * [JACKSON-775]: MissingNode.asText() should return "", not null
+   (reported by Ittai Z)
 
 ------------------------------------------------------------------------
 === History: ===

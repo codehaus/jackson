@@ -854,3 +854,7 @@ Mika Mannermaa:
   * Reported [JACKSON-756] Problems with enums, @JsonCreator, when used as keys
     of EnumMap, regular  Map, or contents of EnumSet
    [1.9.4]
+
+Ittai Zeidman:
+  * Reported [JACKSON-775]: MissingNode.asText() should return "", not null
+   [1.9.5]
