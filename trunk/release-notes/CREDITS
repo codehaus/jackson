@@ -855,6 +855,11 @@ Mika Mannermaa:
     of EnumMap, regular  Map, or contents of EnumSet
    [1.9.4]
 
+Nathaniel Bauernfeind:
+  * Reported [JACKSON-774]: PropertyBasedCreator not using JsonDeserializer.getNullValue()
+   [1.9.5]
+
 Ittai Zeidman:
   * Reported [JACKSON-775]: MissingNode.asText() should return "", not null
    [1.9.5]
+   
