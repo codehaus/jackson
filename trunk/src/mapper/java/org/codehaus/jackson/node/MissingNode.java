@@ -32,8 +32,9 @@ public final class MissingNode
     @Override
     public boolean isMissingNode() { return true; }
 
+    // as per [JACKSON-775]
     @Override
-    public String asText() { return null; }
+    public String asText() { return ""; }
     
     @Override
     public int asInt(int defaultValue) {
