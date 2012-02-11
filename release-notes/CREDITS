@@ -863,3 +863,6 @@ Ittai Zeidman:
   * Reported [JACKSON-775]: MissingNode.asText() should return "", not null
    [1.9.5]
    
+Alexander Klauer:
+  * Reported [JACKSON-779]: Problems with multi-byte UTF-8 chars in JSON	comments
+   [1.9.5]
