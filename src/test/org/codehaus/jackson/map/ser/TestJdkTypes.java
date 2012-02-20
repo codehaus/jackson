@@ -2,6 +2,7 @@ package org.codehaus.jackson.map.ser;
 
 import java.io.*;
 import java.net.InetAddress;
+import java.nio.charset.Charset;
 import java.util.*;
 import java.util.regex.Pattern;
 
@@ -70,4 +71,9 @@ public class TestJdkTypes
         assertEquals(quote("void"), mapper.writeValueAsString(Void.TYPE));
     }
 
+   // [JACKSON-789]
+   public void testCharset() throws IOException {
+        ObjectMapper mapper = new ObjectMapper();
+        assertEquals(quote("UTF-8"), mapper.writeValueAsString(Charset.forName("UTF-8")));
+    }
 }
