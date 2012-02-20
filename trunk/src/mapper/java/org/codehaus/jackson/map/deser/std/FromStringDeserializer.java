@@ -4,6 +4,7 @@ import java.io.*;
 import java.net.InetAddress;
 import java.net.URI;
 import java.net.URL;
+import java.nio.charset.Charset;
 import java.util.*;
 import java.util.regex.Pattern;
 
@@ -39,6 +40,8 @@ public abstract class FromStringDeserializer<T>
         // 1.8:
         all.add(new InetAddressDeserializer());
         all.add(new TimeZoneDeserializer());
+        // 1.9
+        all.add(new CharsetDeserializer());
 
         return all;
     }
@@ -226,6 +229,20 @@ public abstract class FromStringDeserializer<T>
         {
             return InetAddress.getByName(value);
         }
+    }
+
+    // [JACKSON-789] (since 1.9.5)
+    protected static class CharsetDeserializer
+        extends FromStringDeserializer<Charset>
+    {
+        public CharsetDeserializer() { super(Charset.class); }
+    
+        @Override
+	    protected Charset _deserialize(String value, DeserializationContext ctxt)
+            throws IOException
+	    {
+		return Charset.forName(value);
+	    }
     }
 
     /**
