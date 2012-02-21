@@ -2,6 +2,7 @@ package org.codehaus.jackson.map.deser;
 
 import java.util.*;
 
+import org.codehaus.jackson.annotate.JsonProperty;
 import org.codehaus.jackson.map.*;
 
 /**
@@ -50,6 +51,18 @@ public class TestOverloaded
 
     static class WasNumberBean extends NumberBean {
     	public void setValue(String str) { value = str; }
+    }
+
+    // [JACKSON-739]
+    static class Overloaded739
+    {
+        protected Object _value;
+        
+        @JsonProperty
+	    public void setValue(String str) { _value = str; }
+
+        // no annotation, should not be chosen:
+        public void setValue(Object o) { throw new UnsupportedOperationException(); }
     }
 
     /**
@@ -110,6 +123,15 @@ public class TestOverloaded
             ("{\"value\" : \"abc\"}", WasNumberBean.class);
         assertNotNull(bean);
         assertEquals("abc", bean.value);
+    }
+
+    // for [JACKSON-739]
+    public void testConflictResolution() throws Exception
+    {
+        Overloaded739 bean = new ObjectMapper().readValue
+	    ("{\"value\":\"abc\"}", Overloaded739.class);
+        assertNotNull(bean);
+        assertEquals("abc", bean._value);
     }
 
     /**
