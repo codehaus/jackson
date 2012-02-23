@@ -15,6 +15,8 @@ Description:
    (reported by Nathaniel B)
   * [JACKSON-775]: MissingNode.asText() should return "", not null
    (reported by Ittai Z)
+  * [JACKSON-778]: Incorrect detection of generic types with TypeReference
+   (reported by Vladimir P)
   * [JACKSON-779]: Problems with multi-byte UTF-8 chars in JSON comments
    (reported by Alexander K)
   * [JACKSON-789]: Add support for 'java.nio.charset.Charset'

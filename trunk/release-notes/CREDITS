@@ -864,5 +864,10 @@ Ittai Zeidman:
    [1.9.5]
    
 Alexander Klauer:
-  * Reported [JACKSON-779]: Problems with multi-byte UTF-8 chars in JSON	comments
+  * Reported [JACKSON-779]: Problems with multi-byte UTF-8 chars in JSON comments
+   [1.9.5]
+
+Vladimir Petrukhin:
+  * Reported [JACKSON-778], provided test case: Incorrect detection of generic
+    types with TypeReference
    [1.9.5]
