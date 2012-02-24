@@ -800,17 +800,29 @@ public final class AnnotatedClass
          * (for non-static inner classes) are NOT included, but type is? Strange, sounds like
          * a bug. Alas, we can't really fix that...
          */
-        AnnotationMap[] resolvedAnnotations;
+        AnnotationMap[] resolvedAnnotations = null;
         if (paramCount != paramAnns.length) {
-            // only cover one "missing" annotation, and only for member classes; to try to avoid
-            // false "fixes" for possible other error cases
-            if (ctor.getDeclaringClass().isMemberClass() &&  paramCount == (paramAnns.length + 1)) {
-                // hack attack: prepend a null entry to make things match
+            // Limits of the work-around (to avoid hiding real errors):
+            // first, only applicable for member classes and then either:
+
+            Class<?> dc = ctor.getDeclaringClass();
+            // (a) is enum, which have two extra hidden params (name, index)
+            if (dc.isEnum() && (paramCount == paramAnns.length + 2)) {
                 Annotation[][] old = paramAnns;
-                paramAnns = new Annotation[old.length+1][];
-                System.arraycopy(old, 0, paramAnns, 1, old.length);
+                paramAnns = new Annotation[old.length+2][];
+                System.arraycopy(old, 0, paramAnns, 2, old.length);
                 resolvedAnnotations = _collectRelevantAnnotations(paramAnns);
-            } else {
+            } else if (dc.isMemberClass()) {
+                // (b) non-static inner classes, get implicit 'this' for parameter, not  annotation
+                if (paramCount == (paramAnns.length + 1)) {
+                    // hack attack: prepend a null entry to make things match
+                    Annotation[][] old = paramAnns;
+                    paramAnns = new Annotation[old.length+1][];
+                    System.arraycopy(old, 0, paramAnns, 1, old.length);
+                    resolvedAnnotations = _collectRelevantAnnotations(paramAnns);
+                }
+            }
+            if (resolvedAnnotations == null) {
                 throw new IllegalStateException("Internal error: constructor for "+ctor.getDeclaringClass().getName()
                         +" has mismatch: "+paramCount+" parameters; "+paramAnns.length+" sets of annotations");
             }
