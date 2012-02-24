@@ -13,6 +13,8 @@ Description:
    (reported by Erik G)
   * [JACKSON-773]: Bug in SimpleFilterProvider constructor
    (reported by Kenny M)
+  * [JACKSON-796]: Byte[] handling for round-tripping incorrect, esp. with Smile
+   (reported by Chris B)
 
 ------------------------------------------------------------------------
 === History: ===
