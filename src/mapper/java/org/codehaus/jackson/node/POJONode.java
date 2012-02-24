@@ -28,6 +28,16 @@ public final class POJONode
     @Override
     public boolean isPojo() { return true; }
 
+    @Override
+    public byte[] getBinaryValue()
+        throws IOException
+    {
+        if (_value instanceof byte[]) {
+            return (byte[]) _value;
+        }
+        return super.getBinaryValue();
+    }
+    
     /* 
     /**********************************************************
     /* General type coercions

@@ -871,3 +871,7 @@ Vladimir Petrukhin:
   * Reported [JACKSON-778], provided test case: Incorrect detection of generic
     types with TypeReference
    [1.9.5]
+
+Christopher Brown:
+  * Reported [JACKSON-796]: Problems with byte[] conversion to/from JsonNode.
+   [1.9.5]
