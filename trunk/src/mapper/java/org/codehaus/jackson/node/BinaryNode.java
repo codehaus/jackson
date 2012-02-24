@@ -17,6 +17,12 @@ public final class BinaryNode
 
     final byte[] _data;
 
+    /* 
+    /**********************************************************
+    /* Construction
+    /**********************************************************
+     */
+    
     public BinaryNode(byte[] data)
     {
         _data = data;
@@ -54,6 +60,12 @@ public final class BinaryNode
         return new BinaryNode(data, offset, length);
     }
 
+    /* 
+    /**********************************************************
+    /* General type coercions
+    /**********************************************************
+     */
+    
     @Override
     public JsonToken asToken() {
         /* No distinct type; could use one for textual values,
@@ -83,6 +95,12 @@ public final class BinaryNode
         return Base64Variants.getDefaultVariant().encode(_data, false);
     }
 
+    /*
+    /**********************************************************
+    /* Public API, serialization
+    /**********************************************************
+     */
+    
     @Override
     public final void serialize(JsonGenerator jg, SerializerProvider provider)
         throws IOException, JsonProcessingException

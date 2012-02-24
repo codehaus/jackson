@@ -150,29 +150,33 @@ public class TestConversions extends BaseMapTest
         Assert.assertArrayEquals(inputData, result.data);
     }
 
-    public void testEmbeddedObject() throws Exception
+    public void testBinaryData() throws Exception
     {
         ObjectMapper mapper = new ObjectMapper();
         TokenBuffer buf = new TokenBuffer(mapper);
-        buf.writeObject(new byte[0]);
+        buf.writeObject(new byte[3]);
         JsonNode node = mapper.readTree(buf.asParser());
-        assertTrue(node.isPojo());
-        assertEquals(byte[].class, ((POJONode) node).getPojo().getClass());
+//        assertTrue(node.isBinary());
+        byte[] data = node.getBinaryValue();
+        assertNotNull(data);
+        assertEquals(3, data.length);
     }
 
+    private final Object MARKER = new Object();
+    
     public void testEmbeddedObjectInArray() throws Exception
     {
         ObjectMapper mapper = new ObjectMapper();
         TokenBuffer buf = new TokenBuffer(mapper);
         buf.writeStartArray();
-        buf.writeObject(new byte[0]);
+        buf.writeObject(MARKER);
         buf.writeEndArray();
         JsonNode node = mapper.readTree(buf.asParser());
         assertTrue(node.isArray());
         assertEquals(1, node.size());
         JsonNode n = node.get(0);
         assertTrue(n.isPojo());
-        assertEquals(byte[].class, ((POJONode) n).getPojo().getClass());
+        assertSame(MARKER, ((POJONode) n).getPojo());
     }
 
     public void testEmbeddedObjectInObject() throws Exception
@@ -181,14 +185,14 @@ public class TestConversions extends BaseMapTest
         TokenBuffer buf = new TokenBuffer(mapper);
         buf.writeStartObject();
         buf.writeFieldName("pojo");
-        buf.writeObject(new byte[0]);
+        buf.writeObject(MARKER);
         buf.writeEndObject();
         JsonNode node = mapper.readTree(buf.asParser());
         assertTrue(node.isObject());
         assertEquals(1, node.size());
         JsonNode n = node.get("pojo");
         assertTrue(n.isPojo());
-        assertEquals(byte[].class, ((POJONode) n).getPojo().getClass());
+        assertSame(MARKER, ((POJONode) n).getPojo());
     }
 }
 

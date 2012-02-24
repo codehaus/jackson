@@ -20,6 +20,8 @@ Description:
   * [JACKSON-779]: Problems with multi-byte UTF-8 chars in JSON comments
    (reported by Alexander K)
   * [JACKSON-789]: Add support for 'java.nio.charset.Charset'
+  * [JACKSON-796]: Problems with byte[] conversion to/from JsonNode.
+   (reported by Christopher B)
 
 ------------------------------------------------------------------------
 === History: ===
