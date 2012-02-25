@@ -2,6 +2,7 @@ package org.codehaus.jackson.map.deser;
 
 import java.util.*;
 
+import org.codehaus.jackson.JsonNode;
 import org.codehaus.jackson.annotate.*;
 import org.codehaus.jackson.map.*;
 
@@ -98,6 +99,22 @@ public class TestAnyProperties
            return (String) additionalProperties.get("name");
         }
     }
+
+    public class Bean797Base
+    {
+        @JsonAnyGetter
+        public Map<String, JsonNode> getUndefinedProperties() {
+            throw new IllegalStateException("Should not call parent version!");
+        }
+    }
+
+    public class Bean797BaseImpl extends Bean797Base
+    {
+	@Override
+        public Map<String, JsonNode> getUndefinedProperties() {
+            return new HashMap<String, JsonNode>();
+        }
+    }
     
     /*
     /**********************************************************
@@ -169,5 +186,12 @@ public class TestAnyProperties
         assertNotNull(bean.additionalProperties);
         assertEquals(1, bean.additionalProperties.size());
         assertEquals("Bob", bean.additionalProperties.get("name"));
+    }
+
+    public void testIssue797() throws Exception
+    {
+	final ObjectMapper mapper = new ObjectMapper();
+        String json = mapper.writeValueAsString(new Bean797BaseImpl());
+        assertEquals("{}", json);
     }
 }
