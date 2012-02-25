@@ -1,11 +1,19 @@
-Version: 1.9.5
+Version: 1.9.6
 
 Release date:
-  24-Feb-2012
+  xx-Mar-2012
 
 Description:
   Another patch release for 1.9.
   
+  Fixes:
+
+------------------------------------------------------------------------
+=== History: ===
+------------------------------------------------------------------------
+
+1.9.5 [24-Feb-2012]
+
   Fixes:
 
   * [JACKSON-757]: further fixing (1.9.4 had partial fix)
@@ -22,10 +30,6 @@ Description:
   * [JACKSON-789]: Add support for 'java.nio.charset.Charset'
   * [JACKSON-796]: Problems with byte[] conversion to/from JsonNode.
    (reported by Christopher B)
-
-------------------------------------------------------------------------
-=== History: ===
-------------------------------------------------------------------------
 
 1.9.4 [20-Jan-2012]
 
