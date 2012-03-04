@@ -8,6 +8,9 @@ Description:
   
   Fixes:
 
+  * [JACKSON-794]: JDK 7 has new property for Exceptions ("suppressable"),
+    needs to be ignored during deserialization
+
 ------------------------------------------------------------------------
 === History: ===
 ------------------------------------------------------------------------
