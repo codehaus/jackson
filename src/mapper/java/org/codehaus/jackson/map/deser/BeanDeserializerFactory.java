@@ -761,6 +761,8 @@ public class BeanDeserializerFactory
          * as there's no 'setMessage()' method
         */
         builder.addIgnorable("message");
+        // [JACKSON-794]: JDK 7 also added "getSuppressed", skip if we have such data:
+        builder.addIgnorable("suppressed");
 
         // [JACKSON-440]: update builder now that all information is in?
         if (_factoryConfig.hasDeserializerModifiers()) {
