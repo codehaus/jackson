@@ -1557,24 +1557,36 @@ public class SmileParser
         int q = 0;
 
         while (true) {
+            if (_inputPtr >= _inputEnd) {
+                loadMoreGuaranteed();
+            }
             byte b = inBuf[_inputPtr++];
             if (BYTE_MARKER_END_OF_STRING == b) {
                 bytes = 0;
                 break;
             }
             q = ((int) b) & 0xFF;
+            if (_inputPtr >= _inputEnd) {
+                loadMoreGuaranteed();
+            }
             b = inBuf[_inputPtr++];
             if (BYTE_MARKER_END_OF_STRING == b) {
                 bytes = 1;
                 break;
             }
             q = (q << 8) | (b & 0xFF);
+            if (_inputPtr >= _inputEnd) {
+                loadMoreGuaranteed();
+            }
             b = inBuf[_inputPtr++];
             if (BYTE_MARKER_END_OF_STRING == b) {
                 bytes = 2;
                 break;
             }
             q = (q << 8) | (b & 0xFF);
+            if (_inputPtr >= _inputEnd) {
+                loadMoreGuaranteed();
+            }
             b = inBuf[_inputPtr++];
             if (BYTE_MARKER_END_OF_STRING == b) {
                 bytes = 3;

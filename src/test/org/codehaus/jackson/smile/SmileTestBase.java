@@ -1,7 +1,6 @@
 package org.codehaus.jackson.smile;
 
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
+import java.io.*;
 
 import org.junit.Assert;
 
@@ -29,13 +28,29 @@ abstract class SmileTestBase
         return _smileParser(input, false);
     }
 
+    protected SmileParser _smileParser(InputStream input) throws IOException {
+        return _smileParser(input, false);
+    }
+    
     protected SmileParser _smileParser(byte[] input, boolean requireHeader) throws IOException
     {
         SmileFactory f = smileFactory(requireHeader, false, false);
     	return _smileParser(f, input);
     }
 
+    protected SmileParser _smileParser(InputStream input, boolean requireHeader) throws IOException
+    {
+        SmileFactory f = smileFactory(requireHeader, false, false);
+        return _smileParser(f, input);
+    }
+    
     protected SmileParser _smileParser(SmileFactory f, byte[] input)
+        throws IOException
+    {
+        return f.createJsonParser(input);
+    }
+
+    protected SmileParser _smileParser(SmileFactory f, InputStream input)
         throws IOException
     {
         return f.createJsonParser(input);
