@@ -8,8 +8,13 @@ Description:
   
   Fixes:
 
+  * [JACKSON-763] State of base64/byte[] decoding not reset when
+    using 'convertValue()' for list of byte[] values.
+   (reported by Erik G)
   * [JACKSON-794]: JDK 7 has new property for Exceptions ("suppressable"),
     needs to be ignored during deserialization
+  * [JACKSON-803]: Problems with Smile, parsing of long names
+   (reported by D Lam)
 
 ------------------------------------------------------------------------
 === History: ===
