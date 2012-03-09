@@ -17,6 +17,8 @@ Description:
     needs to be ignored during deserialization
   * [JACKSON-796]: Byte[] handling for round-tripping incorrect, esp. with Smile
    (reported by Chris B)
+  * [JACKSON-802]: Improvements to class loading to use both contextual
+    class loader and Class.forName, as necessary
   * [JACKSON-803]: Problems with Smile, parsing of long names
    (reported by D Lam)
 
