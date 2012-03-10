@@ -13,6 +13,7 @@ Description:
    (reported by Erik G)
   * [JACKSON-794]: JDK 7 has new property for Exceptions ("suppressable"),
     needs to be ignored during deserialization
+  * [JACKSON-799]: JsonSerialize.as not working as class annotation, for root values
   * [JACKSON-802]: Improvements to class loading to use both contextual
     class loader and Class.forName, as necessary
   * [JACKSON-803]: Problems with Smile, parsing of long names

@@ -258,6 +258,10 @@ public class BeanSerializerFactory
         JavaType type = modifyTypeByAnnotation(config, beanDesc.getClassInfo(), origType);
         // and if so, we consider it implicit "force static typing" instruction
         boolean staticTyping = (type != origType);
+	if (type != origType && type.getRawClass() != origType.getRawClass()) {
+	    // [JACKSON-799]: need to re-introspect
+	    beanDesc = config.introspect(type);
+	}
         
         // Container types differ from non-container types:
         if (origType.isContainerType()) {

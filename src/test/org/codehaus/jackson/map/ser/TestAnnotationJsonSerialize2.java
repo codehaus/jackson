@@ -111,6 +111,31 @@ public class TestAnnotationJsonSerialize2
         @JsonSerialize(using=NullSerializer.class)
         public String value = "abc";
     }
+
+    // [JACKSON-799] stuff:
+    
+    public interface Fooable {
+        public int getFoo();
+    }
+
+    // force use of interface
+    @JsonSerialize(as=Fooable.class)
+    public static class FooImpl implements Fooable {
+        public int getFoo() { return 42; }
+        public int getBar() { return 15; }
+    }
+
+    public class FooableWrapper {
+        public FooImpl getFoo() {
+            return new FooImpl();
+        }
+    }
+
+    public void testSerializeAsForSimpleProp() throws IOException
+    {
+	ObjectMapper mapper = new ObjectMapper();
+        assertEquals("{\"foo\":{\"foo\":42}}", mapper.writeValueAsString(new FooableWrapper()));
+    }
     
     /*
     /**********************************************************
