@@ -18,6 +18,7 @@ Description:
     class loader and Class.forName, as necessary
   * [JACKSON-803]: Problems with Smile, parsing of long names
    (reported by D Lam)
+  * [JACKSON-804]: Allow byte range up to 255, for interoperability with unsigned bytes
 
 ------------------------------------------------------------------------
 === History: ===

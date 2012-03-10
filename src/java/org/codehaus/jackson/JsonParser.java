@@ -33,7 +33,8 @@ public abstract class JsonParser
     implements Closeable, Versioned
 {
     private final static int MIN_BYTE_I = (int) Byte.MIN_VALUE;
-    private final static int MAX_BYTE_I = (int) Byte.MAX_VALUE;
+    // [JACKSON-804]: allow range up to 255 (instead of Java's 127) for better interoperability
+    private final static int MAX_BYTE_I = 255;
 
     private final static int MIN_SHORT_I = (int) Short.MIN_VALUE;
     private final static int MAX_SHORT_I = (int) Short.MAX_VALUE;
