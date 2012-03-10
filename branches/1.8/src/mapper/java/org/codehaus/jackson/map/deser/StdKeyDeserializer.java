@@ -92,7 +92,7 @@ public abstract class StdKeyDeserializer
 		public Byte _parse(String key, DeserializationContext ctxt) throws JsonMappingException
         {
             int value = _parseInt(key);
-            if (value < Byte.MIN_VALUE || value > Byte.MAX_VALUE) {
+            if (value < Byte.MIN_VALUE || value > 255) {
                 throw ctxt.weirdKeyException(_keyClass, key, "overflow, value can not be represented as 8-bit value");
             }
             return Byte.valueOf((byte) value);

@@ -766,7 +766,7 @@ public abstract class StdDeserializer<T>
         {
             int value = _parseIntPrimitive(jp, ctxt);
             // So far so good: but does it fit?
-            if (value < Byte.MIN_VALUE || value > Byte.MAX_VALUE) {
+            if (value < Byte.MIN_VALUE || value > 255) {
                 throw ctxt.weirdStringException(_valueClass, "overflow, value can not be represented as 8-bit value");
             }
             return Byte.valueOf((byte) value);
