@@ -122,6 +122,13 @@ public class TestAnnotations
         // and included, as there is a field
         public int getD() { return 6; }
     }
+
+    // [JACKSON-806]: override 'need-setter' with explicit annotation
+    static class GettersWithoutSetters2
+    {
+        @JsonProperty
+        public int getA() { return 123; }
+    }
     
     /*
     /**********************************************************
@@ -248,5 +255,13 @@ public class TestAnnotations
         m = new ObjectMapper();
         m.enable(SerializationConfig.Feature.REQUIRE_SETTERS_FOR_GETTERS);
         assertEquals("{\"a\":3,\"c\":5,\"d\":6}", m.writeValueAsString(bean));
+    }
+
+    public void testGettersWithoutSettersOverride() throws Exception
+    {
+        GettersWithoutSetters2 bean = new GettersWithoutSetters2();
+        ObjectMapper m = new ObjectMapper();
+        m.enable(SerializationConfig.Feature.REQUIRE_SETTERS_FOR_GETTERS);
+        assertEquals("{\"a\":123}", m.writeValueAsString(bean));
     }
 }

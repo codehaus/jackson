@@ -19,6 +19,8 @@ Description:
   * [JACKSON-803]: Problems with Smile, parsing of long names
    (reported by D Lam)
   * [JACKSON-804]: Allow byte range up to 255, for interoperability with unsigned bytes
+  * [JACKSON-806]: REQUIRE_SETTERS_FOR_GETTERS ignores explicitly annotated getters
+   (reported by Harold M)
 
 ------------------------------------------------------------------------
 === History: ===
@@ -52,8 +54,6 @@ Description:
   * [JACKSON-744] @JsonAnySetter problems with 1.9
   * [JACKSON-746] Problems with JsonTypeInfo.Id.NONE, default typing
    (reported by Steve L)
-  * [JACKSON-753] JsonParserDelegate missing delegation of getBooleanValue(),
-    getEmbeddedObject()
    (reported by Sebastian T)
   * [JACKSON-756] Problems with enums, @JsonCreator, when used as keys
     of EnumMap, regular Map, or contents of EnumSet
@@ -224,6 +224,38 @@ Description:
   * Removed 'org.codehaus.jackson.annotate.JsonClass, JsonKeyClass and
     JsonContentClass (deprecated since 1.1)
   * Move TokenBufferDeserializer to separate class (from inside StdDeserializer)
+
+1.8.8 [20-Jan-2012]
+
+  Fixes:
+
+  * [JACKSON-701] ArrayIndexOutOfBoundsException when trying to serialize
+    non-static inner classes with annotations on last ctor param
+   (reported Lloyd S)
+  * [JACKSON-741] Add missing linkage from ObjectMapper to JsonFactory
+   by calling 'JsonFactory.setCodec()' from ObjectMapper constructor
+  * [JACKSON-753] JsonParserDelegate missing delegation of getBooleanValue(),
+    getEmbeddedObject()
+   (reported by Sebastian T)
+  * Partial fix for [JACSON-756]: EnumMap, EnumSet work with enums that use
+   @JsonCreator; regular Maps only with 1.9
+   (reported by Mika M)
+
+1.8.7 [16-Dec-2011]
+
+  Fixes:
+
+  * [JACKSON-462] (REGRESSION?) Buffer overflow in Utf8Generator#writeFieldName(String)
+   (reported by Ryan K)
+  * [JACKSON-696] Problems accessing "any getter" that is not public
+   (reported by Brian M)
+  * [JACKSON-709] Problems converting base64-encoded Strings between
+    JsonNode, POJOs
+   (reported by Tom B)
+  * [JACKSON-733] Smile-based mapper could not properly bind byte[] values
+   (reported by Jacques-Olivier G)
+  * [JACKSON-738] Parsing fails for Unicode 1Fxxx symbols when skipping
+   (reported by Alex T)
 
 1.8.6 [04-Oct-2011]
 
