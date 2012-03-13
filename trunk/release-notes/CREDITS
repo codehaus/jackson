@@ -775,19 +775,10 @@ Lloyd Smith:
     non-static inner classes with annotations on last ctor param
    [1.8.8]
 
-Anand Hatrwalne:
-  * Requested [JACKSON-558] Add 'DeserializationConfig.Feature.UNWRAP_ROOT_VALUE' as
-    matching counterpart for 'SerializationConfig.Feature.WRAP_ROOT_VALUE'
-   [1.9.0]
-
-Earl Baugh:
-  * Suggested [JACKSON-584] Serialize type info for non-static anonymous inner classes
-    as that of declared (static) type
-   [1.9.0]
-
-Matt Goldspink:
-  * Suggested [JACKSON-578] Allow use of @JsonView on JAX-RS resource, with JacksonJsonProvider
-   [1.9.0]
+Erik Gorset:
+  * Reported [JACKSON-763] State of base64/byte[] decoding not reset when
+    using 'convertValue()' for list of byte[] values.
+   [1.8.9]
 
 "Programmer Bruce":
   * Suggested these for 1.8.x:
@@ -803,6 +794,20 @@ Matt Goldspink:
      - [JACKSON-613] Add ArrayNode/ObjectNode methods for dealing with wrappers/unboxing/nulls
      - [JACKSON-616] Better handling of primitive deserializers, to avoid NPEs
      - [JACKSON-621] Add new fluent method, VisibilityChecker.with(Visibility)
+
+Anand Hatrwalne:
+  * Requested [JACKSON-558] Add 'DeserializationConfig.Feature.UNWRAP_ROOT_VALUE' as
+    matching counterpart for 'SerializationConfig.Feature.WRAP_ROOT_VALUE'
+   [1.9.0]
+
+Earl Baugh:
+  * Suggested [JACKSON-584] Serialize type info for non-static anonymous inner classes
+    as that of declared (static) type
+   [1.9.0]
+
+Matt Goldspink:
+  * Suggested [JACKSON-578] Allow use of @JsonView on JAX-RS resource, with JacksonJsonProvider
+   [1.9.0]
 
 Ed Anuff:
   * Suggested [JACKSON-602] Add 'JsonSerialize.Inclusion.NON_EMPTY' option
@@ -875,3 +880,8 @@ Vladimir Petrukhin:
 Christopher Brown:
   * Reported [JACKSON-796]: Problems with byte[] conversion to/from JsonNode.
    [1.9.5]
+
+Harold Marger:
+  * Reported [JACKSON-806]: REQUIRE_SETTERS_FOR_GETTERS ignores explicitly annotated getters
+   [1.9.6]
+

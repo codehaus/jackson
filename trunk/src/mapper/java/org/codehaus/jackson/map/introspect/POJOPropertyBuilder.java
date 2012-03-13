@@ -92,6 +92,11 @@ public class POJOPropertyBuilder
 
     @Override
     public String getInternalName() { return _internalName; }
+
+    @Override
+    public boolean isExplicitlyIncluded() {
+        return anyExplicitNames();
+    }
     
     @Override
     public boolean hasGetter() { return _getters != null; }
