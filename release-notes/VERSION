@@ -1,10 +1,10 @@
 Version: 1.8.9
 
 Release date:
-  xx-Feb-2012
+  xx-Mar-2012
 
 Description:
-  Another patch release for 1.8.
+  The final patch release for 1.8
 
   Fixes:
 
@@ -23,6 +23,7 @@ Description:
   * [JACKSON-803]: Problems with Smile, parsing of long names
    (reported by D Lam)
   * [JACKSON-804]: Allow byte range up to 255, for interoperability with unsigned bytes
+  * [JACKSON-812]: BigIntegerNode.equals(...) using '==' for equality
 
 ------------------------------------------------------------------------
 === History: ===
