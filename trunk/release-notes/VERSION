@@ -21,6 +21,7 @@ Description:
   * [JACKSON-804]: Allow byte range up to 255, for interoperability with unsigned bytes
   * [JACKSON-806]: REQUIRE_SETTERS_FOR_GETTERS ignores explicitly annotated getters
    (reported by Harold M)
+  * [JACKSON-812]: BigIntegerNode.equals(...) using '==' for equality
 
 ------------------------------------------------------------------------
 === History: ===
