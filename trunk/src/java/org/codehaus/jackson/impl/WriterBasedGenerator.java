@@ -1191,7 +1191,7 @@ public final class WriterBasedGenerator
         // And then we'll need to verify need for escaping etc:
         int end = _outputTail + len;
         final int[] escCodes = _outputEscapes;
-        final int escLimit = Math.min(escCodes.length, _maximumNonEscapedChar+1);
+        final int escLimit = Math.min(escCodes.length, maxNonEscaped+1);
         int escCode = 0;
         
         output_loop:
@@ -1227,7 +1227,7 @@ public final class WriterBasedGenerator
         throws IOException, JsonGenerationException
     {
         final int[] escCodes = _outputEscapes;
-        final int escLimit = Math.min(escCodes.length, _maximumNonEscapedChar+1);
+        final int escLimit = Math.min(escCodes.length, maxNonEscaped+1);
     
         int ptr = 0;
         int escCode = 0;
@@ -1380,7 +1380,7 @@ public final class WriterBasedGenerator
     {
         final int[] escCodes = _outputEscapes;
         final int maxNonEscaped = (_maximumNonEscapedChar < 1) ? 0xFFFF : _maximumNonEscapedChar;
-        final int escLimit = Math.min(escCodes.length, _maximumNonEscapedChar+1);
+        final int escLimit = Math.min(escCodes.length, maxNonEscaped+1);
         final CharacterEscapes customEscapes = _characterEscapes;
     
         int ptr = 0;

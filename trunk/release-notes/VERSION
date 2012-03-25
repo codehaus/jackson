@@ -22,6 +22,9 @@ Description:
   * [JACKSON-806]: REQUIRE_SETTERS_FOR_GETTERS ignores explicitly annotated getters
    (reported by Harold M)
   * [JACKSON-812]: BigIntegerNode.equals(...) using '==' for equality
+  * [JACKSON-820]: WriterBasedGenerator with CharacterEscapes produces unescaped output
+    for strings > 2k in length
+   (reported by Matt S)
 
 ------------------------------------------------------------------------
 === History: ===
