@@ -24,6 +24,9 @@ Description:
    (reported by D Lam)
   * [JACKSON-804]: Allow byte range up to 255, for interoperability with unsigned bytes
   * [JACKSON-812]: BigIntegerNode.equals(...) using '==' for equality
+  * [JACKSON-820]: WriterBasedGenerator with CharacterEscapes produces unescaped output
+    for strings > 2k in length
+   (reported by	Matt S)
 
 ------------------------------------------------------------------------
 === History: ===
