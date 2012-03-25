@@ -780,6 +780,11 @@ Erik Gorset:
     using 'convertValue()' for list of byte[] values.
    [1.8.9]
 
+Matt Schemmel:
+  * Reported [JACKSON-820] WriterBasedGenerator with CharacterEscapes produces
+    unescaped output for strings > 2k in length
+   [1.8.9]
+
 "Programmer Bruce":
   * Suggested these for 1.8.x:
     - [JACKSON-597] Make ClassDeserializer support primitive types [1.8.3]
