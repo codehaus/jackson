@@ -8,6 +8,9 @@ Description:
 
   Fixes:
 
+  * [Issue-11] JsonParser.getValueAsLong() returning int, not long
+   (reported by Daniel L)
+
 ------------------------------------------------------------------------
 === History: ===
 ------------------------------------------------------------------------

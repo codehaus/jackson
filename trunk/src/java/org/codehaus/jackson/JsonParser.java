@@ -1212,7 +1212,7 @@ public abstract class JsonParser
      * @since 1.6
      */
     public long getValueAsLong() throws IOException, JsonParseException {
-        return getValueAsInt(0);
+        return getValueAsLong(0L);
     }
     
     /**
