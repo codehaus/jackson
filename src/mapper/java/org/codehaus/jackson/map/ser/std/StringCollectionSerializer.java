@@ -20,21 +20,25 @@ import org.codehaus.jackson.map.annotate.JacksonStdImpl;
  * may be overridde; because of this, logic is needed to ensure that the default
  * serializer is in use to use fastest mode, or if not, to defer to custom
  * String serializer.
- * 
- * @since 1.7
  */
 @JacksonStdImpl
-
 public class StringCollectionSerializer
     extends StaticListSerializerBase<Collection<String>>
     implements ResolvableSerializer
 {
     protected JsonSerializer<String> _serializer;
     
+    @Deprecated
     public StringCollectionSerializer(BeanProperty property) {
-        super(Collection.class, property);
+        this(property, null);
     }
-        
+
+    @SuppressWarnings("unchecked")
+    public StringCollectionSerializer(BeanProperty property, JsonSerializer<?> ser) {
+        super(Collection.class, property);
+        _serializer = (JsonSerializer<String>) ser;
+    }
+    
     @Override protected JsonNode contentSchema() {
         return createSchemaNode("string", true);
     }
@@ -43,9 +47,11 @@ public class StringCollectionSerializer
     @Override
     public void resolve(SerializerProvider provider) throws JsonMappingException
     {
-        JsonSerializer<?> ser = provider.findValueSerializer(String.class, _property);
-        if (!isDefaultSerializer(ser)) {
-            _serializer = (JsonSerializer<String>) ser;
+        if (_serializer == null) {
+            JsonSerializer<?> ser = provider.findValueSerializer(String.class, _property);
+            if (!isDefaultSerializer(ser)) {
+                _serializer = (JsonSerializer<String>) ser;
+            }
         }
     }
 
