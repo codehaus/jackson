@@ -7,6 +7,7 @@ import java.net.InetAddress;
 import java.util.*;
 
 import org.codehaus.jackson.map.*;
+import org.codehaus.jackson.map.annotate.JacksonStdImpl;
 import org.codehaus.jackson.map.annotate.JsonSerialize;
 import org.codehaus.jackson.map.ext.OptionalHandlerFactory;
 import org.codehaus.jackson.map.introspect.*;
@@ -489,13 +490,13 @@ public abstract class BasicSerializerFactory
         Class<?> elementRaw = type.getContentType().getRawClass();
         if (isIndexedList(raw)) {
             if (elementRaw == String.class) {
-                return new IndexedStringListSerializer(property);
+                return new IndexedStringListSerializer(property, elementValueSerializer);
             }
             return StdContainerSerializers.indexedListSerializer(type.getContentType(), staticTyping,
                     elementTypeSerializer, property, elementValueSerializer);
         }
         if (elementRaw == String.class) {
-            return new StringCollectionSerializer(property);
+            return new StringCollectionSerializer(property, elementValueSerializer);
         }
         return StdContainerSerializers.collectionSerializer(type.getContentType(), staticTyping,
                 elementTypeSerializer, property, elementValueSerializer);
