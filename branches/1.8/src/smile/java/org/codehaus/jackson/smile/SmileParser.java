@@ -1711,7 +1711,7 @@ public class SmileParser
                     c = _decodeUtf8_3(c);
                 }
                 break;
-            case 4: // 4-byte UTF
+            case 3: // 4-byte UTF
                 c = _decodeUtf8_4(c);
                 // Let's add first part right away:
                 outBuf[outPtr++] = (char) (0xD800 | (c >> 10));
