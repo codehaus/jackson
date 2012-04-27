@@ -352,9 +352,10 @@ public class SmileParser
     @Override
     public JsonLocation getCurrentLocation()
     {
+        long byteOffset = _currInputProcessed + _inputPtr;
         return new JsonLocation(_ioContext.getSourceReference(),
-                _currInputProcessed + _inputPtr, // bytes
-                -1, -1, -1); // char offset, line, column
+                byteOffset, // bytes
+                -1, -1, (int) byteOffset); // char offset, line, column
     }
 
     /*
@@ -2220,7 +2221,7 @@ public class SmileParser
                     c = _decodeUtf8_3(c);
                 }
                 break;
-            case 4: // 4-byte UTF
+            case 3: // 4-byte UTF
                 c = _decodeUtf8_4(c);
                 // Let's add first part right away:
                 outBuf[outPtr++] = (char) (0xD800 | (c >> 10));
