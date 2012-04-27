@@ -8,6 +8,9 @@ Description:
 
   Fixes:
 
+  * [Smile/Issue-2] SmileParser failed to decode surrogate-pair characters for
+    long Strings
+   (reported by Steven S)
   * [Issue-11] JsonParser.getValueAsLong() returning int, not long
    (reported by Daniel L)
   * [JACKSON-829] Custom serializers not working for List<String> properties,
