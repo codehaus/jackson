@@ -1,10 +1,22 @@
-Version: 1.8.9
+Version: 1.8.10
 
 Release date:
-  26-Mar-2012
+  xx-May-2012
 
 Description:
-  The final patch release for 1.8.
+  Additional fix release... unplanned, but warranted due to nature of
+  fixes.
+
+  * [Issue-2] SmileParser failed to decode surrogate-pair characters for
+    long Strings
+
+------------------------------------------------------------------------
+=== History: ===
+------------------------------------------------------------------------
+
+1.8.9 [26-Mar-2012]:
+
+The last planned patch release for 1.8...
 
   Fixes:
 
@@ -27,10 +39,6 @@ Description:
   * [JACKSON-820]: WriterBasedGenerator with CharacterEscapes produces unescaped output
     for strings > 2k in length
    (reported by	Matt S)
-
-------------------------------------------------------------------------
-=== History: ===
-------------------------------------------------------------------------
 
 1.8.8 [20-Jan-2012]
 
