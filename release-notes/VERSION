@@ -13,6 +13,9 @@ Description:
    (reported by Steven S)
   * [Issue-11] JsonParser.getValueAsLong() returning int, not long
    (reported by Daniel L)
+  * [Issue-14]: Annotations were not included from parent classes of
+    mix-in classes
+   (reported by @guillaup)
   * [JACKSON-829] Custom serializers not working for List<String> properties,
     @JsonSerialize(contentUsing)
    (reported by James R)
