@@ -416,7 +416,7 @@ public final class AnnotatedClass
         if (_mixInResolver != null) {
             Class<?> mixin = _mixInResolver.findMixInClassFor(Object.class);
             if (mixin != null) {
-                _addMethodMixIns(methodFilter, _memberMethods, mixin, mixins);
+                _addMethodMixIns(_class, methodFilter, _memberMethods, mixin, mixins);
             }
         }
 
@@ -610,7 +610,7 @@ public final class AnnotatedClass
     {
         // first, mixIns, since they have higher priority then class methods
         if (mixInCls != null) {
-            _addMethodMixIns(methodFilter, methods, mixInCls, mixIns);
+            _addMethodMixIns(cls, methodFilter, methods, mixInCls, mixIns);
         }
 
         if (cls == null) { // just so caller need not check when passing super-class
@@ -650,26 +650,32 @@ public final class AnnotatedClass
         }
     }
 
-    protected void _addMethodMixIns(MethodFilter methodFilter, AnnotatedMethodMap methods,
+    protected void _addMethodMixIns(Class<?> targetClass,
+            MethodFilter methodFilter, AnnotatedMethodMap methods,
             Class<?> mixInCls, AnnotatedMethodMap mixIns)
     {
-        for (Method m : mixInCls.getDeclaredMethods()) {
-            if (!_isIncludableMethod(m, methodFilter)) {
-                continue;
-            }
-            AnnotatedMethod am = methods.find(m);
-            /* Do we already have a method to augment (from sub-class
-             * that will mask this mixIn)? If so, add if visible
-             * without masking (no such annotation)
-             */
-            if (am != null) {
-                _addMixUnders(m, am);
-                /* Otherwise will have precedence, but must wait
-                 * until we find the real method (mixIn methods are
-                 * just placeholder, can't be called)
+        List<Class<?>> parents = new ArrayList<Class<?>>();
+        parents.add(mixInCls);
+        ClassUtil.findSuperTypes(mixInCls, targetClass, parents);
+        for (Class<?> mixin : parents) {        
+            for (Method m : mixin.getDeclaredMethods()) {
+                if (!_isIncludableMethod(m, methodFilter)) {
+                    continue;
+                }
+                AnnotatedMethod am = methods.find(m);
+                /* Do we already have a method to augment (from sub-class
+                 * that will mask this mixIn)? If so, add if visible
+                 * without masking (no such annotation)
                  */
-            } else {
-                mixIns.add(_constructMethod(m));
+                if (am != null) {
+                    _addMixUnders(m, am);
+                    /* Otherwise will have precedence, but must wait
+                     * until we find the real method (mixIn methods are
+                     * just placeholder, can't be called)
+                     */
+                } else {
+                    mixIns.add(_constructMethod(m));
+                }
             }
         }
     }
@@ -710,7 +716,7 @@ public final class AnnotatedClass
             if (_mixInResolver != null) {
                 Class<?> mixin = _mixInResolver.findMixInClassFor(c);
                 if (mixin != null) {
-                    _addFieldMixIns(mixin, fields);
+                    _addFieldMixIns(parent, mixin, fields);
                 }
             }
         }
@@ -721,22 +727,28 @@ public final class AnnotatedClass
      * into already collected actual fields (from introspected classes and their
      * super-classes)
      */
-    protected void _addFieldMixIns(Class<?> mixin, Map<String,AnnotatedField> fields)
+    protected void _addFieldMixIns(Class<?> targetClass, Class<?> mixInCls,
+            Map<String,AnnotatedField> fields)
     {
-        for (Field mixinField : mixin.getDeclaredFields()) {
-            /* there are some dummy things (static, synthetic); better
-             * ignore
-             */
-            if (!_isIncludableField(mixinField)) {
-                continue;
-            }
-            String name = mixinField.getName();
-            // anything to mask? (if not, quietly ignore)
-            AnnotatedField maskedField = fields.get(name);
-            if (maskedField != null) {
-                for (Annotation a : mixinField.getDeclaredAnnotations()) {
-                    if (_annotationIntrospector.isHandled(a)) {
-                        maskedField.addOrOverride(a);
+        List<Class<?>> parents = new ArrayList<Class<?>>();
+        parents.add(mixInCls);
+        ClassUtil.findSuperTypes(mixInCls, targetClass, parents);
+        for (Class<?> mixin : parents) {
+            for (Field mixinField : mixin.getDeclaredFields()) {
+                /* there are some dummy things (static, synthetic); better
+                 * ignore
+                 */
+                if (!_isIncludableField(mixinField)) {
+                    continue;
+                }
+                String name = mixinField.getName();
+                // anything to mask? (if not, quietly ignore)
+                AnnotatedField maskedField = fields.get(name);
+                if (maskedField != null) {
+                    for (Annotation a : mixinField.getDeclaredAnnotations()) {
+                        if (_annotationIntrospector.isHandled(a)) {
+                            maskedField.addOrOverride(a);
+                        }
                     }
                 }
             }
