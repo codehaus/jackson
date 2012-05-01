@@ -242,6 +242,49 @@ public class TestNumericValues
         }
     }
 
+    public void testLongOverflow() throws Exception
+    {
+        BigInteger below = BigInteger.valueOf(Long.MIN_VALUE);
+        below = below.subtract(BigInteger.ONE);
+        BigInteger above = BigInteger.valueOf(Long.MAX_VALUE);
+        above = above.add(BigInteger.ONE);
+
+        String DOC_BELOW = below.toString() + " ";
+        String DOC_ABOVE = below.toString() + " ";
+        for (int input = 0; input < 2; ++input) {
+            JsonParser jp;
+
+            if (input == 0) {
+                jp = createParserUsingStream(DOC_BELOW, "UTF-8");
+            } else {
+                jp = createParserUsingReader(DOC_BELOW);
+            }
+            jp.nextToken();
+            try {
+                long x = jp.getLongValue();
+                fail("Expected an exception for underflow (input "+jp.getText()+"): instead, got long value: "+x);
+            } catch (JsonParseException e) {
+                verifyException(e, "out of range of long");
+            }
+            jp.close();
+
+            if (input == 0) {
+                jp = createParserUsingStream(DOC_ABOVE, "UTF-8");
+            } else {
+                jp = createParserUsingReader(DOC_ABOVE);
+            }
+            jp.nextToken();
+            try {
+                long x = jp.getLongValue();
+                fail("Expected an exception for underflow (input "+jp.getText()+"): instead, got long value: "+x);
+            } catch (JsonParseException e) {
+                verifyException(e, "out of range of long");
+            }
+            jp.close();
+            
+        }
+    }
+    
     /**
      * Method that tries to test that number parsing works in cases where
      * input is split between buffer boundaries.
