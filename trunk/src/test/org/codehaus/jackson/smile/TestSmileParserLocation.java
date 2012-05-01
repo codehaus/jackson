@@ -22,7 +22,8 @@ public class TestSmileParserLocation
         assertNotNull(loc);
         // first: -1 for "not known", for character-based stuff
         assertEquals(-1, loc.getCharOffset());
-        assertEquals(-1, loc.getColumnNr());
+        // except that with 1.9.7 and above, we also consider column to be same as offset, for convenience
+        assertEquals(4, loc.getColumnNr());
         assertEquals(-1, loc.getLineNr());
         // but first 4 bytes are for header
         assertEquals(4, loc.getByteOffset());

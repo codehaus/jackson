@@ -19,6 +19,8 @@ Description:
   * [JACKSON-829] Custom serializers not working for List<String> properties,
     @JsonSerialize(contentUsing)
    (reported by James R)
+  * [JACKSON-832] (partial) Fix numeric range check for Longs (was not working)
+   (reported by Jan J)
 
 ------------------------------------------------------------------------
 === History: ===
