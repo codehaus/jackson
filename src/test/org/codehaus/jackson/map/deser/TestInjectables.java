@@ -45,7 +45,18 @@ public class TestInjectables extends BaseMapTest
             age = a;
         }
     }
-    
+
+    static class CtorBean2 {
+        protected String name;
+        protected Integer age;
+        
+        public CtorBean2(@JacksonInject String n, @JacksonInject("number") Integer a)
+        {
+            name = n;
+            age = a;
+        }
+    }
+
     /*
     /**********************************************************
     /* Unit tests
@@ -76,6 +87,19 @@ public class TestInjectables extends BaseMapTest
         CtorBean bean = mapper.readValue("{\"age\":55}", CtorBean.class);
         assertEquals(55, bean.age);
         assertEquals("Bubba", bean.name);
+    }
+
+    // [Issue-13]
+    public void testTwoInjectablesViaCreator() throws Exception
+    {
+        ObjectMapper mapper = new ObjectMapper();
+        mapper.setInjectableValues(new InjectableValues.Std()
+            .addValue(String.class, "Bob")
+            .addValue("number", Integer.valueOf(13))
+            );
+        CtorBean2 bean = mapper.readValue("{ }", CtorBean2.class);
+        assertEquals(Integer.valueOf(13), bean.age);
+        assertEquals("Bob", bean.name);
     }
     
     public void testInvalidDup() throws Exception

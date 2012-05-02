@@ -903,3 +903,9 @@ James Roper:
 Jan Jan:   
   * Reported [JACKSON-832] (partial) Fix numeric range check for Longs (was not working)
    [1.9.7]
+
+Stuart Dootson:
+  * Reported [Issue-13] Runtime error passing multiple injected values to a constructor
+   [1.9.7]
+   
+   

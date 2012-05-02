@@ -31,6 +31,12 @@ public final class PropertyBasedCreator
     protected final HashMap<String, SettableBeanProperty> _properties;
 
     /**
+     * Number of properties: usually same as size of {@link #_properties},
+     * but not necessarily, when we have unnamed injectable properties.
+     */
+    protected final int _propertyCount;
+
+    /**
      * If some property values must always have a non-null value (like
      * primitive types do), this array contains such default values.
      */
@@ -52,7 +58,9 @@ public final class PropertyBasedCreator
         Object[] defValues = null;
         SettableBeanProperty[] creatorProps = valueInstantiator.getFromObjectArguments();
         SettableBeanProperty[] propertiesWithInjectables = null;
-        for (int i = 0, len = creatorProps.length; i < len; ++i) {
+        final int len = creatorProps.length;
+        _propertyCount = len;
+        for (int i = 0; i < len; ++i) {
             SettableBeanProperty prop = creatorProps[i];
             _properties.put(prop.getName(), prop);
             if (prop.getType().isPrimitive()) {
@@ -98,7 +106,7 @@ public final class PropertyBasedCreator
      */
     public PropertyValueBuffer startBuilding(JsonParser jp, DeserializationContext ctxt)
     {
-        PropertyValueBuffer buffer = new PropertyValueBuffer(jp, ctxt, _properties.size());
+        PropertyValueBuffer buffer = new PropertyValueBuffer(jp, ctxt, _propertyCount);
         if (_propertiesWithInjectables != null) {
             buffer.inject(_propertiesWithInjectables);
         }
