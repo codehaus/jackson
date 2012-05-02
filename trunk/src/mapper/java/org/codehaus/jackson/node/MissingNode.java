@@ -35,18 +35,23 @@ public final class MissingNode
     // as per [JACKSON-775]
     @Override
     public String asText() { return ""; }
-    
+
+    @Override
+    public boolean asBoolean(boolean defaultValue) {
+        return defaultValue;
+    }
+
     @Override
     public int asInt(int defaultValue) {
-        return 0;
+        return defaultValue;
     }
     @Override
     public long asLong(long defaultValue) {
-        return 0L;
+        return defaultValue;
     }
     @Override
     public double asDouble(double defaultValue) {
-        return 0.0;
+        return defaultValue;
     }
     
     @Override

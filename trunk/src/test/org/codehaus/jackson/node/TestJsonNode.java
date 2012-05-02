@@ -251,6 +251,12 @@ public class TestJsonNode
         assertEquals("", n.toString());
 
         // missing acts same as null, so:
-        assertNodeNumbers(n, 0, 0.0);
+        assertNodeNumbersForNonNumeric(n);
+
+        // [JACKSON-823]
+        assertEquals(4, n.asInt(4));
+        assertEquals(5L, n.asLong(5));
+        assertEquals(0.25, n.asDouble(0.25));
+        assertTrue(n.asBoolean(true));
     }
 }
