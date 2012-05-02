@@ -2,6 +2,7 @@ package org.codehaus.jackson.map.jsontype;
 
 import org.codehaus.jackson.annotate.JsonCreator;
 import org.codehaus.jackson.annotate.JsonProperty;
+import org.codehaus.jackson.annotate.JsonSubTypes;
 import org.codehaus.jackson.annotate.JsonTypeInfo;
 import org.codehaus.jackson.annotate.JsonTypeInfo.As;
 import org.codehaus.jackson.annotate.JsonTypeInfo.Id;
@@ -80,6 +81,30 @@ public class TestExternalId extends BaseMapTest
         public int i = 3;
     }
     
+    // [JACKSON-831]
+    
+    interface Pet {}
+
+    static class Dog implements Pet {
+        public String name;
+    }
+
+    static class House831 {
+        private String petType;
+
+        @JsonTypeInfo(use = Id.NAME, include = As.EXTERNAL_PROPERTY, property = "petType")
+        @JsonSubTypes({@JsonSubTypes.Type(name = "dog", value = Dog.class)})
+        public Pet pet;
+
+        public String getPetType() {
+            return petType;
+        }
+
+        public void setPetType(String petType) {
+            this.petType = petType;
+        }
+    }    
+
     /*
     /**********************************************************
     /* Unit tests, serialization
@@ -167,5 +192,17 @@ public class TestExternalId extends BaseMapTest
         FunkyExternalBean result = mapper.readValue("{\"extType\":\"funk\",\"i\":3}", FunkyExternalBean.class);
         assertNotNull(result);
         assertEquals(3, result.i);
+    }
+
+    // There seems to be some problems if type is also visible...
+    public void testIssue831() throws Exception
+    {
+        final String JSON = "{ \"petType\": \"dog\",\n"
+                +"\"pet\": { \"name\": \"Pluto\" }\n}";
+        ObjectMapper mapper = new ObjectMapper();
+        House831 result = mapper.readValue(JSON, House831.class);
+        assertNotNull(result);
+        assertNotNull(result.pet);
+        assertSame(Dog.class, result.pet.getClass());
     }
 }

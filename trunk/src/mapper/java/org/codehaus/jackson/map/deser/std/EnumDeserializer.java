@@ -38,8 +38,6 @@ public class EnumDeserializer
      * 
      * @return Deserializer based on given factory method, if type was suitable;
      *  null if type can not be used
-     * 
-     * @since 1.6
      */
     public static JsonDeserializer<?> deserializerForCreator(DeserializationConfig config,
             Class<?> enumClass, AnnotatedMethod factory)

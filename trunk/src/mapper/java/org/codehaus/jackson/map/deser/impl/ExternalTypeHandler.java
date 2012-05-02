@@ -95,7 +95,7 @@ public class ExternalTypeHandler
                     continue;
                 }
                 // but not just one
-                throw ctxt.mappingException("Missing external type id property '"+_properties[i].getTypePropertyName());
+                throw ctxt.mappingException("Missing external type id property '"+_properties[i].getTypePropertyName()+"'");
             } else if (_tokens[i] == null) {
                 SettableBeanProperty prop = _properties[i].getProperty();
                 throw ctxt.mappingException("Missing property '"+prop.getName()+"' for external type id '"+_properties[i].getTypePropertyName());
