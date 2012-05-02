@@ -1,10 +1,18 @@
-Version: 1.9.7
+Version: 1.9.8
 
 Release date:
-  02-May-2012
+  xx-Xxx-2012
 
 Description:
   Another patch release for 1.9.
+
+Fixes:
+
+------------------------------------------------------------------------
+=== History: ===
+------------------------------------------------------------------------
+
+1.9.7 [02-May-2012]
 
   Fixes:
 
@@ -30,10 +38,6 @@ Description:
    (reported by Jan J)
   * [JACKSON-834] Could not use @JsonFactory with non-String argument with Enums
    (reported by Klaus R)
-
-------------------------------------------------------------------------
-=== History: ===
-------------------------------------------------------------------------
 
 1.9.6 [26-Mar-2012]
 
