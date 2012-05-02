@@ -13,6 +13,8 @@ Description:
    (reported by Steven S)
   * [Issue-11] JsonParser.getValueAsLong() returning int, not long
    (reported by Daniel L)
+  * [Issue-13] Runtime error passing multiple injected values to a constructor
+   (reported by Stuart D)
   * [Issue-14]: Annotations were not included from parent classes of
     mix-in classes
    (reported by @guillaup)
