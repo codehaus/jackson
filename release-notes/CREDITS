@@ -900,14 +900,18 @@ James Roper:
     properties, @JsonSerialize(contentUsing)
    [1.9.7]
 
+Laurent Pireyn:
+  * Reported [JACKSON-831] External type id, explicit property do not work well together
+   [1.9.7]
+
 Jan Jan:   
   * Reported [JACKSON-832] (partial) Fix numeric range check for Longs (was not working)
    [1.9.7]
 
-Stuart Dootson:
-  * Reported [Issue-13] Runtime error passing multiple injected values to a constructor
+Klaus Reimer:   
+  * [JACKSON-834] Could not use @JsonFactory with non-String argument with Enums
    [1.9.7]
 
-Klaus Reimer:   
-  * [JACKSON-834] Could	not use	@JsonFactory with non-String argument with Enums
+Stuart Dootson:
+  * Reported [Issue-13] Runtime error passing multiple injected values to a constructor
    [1.9.7]

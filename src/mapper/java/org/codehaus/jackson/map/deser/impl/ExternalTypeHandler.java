@@ -50,6 +50,38 @@ public class ExternalTypeHandler
     }
 
     /**
+     * Method called to see if given property/value pair is an external type
+     * id; and if so handle it. This is <b>only</b> to be called in case
+     * containing POJO has similarly named property as the external type id;
+     * otherwise {@link #handleToken} should be called instead.
+     */
+    public boolean handleTypePropertyValue(JsonParser jp, DeserializationContext ctxt,
+            String propName, Object bean)
+        throws IOException, JsonProcessingException
+    {
+        Integer I = _nameToPropertyIndex.get(propName);
+        if (I == null) {
+            return false;
+        }
+        int index = I.intValue();
+        ExtTypedProperty prop = _properties[index];
+        if (!prop.hasTypePropertyName(propName)) {
+            return false;
+        }
+        _typeIds[index] = jp.getText();
+        // note: can NOT skip child values (should always be String anyway)
+        boolean canDeserialize = (bean != null) && (_tokens[index] != null);
+        // Minor optimization: deserialize properties as soon as we have all we need:
+        if (canDeserialize) {
+            _deserialize(jp, ctxt, bean, index);
+            // clear stored data, to avoid deserializing+setting twice:
+            _typeIds[index] = null;
+            _tokens[index] = null;
+        }
+        return true;
+    }
+    
+    /**
      * Method called to ask handler to handle 
      */
     public boolean handleToken(JsonParser jp, DeserializationContext ctxt,
