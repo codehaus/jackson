@@ -16,6 +16,9 @@ Description:
   * [Issue-14]: Annotations were not included from parent classes of
     mix-in classes
    (reported by @guillaup)
+  * [JACKSON-823] MissingNode does not return default value for 'asXxx()'
+   methods
+   (reported by Adam V)
   * [JACKSON-829] Custom serializers not working for List<String> properties,
     @JsonSerialize(contentUsing)
    (reported by James R)
