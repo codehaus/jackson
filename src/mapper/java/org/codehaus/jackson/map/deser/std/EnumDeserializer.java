@@ -45,13 +45,21 @@ public class EnumDeserializer
             Class<?> enumClass, AnnotatedMethod factory)
     {
         // note: caller has verified there's just one arg; but we must verify its type
-        if (factory.getParameterType(0) != String.class) {
-            throw new IllegalArgumentException("Parameter #0 type for factory method ("+factory+") not suitable, must be java.lang.String");
+        Class<?> raw = factory.getParameterClass(0);
+        if (raw == String.class) {
+            raw = null;
+        } else  if (raw == Integer.TYPE || raw == Integer.class) {
+            raw = Integer.class;
+        } else  if (raw == Long.TYPE || raw == Long.class) {
+            raw = Long.class;
+        } else {
+            throw new IllegalArgumentException("Parameter #0 type for factory method ("+factory
+                    +") not suitable, must be java.lang.String or int/Integer/long/Long");
         }
         if (config.isEnabled(DeserializationConfig.Feature.CAN_OVERRIDE_ACCESS_MODIFIERS)) {
             ClassUtil.checkAndFixAccess(factory.getMember());
         }
-        return new FactoryBasedDeserializer(enumClass, factory);
+        return new FactoryBasedDeserializer(enumClass, factory, raw);
     }
     
     /*
@@ -108,26 +116,35 @@ public class EnumDeserializer
         extends StdScalarDeserializer<Object>
     {
         protected final Class<?> _enumClass;
+
+        // Marker type; null if String expected; otherwise numeric wrapper
+        protected final Class<?> _inputType;
         protected final Method _factory;
         
-        public FactoryBasedDeserializer(Class<?> cls, AnnotatedMethod f)
+        public FactoryBasedDeserializer(Class<?> cls, AnnotatedMethod f,
+                Class<?> inputType)
         {
             super(Enum.class);
             _enumClass = cls;
             _factory = f.getAnnotated();
+            _inputType = inputType;
         }
 
         @Override
         public Object deserialize(JsonParser jp, DeserializationContext ctxt)
             throws IOException, JsonProcessingException
         {
-            JsonToken curr = jp.getCurrentToken();
-            
-            // Usually should just get string value:
-            if (curr != JsonToken.VALUE_STRING && curr != JsonToken.FIELD_NAME) {
+            // couple of accepted types...
+            Object value;
+            if (_inputType == null) {
+                value = jp.getText();
+            } else  if (_inputType == Integer.class) {
+                value = Integer.valueOf(jp.getValueAsInt());
+            } else  if (_inputType == Long.class) {
+                value = Long.valueOf(jp.getValueAsLong());
+            } else {
                 throw ctxt.mappingException(_enumClass);
             }
-            String value = jp.getText();
             try {
                 return _factory.invoke(_enumClass, value);
             } catch (Exception e) {
