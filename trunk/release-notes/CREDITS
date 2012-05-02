@@ -907,5 +907,7 @@ Jan Jan:
 Stuart Dootson:
   * Reported [Issue-13] Runtime error passing multiple injected values to a constructor
    [1.9.7]
-   
-   
+
+Klaus Reimer:   
+  * [JACKSON-834] Could	not use	@JsonFactory with non-String argument with Enums
+   [1.9.7]

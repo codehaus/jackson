@@ -26,6 +26,8 @@ Description:
    (reported by James R)
   * [JACKSON-832] (partial) Fix numeric range check for Longs (was not working)
    (reported by Jan J)
+  * [JACKSON-834] Could not use @JsonFactory with non-String argument with Enums
+   (reported by Klaus R)
 
 ------------------------------------------------------------------------
 === History: ===
