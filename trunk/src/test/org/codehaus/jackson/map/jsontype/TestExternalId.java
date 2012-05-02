@@ -204,5 +204,6 @@ public class TestExternalId extends BaseMapTest
         assertNotNull(result);
         assertNotNull(result.pet);
         assertSame(Dog.class, result.pet.getClass());
+        assertEquals("dog", result.petType);
     }
 }

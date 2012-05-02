@@ -24,6 +24,8 @@ Description:
   * [JACKSON-829] Custom serializers not working for List<String> properties,
     @JsonSerialize(contentUsing)
    (reported by James R)
+  * [JACKSON-831] External type id, explicit property do not work well together
+   (reported by Laurent P)
   * [JACKSON-832] (partial) Fix numeric range check for Longs (was not working)
    (reported by Jan J)
   * [JACKSON-834] Could not use @JsonFactory with non-String argument with Enums
