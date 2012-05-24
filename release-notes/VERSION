@@ -8,6 +8,10 @@ Description:
 
 Fixes:
 
+  * [JACKSON-838]: Utf8StreamParser._reportInvalidToken() skips letters
+    from reported token name
+   (reported by Lóránt Pintér)
+
 ------------------------------------------------------------------------
 === History: ===
 ------------------------------------------------------------------------
