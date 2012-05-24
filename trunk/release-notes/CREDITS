@@ -915,3 +915,8 @@ Klaus Reimer:
 Stuart Dootson:
   * Reported [Issue-13] Runtime error passing multiple injected values to a constructor
    [1.9.7]
+
+Lóránt Pintér:
+  * Reported [JACKSON-838]: Utf8StreamParser._reportInvalidToken() skips
+    letters from reported token name
+   [1.9.8]
