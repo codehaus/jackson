@@ -920,3 +920,7 @@ Lóránt Pintér:
   * Reported [JACKSON-838]: Utf8StreamParser._reportInvalidToken() skips
     letters from reported token name
    [1.9.8]
+
+Scott Stanton:
+  * Reported [JACKSON-841] Data is doubled in SegmentedStringWriter output
+   [1.9.8]
