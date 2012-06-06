@@ -9,6 +9,8 @@ Description:
 
   * [Issue-2] SmileParser failed to decode surrogate-pair characters for
     long Strings
+  * [JACKSON-841] Data is doubled in SegmentedStringWriter output
+   (reported by Scott S)
 
 ------------------------------------------------------------------------
 === History: ===
