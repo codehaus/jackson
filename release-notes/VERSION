@@ -12,7 +12,9 @@ Fixes:
     from reported token name
    (reported by Lóránt Pintér)
   * [JACKSON-841] Data is doubled in SegmentedStringWriter output
-  (reported by Scott S)
+   (reported by Scott S)
+  * [JACKSON-842] ArrayIndexOutOfBoundsException when skipping C-style comments
+   (reported by Sebastien R)
 
 ------------------------------------------------------------------------
 === History: ===

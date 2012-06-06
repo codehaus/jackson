@@ -924,3 +924,7 @@ Lóránt Pintér:
 Scott Stanton:
   * Reported [JACKSON-841] Data is doubled in SegmentedStringWriter output
    [1.9.8]
+
+Sébastien R:
+  * Reported [JACKSON-842] ArrayIndexOutOfBoundsException when skipping C-style comments
+   [1.9.8]
