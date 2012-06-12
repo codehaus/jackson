@@ -385,7 +385,6 @@ public class Utf8Generator
         if (!_writeContext.inObject()) {
             _reportError("Current context not an object but "+_writeContext.getTypeDesc());
         }
-        _writeContext = _writeContext.getParent();
         if (_cfgPrettyPrinter != null) {
             _cfgPrettyPrinter.writeEndObject(this, _writeContext.getEntryCount());
         } else {
@@ -394,6 +393,7 @@ public class Utf8Generator
             }
             _outputBuffer[_outputTail++] = BYTE_RCURLY;
         }
+        _writeContext = _writeContext.getParent();
     }
 
     protected final void _writeFieldName(String name)
