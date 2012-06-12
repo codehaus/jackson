@@ -8,6 +8,8 @@ Description:
 
 Fixes:
 
+  * [Issue-6]: element count for PrettyPrinter, endObject wrong
+   (reported by "thebluemountain")
   * [JACKSON-838]: Utf8StreamParser._reportInvalidToken() skips letters
     from reported token name
    (reported by Lóránt Pintér)

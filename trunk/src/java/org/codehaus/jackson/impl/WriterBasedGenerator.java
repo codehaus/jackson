@@ -288,7 +288,6 @@ public final class WriterBasedGenerator
         if (!_writeContext.inObject()) {
             _reportError("Current context not an object but "+_writeContext.getTypeDesc());
         }
-        _writeContext = _writeContext.getParent();
         if (_cfgPrettyPrinter != null) {
             _cfgPrettyPrinter.writeEndObject(this, _writeContext.getEntryCount());
         } else {
@@ -297,6 +296,7 @@ public final class WriterBasedGenerator
             }
             _outputBuffer[_outputTail++] = '}';
         }
+        _writeContext = _writeContext.getParent();
     }
 
     protected void _writeFieldName(String name, boolean commaBefore)
