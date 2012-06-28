@@ -1,7 +1,7 @@
 Version: 1.9.8
 
 Release date:
-  xx-Xxx-2012
+  28-Jun-2012
 
 Description:
   Another patch release for 1.9.
@@ -17,6 +17,8 @@ Fixes:
    (reported by Scott S)
   * [JACKSON-842] ArrayIndexOutOfBoundsException when skipping C-style comments
    (reported by Sebastien R)
+  * [JACKSON-845] Problem with Object[][] deserialization, default typing
+   (reported by Pawel J)
 
 ------------------------------------------------------------------------
 === History: ===
