@@ -38,8 +38,10 @@ import org.codehaus.jackson.util.InternCache;
  * instances can be freely used without synchronization. However, using
  * master table concurrently with child instances can only be done if
  * access to master instance is read-only (ie. no modifications done).
+ *<p>
+ * Note on 1.9.9: sanity checks added to try to prevent hash-collision
+ * based attacks; will fail with too long collision chains.
  */
-
 public final class CharsToNameCanonicalizer
 {
     /**
@@ -67,15 +69,34 @@ public final class CharsToNameCanonicalizer
      */
     final static int MAX_ENTRIES_FOR_REUSE = 12000;
 
+    /**
+     * Also: to thwart attacks based on hash collisions (which may or may not
+     * be cheap to calculate), we will need to detect "too long"
+     * collision chains. Let's start with static value of 255 entries
+     * for the longest legal chain.
+     * 
+     * @since 1.9.9
+     */
+    final static int MAX_COLL_CHAIN_LENGTH = 255;
+
+    /**
+     * And to support reduce likelihood of accidental collisons causing
+     * exceptions, let's prevent reuse of tables with long collision
+     * overflow lists as well.
+     * 
+     * @since 1.9.9
+     */
+    final static int MAX_COLL_CHAIN_FOR_REUSE  = 63;
+    
     final static CharsToNameCanonicalizer sBootstrapSymbolTable;
     static {
         sBootstrapSymbolTable = new CharsToNameCanonicalizer();
     }
 
     /*
-    /****************************************
+    /**********************************************************
     /* Configuration:
-    /****************************************
+    /**********************************************************
      */
 
     /**
@@ -99,9 +120,9 @@ public final class CharsToNameCanonicalizer
     final protected boolean _canonicalize;
     
     /*
-    /****************************************
+    /**********************************************************
     /* Actual symbol table data:
-    /****************************************
+    /**********************************************************
      */
 
     /**
@@ -139,10 +160,19 @@ public final class CharsToNameCanonicalizer
      */
     protected int _indexMask;
 
+    /**
+     * We need to keep track of the longest collision list; this is needed
+     * both to indicate problems with attacks and to allow flushing for
+     * other cases.
+     * 
+     * @since 1.9.9
+     */
+    protected int _longestCollisionList;
+    
     /*
-    /****************************************
+    /**********************************************************
     /* State regarding shared arrays
-    /****************************************
+    /**********************************************************
      */
 
     /**
@@ -154,9 +184,9 @@ public final class CharsToNameCanonicalizer
     protected boolean _dirty;
 
     /*
-    /****************************************
+    /**********************************************************
     /* Life-cycle
-    /****************************************
+    /**********************************************************
      */
 
     /**
@@ -182,6 +212,7 @@ public final class CharsToNameCanonicalizer
         _intern = true;
         // And we'll also set flags so no copying of buckets is needed:
         _dirty = true;
+        _longestCollisionList = 0;
         initTables(DEFAULT_TABLE_SIZE);
     }
 
@@ -192,6 +223,7 @@ public final class CharsToNameCanonicalizer
         // Mask is easy to calc for powers of two.
         _indexMask = initialSize - 1;
         _size = 0;
+        _longestCollisionList = 0;
         // Hard-coded fill factor is 75%
         _sizeThreshold = (initialSize - (initialSize >> 2));
     }
@@ -201,7 +233,8 @@ public final class CharsToNameCanonicalizer
      */
     private CharsToNameCanonicalizer(CharsToNameCanonicalizer parent,
             boolean canonicalize, boolean intern,
-            String[] symbols, Bucket[] buckets, int size)
+            String[] symbols, Bucket[] buckets, int size,
+            int longestColl)
     {
         _parent = parent;
         _canonicalize = canonicalize;
@@ -210,6 +243,7 @@ public final class CharsToNameCanonicalizer
         _symbols = symbols;
         _buckets = buckets;
         _size = size;
+        _longestCollisionList = longestColl;
         // Hard-coded fill factor, 75%
         int arrayLen = (symbols.length);
         _sizeThreshold = arrayLen - (arrayLen >> 2);
@@ -233,12 +267,14 @@ public final class CharsToNameCanonicalizer
      */
     public synchronized CharsToNameCanonicalizer makeChild(boolean canonicalize, boolean intern)
     {
-        return new CharsToNameCanonicalizer(this, canonicalize, intern, _symbols, _buckets, _size);
+        return new CharsToNameCanonicalizer(this, canonicalize, intern, _symbols, _buckets,
+                _size, _longestCollisionList);
     }
 
     private CharsToNameCanonicalizer makeOrphan()
     {
-        return new CharsToNameCanonicalizer(null, true, true, _symbols, _buckets, _size);
+        return new CharsToNameCanonicalizer(null, true, true, _symbols, _buckets,
+                _size, _longestCollisionList);
     }
 
     /**
@@ -256,7 +292,8 @@ public final class CharsToNameCanonicalizer
          * One way to do this is to just purge tables if they grow
          * too large, and that's what we'll do here.
          */
-        if (child.size() > MAX_ENTRIES_FOR_REUSE) {
+        if (child.size() > MAX_ENTRIES_FOR_REUSE
+                || child._longestCollisionList > MAX_COLL_CHAIN_FOR_REUSE) {
             /* Should there be a way to get notified about this
              * event, to log it or such? (as it's somewhat abnormal
              * thing to happen)
@@ -277,6 +314,7 @@ public final class CharsToNameCanonicalizer
             _size = child._size;
             _sizeThreshold = child._sizeThreshold;
             _indexMask = child._indexMask;
+            _longestCollisionList = child._longestCollisionList;
         }
         /* Dirty flag... well, let's just clear it, to force copying just
          * in case. Shouldn't really matter, for master tables.
@@ -302,19 +340,47 @@ public final class CharsToNameCanonicalizer
     }
 
     /*
-    /****************************************
+    /**********************************************************
     /* Public API, generic accessors:
-    /****************************************
+    /**********************************************************
      */
 
     public int size() { return _size; }
 
     public boolean maybeDirty() { return _dirty; }
 
+    /**
+     * Method mostly needed by unit tests; calculates number of
+     * entries that are in collision list. Value can be at most
+     * ({@link #size} - 1), but should usually be much lower, ideally 0.
+     */
+    public int collisionCount()
+    {
+        int count = 0;
+        for (Bucket bucket : _buckets) {
+            if (bucket != null) {
+                count += bucket.length();
+            }
+        }
+        return count;    
+    }
+
+    /**
+     * Method mostly needed by unit tests; calculates length of the
+     * longest collision chain. This should typically be a low number,
+     * but may be up to {@link #size} - 1 in the pathological case
+     * 
+     * @since 1.9.9
+     */
+    public int maxCollisionLength()
+    {
+        return _longestCollisionList;
+    }
+
     /*
-    /****************************************
+    /**********************************************************
     /* Public API, accessing symbols:
-    /****************************************
+    /**********************************************************
      */
 
     public String findSymbol(char[] buffer, int start, int len, int hash)
@@ -365,18 +431,23 @@ public final class CharsToNameCanonicalizer
              */
             hash = calcHash(buffer, start, len) & _indexMask;
         }
-        ++_size;
 
         String newSymbol = new String(buffer, start, len);
         if (_intern) {
             newSymbol = InternCache.instance.intern(newSymbol);
         }
+        ++_size;
         // Ok; do we need to add primary entry, or a bucket?
         if (_symbols[hash] == null) {
             _symbols[hash] = newSymbol;
         } else {
-            int bix = hash >> 1;
-            _buckets[bix] = new Bucket(newSymbol, _buckets[bix]);
+            int bix = (hash >> 1);
+            Bucket newB = new Bucket(newSymbol, _buckets[bix]);
+            _buckets[bix] = newB;
+            _longestCollisionList = Math.max(newB.length(), _longestCollisionList);
+            if (_longestCollisionList > MAX_COLL_CHAIN_LENGTH) {
+                reportTooManyCollisions(MAX_COLL_CHAIN_LENGTH);
+            }
         }
 
         return newSymbol;
@@ -409,9 +480,9 @@ public final class CharsToNameCanonicalizer
     }
 
     /*
-    /****************************************
+    /**********************************************************
     /* Internal methods
-    /****************************************
+    /**********************************************************
      */
 
     /**
@@ -470,6 +541,7 @@ public final class CharsToNameCanonicalizer
         /* Need to do two loops, unfortunately, since spill-over area is
          * only half the size:
          */
+        int maxColl = 0;
         for (int i = 0; i < size; ++i) {
             String symbol = oldSyms[i];
             if (symbol != null) {
@@ -478,8 +550,10 @@ public final class CharsToNameCanonicalizer
                 if (_symbols[index] == null) {
                     _symbols[index] = symbol;
                 } else {
-                    int bix = index >> 1;
-                    _buckets[bix] = new Bucket(symbol, _buckets[bix]);
+                    int bix = (index >> 1);
+                    Bucket newB = new Bucket(symbol, _buckets[bix]);
+                    _buckets[bix] = newB;
+                    maxColl = Math.max(maxColl, newB.length());
                 }
             }
         }
@@ -494,22 +568,34 @@ public final class CharsToNameCanonicalizer
                 if (_symbols[index] == null) {
                     _symbols[index] = symbol;
                 } else {
-                    int bix = index >> 1;
-                    _buckets[bix] = new Bucket(symbol, _buckets[bix]);
+                    int bix = (index >> 1);
+                    Bucket newB = new Bucket(symbol, _buckets[bix]);
+                    _buckets[bix] = newB;
+                    maxColl = Math.max(maxColl, newB.length());
                 }
                 b = b.getNext();
             }
         }
+	_longestCollisionList = maxColl;
 
         if (count != _size) {
             throw new Error("Internal error on SymbolTable.rehash(): had "+_size+" entries; now have "+count+".");
         }
     }
 
+    /**
+     * @since 2.1
+     */
+    protected void reportTooManyCollisions(int maxLen)
+    {
+        throw new IllegalStateException("Longest collision chain in symbol table (of size "+_size
+                +") now exceeds maximum, "+maxLen+" -- suspect a DoS attack based on hash collisions");
+    }    
+
     /*
-    /****************************************
+    /**********************************************************
     /* Bucket class
-    /****************************************
+    /**********************************************************
      */
 
     /**
@@ -518,19 +604,22 @@ public final class CharsToNameCanonicalizer
      */
     static final class Bucket {
         private final String _symbol;
-        private final Bucket mNext;
+        private final Bucket _next;
+        private final int _length;
 
         public Bucket(String symbol, Bucket next) {
             _symbol = symbol;
-            mNext = next;
+            _next = next;
+            _length = (next == null) ? 1 : next._length+1;
         }
 
         public String getSymbol() { return _symbol; }
-        public Bucket getNext() { return mNext; }
+        public Bucket getNext() { return _next; }
+        public int length() { return _length; }        
 
         public String find(char[] buf, int start, int len) {
             String sym = _symbol;
-            Bucket b = mNext;
+            Bucket b = _next;
 
             while (true) { // Inlined equality comparison:
                 if (sym.length() == len) {
@@ -553,26 +642,5 @@ public final class CharsToNameCanonicalizer
             return null;
         }
 
-    /* 26-Nov-2008, tatu: not used currently; if not used in near future,
-     *   let's just delete it.
-     */
-        /*
-        public String find(String str) {
-            String sym = _symbol;
-            Bucket b = mNext;
-
-            while (true) {
-                if (sym.equals(str)) {
-                    return sym;
-                }
-                if (b == null) {
-                    break;
-                }
-                sym = b.getSymbol();
-                b = b.getNext();
-            }
-            return null;
-        }
-        */
     }
 }
