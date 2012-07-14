@@ -346,9 +346,11 @@ public final class CharsToNameCanonicalizer
      */
 
     public int size() { return _size; }
-
+   
     public boolean maybeDirty() { return _dirty; }
 
+    public int bucketCount() { return _symbols.length; }
+    
     /**
      * Method mostly needed by unit tests; calculates number of
      * entries that are in collision list. Value can be at most
@@ -392,8 +394,7 @@ public final class CharsToNameCanonicalizer
             return new String(buffer, start, len);
         }
 
-        hash &= _indexMask;
-
+        hash = _hashToIndex(hash);
         String sym = _symbols[hash];
 
         // Optimal case; checking existing primary symbol for hash index:
@@ -429,7 +430,7 @@ public final class CharsToNameCanonicalizer
             /* Need to recalc hash; rare occurence (index mask has been
              * recalculated as part of rehash)
              */
-            hash = calcHash(buffer, start, len) & _indexMask;
+            hash = _hashToIndex(calcHash(buffer, start, len));
         }
 
         String newSymbol = new String(buffer, start, len);
@@ -453,6 +454,12 @@ public final class CharsToNameCanonicalizer
         return newSymbol;
     }
 
+    /*
+    /**********************************************************
+    /* Hash calculation
+    /**********************************************************
+     */
+    
     /**
      * Implementation of a hashing method for variable length
      * Strings. Most of the time intention is that this calculation
@@ -479,6 +486,16 @@ public final class CharsToNameCanonicalizer
         return hash;
     }
 
+    /**
+     * Helper method that takes in a "raw" hash value, shuffles it as necessary,
+     * and truncates to be used as the index.
+     */
+    private final int _hashToIndex(int rawHash)
+    {
+        rawHash += (rawHash >>> 15); // this seems to help quite a bit, at least for our tests
+        return (rawHash & _indexMask);
+    }
+    
     /*
     /**********************************************************
     /* Internal methods
@@ -546,7 +563,7 @@ public final class CharsToNameCanonicalizer
             String symbol = oldSyms[i];
             if (symbol != null) {
                 ++count;
-                int index = calcHash(symbol) & _indexMask;
+                int index = _hashToIndex(calcHash(symbol));
                 if (_symbols[index] == null) {
                     _symbols[index] = symbol;
                 } else {
@@ -564,7 +581,7 @@ public final class CharsToNameCanonicalizer
             while (b != null) {
                 ++count;
                 String symbol = b.getSymbol();
-                int index = calcHash(symbol) & _indexMask;
+                int index = _hashToIndex(calcHash(symbol));
                 if (_symbols[index] == null) {
                     _symbols[index] = symbol;
                 } else {

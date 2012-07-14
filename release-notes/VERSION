@@ -8,6 +8,10 @@ Description:
 
 Fixes:
 
+  * [Issue-21]: Improve handling of String hash code collisions for
+   symbol tables; exception for degenerate cases (attacks), improvements
+   for calculation otherwise
+
 ------------------------------------------------------------------------
 === History: ===
 ------------------------------------------------------------------------
