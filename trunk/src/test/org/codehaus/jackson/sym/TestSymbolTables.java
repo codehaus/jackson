@@ -1,5 +1,7 @@
 package org.codehaus.jackson.sym;
 
+import java.io.IOException;
+
 public class TestSymbolTables extends main.BaseTest
 {
     // 11 3-char snippets that hash to 0xFFFF (with default JDK hashCode() calc),
@@ -50,5 +52,81 @@ public class TestSymbolTables extends main.BaseTest
             // one "non-colliding" entry (head of collision chain), thus:
             assertEquals(CharsToNameCanonicalizer.MAX_COLL_CHAIN_LENGTH+2, sym.size());
         }
+    }
+
+    // Test for verifying stability of hashCode, wrt collisions, using
+    // synthetic field name generation and character-based input
+    public void testSyntheticWithChars()
+    {
+        // pass seed, to keep results consistent:
+        CharsToNameCanonicalizer symbols = CharsToNameCanonicalizer.createRoot();
+        final int COUNT = 6000;
+        for (int i = 0; i < COUNT; ++i) {
+            String id = fieldNameFor(i);
+            char[] ch = id.toCharArray();
+            symbols.findSymbol(ch, 0, ch.length, CharsToNameCanonicalizer.calcHash(id));
+        }
+
+        assertEquals(8192, symbols.bucketCount());
+        assertEquals(COUNT, symbols.size());
+        
+//System.out.printf("Char stuff: collisions %d, max-coll %d\n", symbols.collisionCount(), symbols.maxCollisionLength());
+        
+        // original hashCode calc gave very high rate (3567), but with shuffling comes down a bit
+        // (changing mult to 33 would help more)
+        assertEquals(1905, symbols.collisionCount());
+        // esp. with collisions; first got about 30
+        assertEquals(6, symbols.maxCollisionLength());
+    }
+
+    // Test for verifying stability of hashCode, wrt collisions, using
+    // synthetic field name generation and byte-based input (UTF-8)
+    public void testSyntheticWithBytes() throws IOException
+    {
+        // pass seed, to keep results consistent:
+        BytesToNameCanonicalizer symbols = BytesToNameCanonicalizer.createRoot(1);
+        final int COUNT = 6000;
+        for (int i = 0; i < COUNT; ++i) {
+            String id = fieldNameFor(i);
+            int[] quads = BytesToNameCanonicalizer.calcQuads(id.getBytes("UTF-8"));
+            symbols.addName(id, quads, quads.length);
+        }
+        assertEquals(COUNT, symbols.size());
+        assertEquals(8192, symbols.bucketCount());
+
+//System.out.printf("Byte stuff: collisions %d, max-coll %d\n", symbols.collisionCount(), symbols.maxCollisionLength());
+    
+        // Fewer collisions than with chars, but still quite a few
+        assertEquals(1770, symbols.collisionCount());
+        // but not super long collision chains:
+        assertEquals(9, symbols.maxCollisionLength());
+    }
+
+    protected void fieldNameFor(StringBuilder sb, int index)
+    {
+        /* let's do something like "f1.1" to exercise different
+         * field names (important for byte-based codec)
+         * Other name shuffling done mostly just for fun... :)
+         */
+        sb.append("f");
+        sb.append(index);
+        if (index > 50) {
+            sb.append('.');
+            if (index > 200) {
+                sb.append(index);
+                if (index > 4000) { // and some even longer symbols...
+                    sb.append(".").append(index);
+                }
+            } else {
+                sb.append(index >> 3); // divide by 8
+            }
+        }
+    }
+
+    protected String fieldNameFor(int index)
+    {
+        StringBuilder sb = new StringBuilder(16);
+        fieldNameFor(sb, index);
+        return sb.toString();
     }
 }

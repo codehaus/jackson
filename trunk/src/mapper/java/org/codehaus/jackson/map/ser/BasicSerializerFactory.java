@@ -7,7 +7,6 @@ import java.net.InetAddress;
 import java.util.*;
 
 import org.codehaus.jackson.map.*;
-import org.codehaus.jackson.map.annotate.JacksonStdImpl;
 import org.codehaus.jackson.map.annotate.JsonSerialize;
 import org.codehaus.jackson.map.ext.OptionalHandlerFactory;
 import org.codehaus.jackson.map.introspect.*;

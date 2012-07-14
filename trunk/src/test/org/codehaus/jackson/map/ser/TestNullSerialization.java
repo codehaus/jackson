@@ -51,7 +51,7 @@ public class TestNullSerialization
         ObjectMapper mapper = new ObjectMapper();
         mapper.setAnnotationIntrospector(new JacksonAnnotationIntrospector());
         mapper.setSerializationInclusion(Inclusion.NON_NULL);
-        assertEquals("{\"value\":\"abc\"}", mapper.writeValueAsString(new NullBean("abc")));
-        assertEquals("{}", mapper.writeValueAsString(new NullBean(null)));
+        assertEquals("{\"value\":\"abc\"}", mapper.writeValueAsString(new NullBean<String>("abc")));
+        assertEquals("{}", mapper.writeValueAsString(new NullBean<String>(null)));
     }
 }
