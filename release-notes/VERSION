@@ -11,6 +11,7 @@ Fixes:
   * [Issue-21]: Improve handling of String hash code collisions for
    symbol tables; exception for degenerate cases (attacks), improvements
    for calculation otherwise
+  * [JACKSON-853]: JsonStringEncoder.quoteAsString() problem with buffer boundary
 
 ------------------------------------------------------------------------
 === History: ===
