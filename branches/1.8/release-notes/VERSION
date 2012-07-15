@@ -1,11 +1,11 @@
 Version: 1.8.10
 
 Release date:
-  xx-Jun-2012
+  15-Jul-2012
 
 Description:
-  Additional fix release... unplanned, but warranted due to nature of
-  fixes.
+  Additional fix release: unplanned, but warranted due to urgent
+  nature of fixes.
 
   * [Issue-2] SmileParser failed to decode surrogate-pair characters for
     long Strings
@@ -13,6 +13,7 @@ Description:
    (reported by Scott S)
   * [JACKSON-842] ArrayIndexOutOfBoundsException when skipping C-style comments
    (reported by Sebastien R)
+  * [JACKSON-853] JsonStringEncoder.quoteAsString() problem with buffer boundary
 
 ------------------------------------------------------------------------
 === History: ===

@@ -138,8 +138,8 @@ public final class JsonStringEncoder
                 }
                 outputBuffer = textBuffer.finishCurrentSegment();
                 int second = length - first;
-                System.arraycopy(_quoteBuffer, first, outputBuffer, outPtr, second);
-                outPtr += second;
+                System.arraycopy(_quoteBuffer, first, outputBuffer, 0, second);
+                outPtr = second;
             } else {
                 System.arraycopy(_quoteBuffer, 0, outputBuffer, outPtr, length);
                 outPtr += length;
