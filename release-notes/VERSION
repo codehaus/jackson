@@ -1,11 +1,24 @@
-Version: 1.8.10
+Version: 1.8.11
 
 Release date:
-  15-Jul-2012
+  (never?)
 
 Description:
-  Additional fix release: unplanned, but warranted due to urgent
-  nature of fixes.
+  Theoretical patch version that we may have to release if
+  things go badly.
+
+  Fixes:
+
+  * [Issue-24]: ArrayIndexOutOfBoundsException with TextBuffer.append(),
+   huge Strings.
+
+------------------------------------------------------------------------
+=== History: ===
+------------------------------------------------------------------------
+
+1.8.10 (15-Jul-2012)
+
+  Fixes:
 
   * [Issue-2] SmileParser failed to decode surrogate-pair characters for
     long Strings
@@ -15,11 +28,7 @@ Description:
    (reported by Sebastien R)
   * [JACKSON-853] JsonStringEncoder.quoteAsString() problem with buffer boundary
 
-------------------------------------------------------------------------
-=== History: ===
-------------------------------------------------------------------------
-
-1.8.9 [26-Mar-2012]:
+1.8.9 (26-Mar-2012):
 
 The last planned patch release for 1.8...
 
