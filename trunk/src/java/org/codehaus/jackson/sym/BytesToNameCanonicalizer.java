@@ -1,13 +1,17 @@
 package org.codehaus.jackson.sym;
 
 import java.util.Arrays;
+import java.util.concurrent.atomic.AtomicReference;
 
 import org.codehaus.jackson.util.InternCache;
 
 /**
- * This class is basically a caching symbol table implementation used for
- * canonicalizing {@link Name}s, constructed directly from a byte-based
- * input source.
+ * A caching symbol table implementation used for canonicalizing JSON field
+ * names (as {@link Name}s which are constructed directly from a byte-based
+ * input source).
+ * Complications arise from trying to do efficient reuse and merging of
+ * symbol tables, to be able to make use of usually shared vocabulary
+ * of subsequent parsing runs.
  *
  * @author Tatu Saloranta
  */
@@ -52,8 +56,15 @@ public final class BytesToNameCanonicalizer
      */
     final static int MAX_COLL_CHAIN_FOR_REUSE  = 63;
 
+    /**
+     * No point in trying to construct tiny tables, just need to resize
+     * soon.
+     */
     final static int MIN_HASH_SIZE = 16;
 
+    /**
+     * We will also need to defin
+     */
     final static int INITIAL_COLLISION_LEN = 32;
 
     /**
@@ -68,8 +79,20 @@ public final class BytesToNameCanonicalizer
     /**********************************************************
      */
 
+    /**
+     * Reference to the root symbol table, for child tables, so
+     * that they can merge table information back as necessary.
+     */
     final protected BytesToNameCanonicalizer _parent;
 
+    /**
+     * Member that is only used by the root table instance: root
+     * passes immutable state into child instances, and children
+     * may return new state if they add entries to the table.
+     * Child tables do NOT use the reference.
+     */
+    final protected AtomicReference<TableInfo> _tableInfo;
+    
     /**
      * Seed value we use as the base to make hash codes non-static between
      * different runs, but still stable for lifetime of a single symbol table
@@ -88,17 +111,18 @@ public final class BytesToNameCanonicalizer
      */
 
     /**
-     * Whether canonial symbol Strings are to be intern()ed before added
+     * Whether canonical symbol Strings are to be intern()ed before added
      * to the table or not
      */
-    private final boolean _intern;
+    protected final boolean _intern;
     
     // // // First, global information
 
     /**
-     * Total number of Names in the symbol table
+     * Total number of Names in the symbol table;
+     * only used for child tables.
      */
-    private int _count;
+    protected int _count;
 
     /**
      * We need to keep track of the longest collision list; this is needed
@@ -117,7 +141,7 @@ public final class BytesToNameCanonicalizer
      * size; essentially, hash array size - 1 (since hash array sizes
      * are 2^N).
      */
-    private int _mainHashMask;
+    protected int _mainHashMask;
 
     /**
      * Array of 2^N size, which contains combination
@@ -125,27 +149,27 @@ public final class BytesToNameCanonicalizer
      * and 8-bit collision bucket index (0 to indicate empty
      * collision bucket chain; otherwise subtract one from index)
      */
-    private int[] _mainHash;
+    protected int[] _mainHash;
 
     /**
      * Array that contains <code>Name</code> instances matching
      * entries in <code>_mainHash</code>. Contains nulls for unused
      * entries.
      */
-    private Name[] _mainNames;
+    protected Name[] _mainNames;
 
     // // // Then the collision/spill-over area info
 
     /**
      * Array of heads of collision bucket chains; size dynamically
      */
-    private Bucket[] _collList;
+    protected Bucket[] _collList;
 
     /**
      * Total number of Names in collision buckets (included in
      * <code>_count</code> along with primary entries)
      */
-    private int _collCount;
+    protected int _collCount;
 
     /**
      * Index of the first unused collision bucket entry (== size of
@@ -153,7 +177,7 @@ public final class BytesToNameCanonicalizer
      * or equal to 0xFF (255), since max number of entries is 255
      * (8-bit, minus 0 used as 'empty' marker)
      */
-    private int _collEnd;
+    protected int _collEnd;
 
     // // // Info regarding pending rehashing...
 
@@ -199,10 +223,93 @@ public final class BytesToNameCanonicalizer
 
     /*
     /**********************************************************
-    /* Construction, merging
+    /* Life-cycle: constructors
     /**********************************************************
      */
 
+    /**
+     * Constructor used for creating per-<code>JsonFactory</code> "root"
+     * symbol tables: ones used for merging and sharing common symbols
+     * 
+     * @param hashSize Initial hash area size
+     * @param intern Whether Strings contained should be {@link String#intern}ed
+     * @param seed Random seed valued used to make it more difficult to cause
+     *   collisions (used for collision-based DoS attacks).
+     */
+    private BytesToNameCanonicalizer(int hashSize, boolean intern, int seed)
+    {
+        _parent = null;
+        _hashSeed = seed;
+        _intern = intern;
+        // Sanity check: let's now allow hash sizes below certain minimum value
+        if (hashSize < MIN_HASH_SIZE) {
+            hashSize = MIN_HASH_SIZE;
+        } else {
+            /* Also; size must be 2^N; otherwise hash algorithm won't
+             * work... so let's just pad it up, if so
+             */
+            if ((hashSize & (hashSize - 1)) != 0) { // only true if it's 2^N
+                int curr = MIN_HASH_SIZE;
+                while (curr < hashSize) {
+                    curr += curr;
+                }
+                hashSize = curr;
+            }
+        }
+        _tableInfo = new AtomicReference<TableInfo>(initTableInfo(hashSize));
+    }
+
+    /**
+     * Constructor used when creating a child instance
+     */
+    private BytesToNameCanonicalizer(BytesToNameCanonicalizer parent, boolean intern, int seed,
+            TableInfo state)
+    {
+        _parent = parent;
+        _hashSeed = seed;
+        _intern = intern;
+        _tableInfo = null; // not used by child tables
+
+        // Then copy shared state
+        _count = state.count;
+        _mainHashMask = state.mainHashMask;
+        _mainHash = state.mainHash;
+        _mainNames = state.mainNames;
+        _collList = state.collList;
+        _collCount = state.collCount;
+        _collEnd = state.collEnd;
+        _longestCollisionList = state.longestCollisionList;
+
+        // and then set other state to reflect sharing status
+        _needRehash = false;
+        _mainHashShared = true;
+        _mainNamesShared = true;
+        _collListShared = true;
+    }
+
+    /*
+        public TableInfo(int count, int mainHashMask, int[] mainHash, Name[] mainNames,
+                Bucket[] collList, int collCount, int collEnd, int longestCollisionList)
+     */
+    private TableInfo initTableInfo(int hashSize)
+    {
+        return new TableInfo(0, // count
+                hashSize - 1, // mainHashMask
+                new int[hashSize], // mainHash
+                new Name[hashSize], // mainNames
+                null, // collList
+                0, // collCount,
+                0, // collEnd
+                0 // longestCollisionList
+        );
+    }
+    
+    /*
+    /**********************************************************
+    /* Life-cycle: factory methods, merging
+    /**********************************************************
+     */
+    
     /**
      * Factory method to call to create a symbol table instance with a
      * randomized seed value.
@@ -227,13 +334,16 @@ public final class BytesToNameCanonicalizer
     }
     
     /**
+     * Factory method used to create actual symbol table instance to
+     * use for parsing.
+     * 
      * @param intern Whether canonical symbol Strings should be interned
      *   or not
      */
-    public synchronized BytesToNameCanonicalizer makeChild(boolean canonicalize,
+    public BytesToNameCanonicalizer makeChild(boolean canonicalize,
         boolean intern)
     {
-        return new BytesToNameCanonicalizer(this, intern, _hashSeed);
+        return new BytesToNameCanonicalizer(this, intern, _hashSeed, _tableInfo.get());
     }
 
     /**
@@ -245,87 +355,25 @@ public final class BytesToNameCanonicalizer
      */
     public void release()
     {
-        if (maybeDirty() && _parent != null) {
-            _parent.mergeChild(this);
+        // we will try to merge if child table has new entries
+        if (_parent != null && maybeDirty()) {
+            _parent.mergeChild(new TableInfo(this));
             /* Let's also mark this instance as dirty, so that just in
-             * case release was too early, there's no corruption
-             * of possibly shared data.
+             * case release was too early, there's no corruption of possibly shared data.
              */
-            markAsShared();
+            _mainHashShared = true;
+            _mainNamesShared = true;
+            _collListShared = true;
         }
     }
 
-    private BytesToNameCanonicalizer(int hashSize, boolean intern, int seed)
+    private void mergeChild(TableInfo childState)
     {
-        _parent = null;
-        _hashSeed = seed;
-        _intern = intern;
-        // Sanity check: let's now allow hash sizes below certain minimum value
-        if (hashSize < MIN_HASH_SIZE) {
-            hashSize = MIN_HASH_SIZE;
-        } else {
-            /* Also; size must be 2^N; otherwise hash algorithm won't
-             * work... so let's just pad it up, if so
-             */
-            if ((hashSize & (hashSize - 1)) != 0) { // only true if it's 2^N
-                int curr = MIN_HASH_SIZE;
-                while (curr < hashSize) {
-                    curr += curr;
-                }
-                hashSize = curr;
-            }
-        }
-        initTables(hashSize);
-    }
-
-    /**
-     * Constructor used when creating a child instance
-     */
-    private BytesToNameCanonicalizer(BytesToNameCanonicalizer parent, boolean intern,
-            int seed)
-    {
-        _parent = parent;
-        _hashSeed = seed;
-        _intern = intern;
-
-        // First, let's copy the state as is:
-        _count = parent._count;
-        _mainHashMask = parent._mainHashMask;
-        _mainHash = parent._mainHash;
-        _mainNames = parent._mainNames;
-        _collList = parent._collList;
-        _collCount = parent._collCount;
-        _collEnd = parent._collEnd;
-        _longestCollisionList = parent._longestCollisionList;
-        _needRehash = false;
-        // And consider all shared, so far:
-        _mainHashShared = true;
-        _mainNamesShared = true;
-        _collListShared = true;
-    }
-
-    private void initTables(int hashSize)
-    {
-        _count = 0;
-        _longestCollisionList = 0;
-        _mainHash = new int[hashSize];
-        _mainNames = new Name[hashSize];
-        _mainHashShared = false;
-        _mainNamesShared = false;
-        _mainHashMask = hashSize - 1;
-
-        _collListShared = true; // just since it'll need to be allocated
-        _collList = null;
-        _collEnd = 0;
-
-        _needRehash = false;
-    }
-
-    private synchronized void mergeChild(BytesToNameCanonicalizer child)
-    {
-        // Only makes sense if child has more entries
-        int childCount = child._count;
-        if (childCount <= _count) {
+        final int childCount = childState.count;
+        TableInfo currState = _tableInfo.get();
+        
+        // Only makes sense if child actually has more entries
+        if (childCount <= currState.count) {
             return;
         }
 
@@ -335,33 +383,16 @@ public final class BytesToNameCanonicalizer
          * One way to do this is to just purge tables if they grow
          * too large, and that's what we'll do here.
          */
-        if (child.size() > MAX_ENTRIES_FOR_REUSE
-                || child._longestCollisionList > MAX_COLL_CHAIN_FOR_REUSE) {
+        if (childCount > MAX_ENTRIES_FOR_REUSE
+                || childState.longestCollisionList > MAX_COLL_CHAIN_FOR_REUSE) {
             /* Should there be a way to get notified about this
              * event, to log it or such? (as it's somewhat abnormal
              * thing to happen)
              */
-            // At any rate, need to clean up the tables, then:
-            initTables(DEFAULT_TABLE_SIZE);
-        } else {
-            _count = child._count;
-            _longestCollisionList = child._longestCollisionList;
-            _mainHash = child._mainHash;
-            _mainNames = child._mainNames;
-            _mainHashShared = true; // shouldn't matter for parent
-            _mainNamesShared = true; // - "" -
-            _mainHashMask = child._mainHashMask;
-            _collList = child._collList;
-            _collCount = child._collCount;
-            _collEnd = child._collEnd;
+            // At any rate, need to clean up the tables
+            childState = initTableInfo(DEFAULT_TABLE_SIZE);
         }
-    }
-
-    private void markAsShared()
-    {
-        _mainHashShared = true;
-        _mainNamesShared = true;
-        _collListShared = true;
+        _tableInfo.compareAndSet(currState, childState);
     }
 
     /*
@@ -370,7 +401,14 @@ public final class BytesToNameCanonicalizer
     /**********************************************************
      */
 
-    public int size() { return _count; }
+    public int size()
+    {
+        if (_tableInfo != null) { // root table
+            return _tableInfo.get().count;
+        }
+        // nope, child table
+        return _count;
+    }
 
     /**
      * @since 1.9.9
@@ -486,12 +524,11 @@ public final class BytesToNameCanonicalizer
      *   name; if less than 8 bytes, padded with up to 3 zero bytes
      *   in front (zero MSBs, ie. right aligned)
      *
-     * @return Name matching the symbol passed (or constructed for
-     *   it)
+     * @return Name matching the symbol passed (or constructed for it)
      */
     public Name findName(int firstQuad, int secondQuad)
     {
-        int hash = calcHash(firstQuad, secondQuad);
+        int hash = (secondQuad == 0) ? calcHash(firstQuad) : calcHash(firstQuad, secondQuad);
         int ix = (hash & _mainHashMask);
         int val = _mainHash[ix];
         
@@ -619,6 +656,8 @@ public final class BytesToNameCanonicalizer
     // as it seems to give fewest collisions for us
     // (see [http://www.cse.yorku.ca/~oz/hash.html] for details)
     private final static int MULT = 33;
+    private final static int MULT2 = 65599;
+    private final static int MULT3 = 31;
     
     public final int calcHash(int firstQuad)
     {
@@ -633,11 +672,11 @@ public final class BytesToNameCanonicalizer
         /* For two quads, let's change algorithm a bit, to spice
          * things up (can do bit more processing anyway)
          */
-        
         int hash = firstQuad;
-        hash += (hash >>> 15); // try mixing first and second byte pairs first
-        hash ^= ((secondQuad + _hashSeed) * MULT); // then add second quad
-        hash += (hash >>> 9); // and shuffle some more
+        hash ^= (hash >>> 15); // try mixing first and second byte pairs first
+        hash += (secondQuad * MULT); // then add second quad
+        hash ^= _hashSeed;
+        hash += (hash >>> 7); // and shuffle some more
         return hash;
     }
 
@@ -653,22 +692,24 @@ public final class BytesToNameCanonicalizer
          * add seed bit later in the game, and switch plus/xor around,
          * use different shift lengths.
          */
-        int hash = quads[0];
-        hash ^= (hash >>> 9);
-        hash += ((quads[1] + _hashSeed) * MULT);
-        hash ^= (hash >>> 15);
-        hash ^= (quads[2] * MULT);
+        int hash = quads[0] ^ _hashSeed;
+        hash += (hash >>> 9);
+        hash *= MULT;
+        hash += quads[1];
+        hash *= MULT2;
+        hash += (hash >>> 15);
+        hash ^= quads[2];
         hash += (hash >>> 17);
         
         for (int i = 3; i < qlen; ++i) {
-            hash = (hash * MULT) + (quads[i] + 1);
+            hash = (hash * MULT3) ^ quads[i];
             // for longer entries, mess a bit in-between too
-            hash ^= (hash >>> 3);
+            hash += (hash >>> 3);
+            hash ^= (hash << 7);
         }
-
         // and finally shuffle some more once done
         hash += (hash >>> 15); // to get high-order bits to mix more
-        hash ^= (hash >>> 9); // as well as lowest 2 bytes
+        hash ^= (hash << 9); // as well as lowest 2 bytes
         return hash;
     }
 
@@ -1065,6 +1106,54 @@ public final class BytesToNameCanonicalizer
     /**********************************************************
      */
 
+    /**
+     * Immutable value class used for sharing information as efficiently
+     * as possible, by only require synchronization of reference manipulation
+     * but not access to contents.
+     * 
+     * @since 1.9.9
+     */
+    private final static class TableInfo
+    {
+        public final int count;
+        public final int mainHashMask;
+        public final int[] mainHash;
+        public final Name[] mainNames;
+        public final Bucket[] collList;
+        public final int collCount;
+        public final int collEnd;
+        public final int longestCollisionList;
+
+        public TableInfo(int count, int mainHashMask, int[] mainHash, Name[] mainNames,
+                Bucket[] collList, int collCount, int collEnd, int longestCollisionList)
+        {
+            this.count = count;
+            this.mainHashMask = mainHashMask;
+            this.mainHash = mainHash;
+            this.mainNames = mainNames;
+            this.collList = collList;
+            this.collCount = collCount;
+            this.collEnd = collEnd;
+            this.longestCollisionList = longestCollisionList;
+        }
+
+        public TableInfo(BytesToNameCanonicalizer src)
+        {
+            count = src._count;
+            mainHashMask = src._mainHashMask;
+            mainHash = src._mainHash;
+            mainNames = src._mainNames;
+            collList = src._collList;
+            collCount = src._collCount;
+            collEnd = src._collEnd;
+            longestCollisionList = src._longestCollisionList;
+        }
+    
+    }
+    
+    /**
+     * 
+     */
     final static class Bucket
     {
         protected final Name _name;

@@ -8,9 +8,18 @@ public class TestSymbolTables extends main.BaseTest
     // and which can be combined as
     // sequences, like, say, 11x11x11 (1331) 9-character thingies
     final static String[] CHAR_COLLISION_SNIPPETS = {
+        /*
+         // with MULT of 31, seed 0, we'd get:
         "@~}", "@^", "A_}", "A`^", 
         "Aa?", "B@}", "BA^", "BB?", 
         "C!}", "C\"^", "C#?"
+        */
+
+        "*!\u0804", "*\"\u07E3", "*#\u07C2", "*$\u07A1", "*%\u0780", "*&\u075F", 
+        "*'\u073E", "*(\u071D", "*)\u06FC", "**\u06DB"
+
+        // With MULT of 33, seed of 0:
+
     };
     final static String[] CHAR_COLLISIONS;
     static {
@@ -27,6 +36,10 @@ public class TestSymbolTables extends main.BaseTest
         }
     }
     
+    /**
+     * Test to see what happens with pre-computed collisions; should
+     * get an exception.
+     */
     public void testCharBasedCollisions()
     {
         CharsToNameCanonicalizer sym = CharsToNameCanonicalizer.createRoot();
@@ -35,7 +48,7 @@ public class TestSymbolTables extends main.BaseTest
         try {
             int firstHash = 0;
             for (String str : CHAR_COLLISIONS) {
-                int hash = CharsToNameCanonicalizer.calcHash(str);
+                int hash = sym.calcHash(str);
                 if (firstHash == 0) {
                     firstHash = hash;
                 } else {
@@ -59,12 +72,12 @@ public class TestSymbolTables extends main.BaseTest
     public void testSyntheticWithChars()
     {
         // pass seed, to keep results consistent:
-        CharsToNameCanonicalizer symbols = CharsToNameCanonicalizer.createRoot();
+        CharsToNameCanonicalizer symbols = CharsToNameCanonicalizer.createRoot(1);
         final int COUNT = 6000;
         for (int i = 0; i < COUNT; ++i) {
             String id = fieldNameFor(i);
             char[] ch = id.toCharArray();
-            symbols.findSymbol(ch, 0, ch.length, CharsToNameCanonicalizer.calcHash(id));
+            symbols.findSymbol(ch, 0, ch.length, symbols.calcHash(id));
         }
 
         assertEquals(8192, symbols.bucketCount());
@@ -73,10 +86,9 @@ public class TestSymbolTables extends main.BaseTest
 //System.out.printf("Char stuff: collisions %d, max-coll %d\n", symbols.collisionCount(), symbols.maxCollisionLength());
         
         // original hashCode calc gave very high rate (3567), but with shuffling comes down a bit
-        // (changing mult to 33 would help more)
-        assertEquals(1905, symbols.collisionCount());
+        assertEquals(1401, symbols.collisionCount());
         // esp. with collisions; first got about 30
-        assertEquals(6, symbols.maxCollisionLength());
+        assertEquals(4, symbols.maxCollisionLength());
     }
 
     // Test for verifying stability of hashCode, wrt collisions, using
@@ -84,7 +96,8 @@ public class TestSymbolTables extends main.BaseTest
     public void testSyntheticWithBytes() throws IOException
     {
         // pass seed, to keep results consistent:
-        BytesToNameCanonicalizer symbols = BytesToNameCanonicalizer.createRoot(1);
+        BytesToNameCanonicalizer symbols = BytesToNameCanonicalizer.createRoot(1)
+                .makeChild(true, true);
         final int COUNT = 6000;
         for (int i = 0; i < COUNT; ++i) {
             String id = fieldNameFor(i);
@@ -97,9 +110,9 @@ public class TestSymbolTables extends main.BaseTest
 //System.out.printf("Byte stuff: collisions %d, max-coll %d\n", symbols.collisionCount(), symbols.maxCollisionLength());
     
         // Fewer collisions than with chars, but still quite a few
-        assertEquals(1770, symbols.collisionCount());
+        assertEquals(1700, symbols.collisionCount());
         // but not super long collision chains:
-        assertEquals(9, symbols.maxCollisionLength());
+        assertEquals(10, symbols.maxCollisionLength());
     }
 
     protected void fieldNameFor(StringBuilder sb, int index)
