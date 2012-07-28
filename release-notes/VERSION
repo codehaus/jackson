@@ -1,7 +1,7 @@
 Version: 1.9.9
 
 Release date:
-  xx-xxx-2012
+  28-Jul-2012
 
 Description:
   Another patch release for 1.9.
@@ -13,6 +13,11 @@ Fixes:
    for calculation otherwise
   * [Issue-24]: ArrayIndexOutOfBoundsException with TextBuffer.append()
   * [JACKSON-853]: JsonStringEncoder.quoteAsString() problem with buffer boundary
+
+Other:
+  * Improved multi-threader handling of byte-based symbol table; should
+    reduce lock contention for heavily multi-threaded cases, esp. when
+    parsing short documents.
 
 ------------------------------------------------------------------------
 === History: ===
