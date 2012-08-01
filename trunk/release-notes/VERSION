@@ -1,13 +1,21 @@
-Version: 1.9.9
+Version: 1.9.10
 
 Release date:
-  28-Jul-2012
+  xx-xxx-2012
 
 Description:
   Another patch release for 1.9.
 
 Fixes:
+  * [JACKSON-855] add StackOverflowError as root cause
 
+------------------------------------------------------------------------
+=== History: ===
+------------------------------------------------------------------------
+
+1.9.9 (28-Jul-2012)
+
+Fixes:
   * [Issue-21]: Improve handling of String hash code collisions for
    symbol tables; exception for degenerate cases (attacks), improvements
    for calculation otherwise
@@ -19,9 +27,6 @@ Other:
     reduce lock contention for heavily multi-threaded cases, esp. when
     parsing short documents.
 
-------------------------------------------------------------------------
-=== History: ===
-------------------------------------------------------------------------
 
 1.9.8 (28-Jun-2012)
 
