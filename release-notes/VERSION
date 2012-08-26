@@ -7,7 +7,8 @@ Description:
   Another patch release for 1.9.
 
 Fixes:
-  * [JACKSON-855] add StackOverflowError as root cause
+  * [JACKSON-855]: add StackOverflowError as root cause
+  * [Issue#57]: Allow serialization of JDK proxy types
 
 ------------------------------------------------------------------------
 === History: ===
