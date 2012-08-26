@@ -150,10 +150,12 @@ public final class ClassUtil
      */
     public static boolean isProxyType(Class<?> type)
     {
-        // Then: well-known proxy (etc) classes
+        // As per [Issue#57], should NOT disqualify JDK proxy:
+        /*
         if (Proxy.isProxyClass(type)) {
             return true;
         }
+        */
         String name = type.getName();
         // Hibernate uses proxies heavily as well:
         if (name.startsWith("net.sf.cglib.proxy.")
