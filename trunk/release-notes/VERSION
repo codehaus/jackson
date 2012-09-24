@@ -1,10 +1,18 @@
-Version: 1.9.10
+Version: 1.9.11
 
 Release date:
-  23-Sep-2012
+  xx-Nov-2012
 
 Description:
   Another patch release for 1.9.
+
+Fixes:
+
+------------------------------------------------------------------------
+=== History: ===
+------------------------------------------------------------------------
+
+1.9.10 (23-Sep-2012)
 
 Fixes:
   * [JACKSON-855]: add StackOverflowError as root cause
@@ -12,10 +20,6 @@ Fixes:
    (reported by Duncan B)
   * [Issue#57]: Allow serialization of JDK proxy types
   * [Issue#71]: java.util.concurrent.ConcurrentNavigableMap support was failing
-
-------------------------------------------------------------------------
-=== History: ===
-------------------------------------------------------------------------
 
 1.9.9 (28-Jul-2012)
 
