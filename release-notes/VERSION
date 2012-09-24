@@ -8,6 +8,8 @@ Description:
 
 Fixes:
   * [JACKSON-855]: add StackOverflowError as root cause
+  * [JACKSON-867]: missing Export-Package header for "org.codehaus.jackson.map.ext"
+   (reported by Duncan B)
   * [Issue#57]: Allow serialization of JDK proxy types
   * [Issue#71]: java.util.concurrent.ConcurrentNavigableMap support was failing
 

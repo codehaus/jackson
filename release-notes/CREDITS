@@ -928,3 +928,8 @@ Scott Stanton:
 Sébastien R:
   * Reported [JACKSON-842] ArrayIndexOutOfBoundsException when skipping C-style comments
    [1.9.8]
+
+Duncan Bloem:
+  * Reported [JACKSON-867]  missing Export-Package header for
+   "org.codehaus.jackson.map.ext"
+   [1.9.10]
