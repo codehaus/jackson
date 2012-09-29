@@ -11,6 +11,7 @@ Description:
 
   * [Issue-24]: ArrayIndexOutOfBoundsException with TextBuffer.append(),
    huge Strings.
+  * (Smile) [Issue#8]: Problem with `JsonGenerator`, "addSeenName()"
 
 ------------------------------------------------------------------------
 === History: ===
