@@ -162,7 +162,7 @@ public class SmileParser
      */
     
     /**
-     * <code>ThreadLocal</code> contains a {@link java.lang.ref.SoftRerefence}
+     * <code>ThreadLocal</code> contains a {@link java.lang.ref.SoftReference}
      * to a buffer recycler used to provide a low-cost
      * buffer recycling for Smile-specific buffers.
      */
