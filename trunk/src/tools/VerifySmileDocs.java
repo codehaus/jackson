@@ -27,7 +27,6 @@ public class VerifySmileDocs
     private void verifyAll(File inputDir) throws IOException
     {
         File[] files = inputDir.listFiles(new FilenameFilter() {
-            @Override
             public boolean accept(File dir, String name) {
                 int i = name.lastIndexOf('.');
                 if (i > 0) {

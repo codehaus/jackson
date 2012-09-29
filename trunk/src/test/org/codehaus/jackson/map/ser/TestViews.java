@@ -7,6 +7,7 @@ import java.util.*;
 
 import org.codehaus.jackson.annotate.*;
 import org.codehaus.jackson.map.*;
+import org.codehaus.jackson.map.annotate.JsonSerialize.Inclusion;
 import org.codehaus.jackson.map.annotate.JsonView;
 
 /**
@@ -70,6 +71,14 @@ public class TestViews
         @JsonView(ViewA.class)
         public String value = "x";
     }   
+
+    // [JACKSON-868]
+    public static class WebView { }
+    public static class OtherView { }
+    public static class Foo {
+      @JsonView(WebView.class)
+      public int getFoo() { return 3; }
+    }
     
     /*
     /**********************************************************
@@ -165,5 +174,16 @@ public class TestViews
         String json = mapper.writerWithView(Object.class).writeValueAsString(bean);
         //json = mapper.writeValueAsString(bean);
         assertEquals("{\"id\":\"id\"}", json);
+    }
+
+    // [JACKSON-868]
+    public void testWithInclusionSettings() throws IOException
+    {
+        ObjectMapper mapper = new ObjectMapper();
+        mapper.setSerializationInclusion(Inclusion.NON_DEFAULT);
+        SerializationConfig dbViewConfig = mapper.getSerializationConfig().withView(OtherView.class);
+        mapper.setSerializationConfig(dbViewConfig);
+        String json = mapper.writeValueAsString(new Foo());
+        assertEquals(json, "{}");
     }
 }

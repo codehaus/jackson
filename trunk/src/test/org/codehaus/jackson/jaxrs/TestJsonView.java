@@ -40,10 +40,10 @@ public class TestJsonView extends main.BaseTest
         ByteArrayOutputStream out = new ByteArrayOutputStream();
         Bean bean = new Bean();
         Annotation ann = new JsonView() {
-            @Override
+            //@Override
             public Class<?>[] value() { return new Class[] { MyView1.class }; }
 
-            @Override
+            //@Override
             public Class<? extends Annotation> annotationType() {
                 return JsonView.class;
             }
