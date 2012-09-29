@@ -121,6 +121,7 @@ public class TestAnnotationJsonSerialize2
     // force use of interface
     @JsonSerialize(as=Fooable.class)
     public static class FooImpl implements Fooable {
+        @Override
         public int getFoo() { return 42; }
         public int getBar() { return 15; }
     }

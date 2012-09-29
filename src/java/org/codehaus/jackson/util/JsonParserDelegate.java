@@ -168,6 +168,7 @@ public class JsonParserDelegate extends JsonParser
     /**********************************************************
      */
 
+    @Override
     public boolean getBooleanValue() throws IOException, JsonParseException {
         return delegate.getBooleanValue();
     }

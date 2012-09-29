@@ -1,12 +1,14 @@
 Version: 1.9.11
 
 Release date:
-  xx-Nov-2012
+  xx-Oct-2012
 
 Description:
   Another patch release for 1.9.
 
 Fixes:
+
+* [Issue#8]: Problem with 'SmileGenerator', addSeenName()
 
 ------------------------------------------------------------------------
 === History: ===
