@@ -1,17 +1,16 @@
 Version: 1.8.11
 
 Release date:
-  (never?)
+  01-Oct-2012
 
 Description:
-  Theoretical patch version that we may have to release if
-  things go badly.
+  Extra patch version above and beyond last official version (1.8.10)
 
-  Fixes:
+Fixes:
 
-  * [Issue-24]: ArrayIndexOutOfBoundsException with TextBuffer.append(),
-   huge Strings.
-  * (Smile) [Issue#8]: Problem with `JsonGenerator`, "addSeenName()"
+* [Issue-24]: ArrayIndexOutOfBoundsException with TextBuffer.append(),
+  huge Strings.
+* (Smile) [Issue#8]: Problem with `JsonGenerator`, "addSeenName()"
 
 ------------------------------------------------------------------------
 === History: ===
@@ -19,7 +18,7 @@ Description:
 
 1.8.10 (15-Jul-2012)
 
-  Fixes:
+Fixes:
 
   * [Issue-2] SmileParser failed to decode surrogate-pair characters for
     long Strings
