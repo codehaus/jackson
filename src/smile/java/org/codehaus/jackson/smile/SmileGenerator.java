@@ -2100,10 +2100,12 @@ public class SmileGenerator
                 _seenStringValues = new SharedStringNode[MAX_SHARED_STRING_VALUES];
                 final int mask = MAX_SHARED_STRING_VALUES-1;
                 for (SharedStringNode node : old) {
-                    for (; node != null; node = node.next) {
+		    while (node != null) {
                         int ix = node.value.hashCode() & mask;
+			SharedStringNode next = node.next;
                         node.next = _seenStringValues[ix];
                         _seenStringValues[ix] = node;
+			node = next;
                     }
                 }
             }
