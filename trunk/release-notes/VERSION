@@ -1,7 +1,7 @@
-Version: 1.9.11
+Version: 1.9.12
 
 Release date:
-  06-Nov-2012
+  xx-Dec-2012
 
 Description:
   Another patch release for 1.9.
@@ -11,6 +11,9 @@ Fixes:
 * [JACKSON-875]: Enums are not properly serialized when
   Feature.USE_ANNOTATIONS is disabled
  (reported by Laurent P)
+* [Issue#38]: Infinite loop in `JsonParser.nextFieldName()` with trailing
+ space after field name
+ (reported by matjazs@github)
 
 ------------------------------------------------------------------------
 === History: ===

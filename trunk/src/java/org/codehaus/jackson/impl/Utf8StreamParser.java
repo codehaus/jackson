@@ -2359,6 +2359,7 @@ public final class Utf8StreamParser
                 switch (i) {
                 case INT_SPACE:
                 case INT_TAB:
+                    break;
                 case INT_CR:
                     _skipCR();
                     break;
@@ -2374,11 +2375,11 @@ public final class Utf8StreamParser
                     }
                     break space_loop;
                 }
+                if (_inputPtr >= _inputEnd) {
+                    loadMoreGuaranteed();
+                }
+                i = _inputBuffer[_inputPtr++] & 0xFF;
             }
-            if (_inputPtr >= _inputEnd) {
-                loadMoreGuaranteed();
-            }
-            i = _inputBuffer[_inputPtr++] & 0xFF;
             if (i != INT_COLON) {
                 _reportUnexpectedChar(i, "was expecting a colon to separate field name and value");
             }
