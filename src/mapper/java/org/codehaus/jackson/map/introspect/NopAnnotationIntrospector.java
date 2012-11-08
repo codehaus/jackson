@@ -42,7 +42,8 @@ public class NopAnnotationIntrospector
 
     @Override
     public String findEnumValue(Enum<?> value) {
-        return null;
+        // as per [JACKSON-875]
+        return value.name();
     }
     
     /*
