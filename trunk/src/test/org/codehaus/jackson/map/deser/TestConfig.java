@@ -22,6 +22,8 @@ public class TestConfig
         @JsonProperty("y")
             public void setX(int v) { value = v; }
     }
+
+    enum Alpha { A, B, C; }
     
     /*
     /**********************************************************
@@ -114,5 +116,17 @@ public class TestConfig
         assertEquals(1, mapper.getDeserializerProvider().cachedDeserializersCount());
         mapper.getDeserializerProvider().flushCachedDeserializers();
         assertEquals(0, mapper.getDeserializerProvider().cachedDeserializersCount());
+    }
+
+    // [JACKSON-875]
+    public void testEnumsWhenDisabled() throws Exception
+    {
+        ObjectMapper m = new ObjectMapper();
+        assertEquals(Alpha.B, m.readValue(quote("B"), Alpha.class));
+
+        m = new ObjectMapper();
+        m.configure(DeserializationConfig.Feature.USE_ANNOTATIONS, false);
+        // should still use the basic name handling here
+        assertEquals(Alpha.B, m.readValue(quote("B"), Alpha.class));
     }
 }

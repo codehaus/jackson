@@ -637,10 +637,15 @@ public abstract class AnnotationIntrospector
      * Method for determining the String value to use for serializing
      * given enumeration entry; used when serializing enumerations
      * as Strings (the standard method).
+     *<p>
+     * NOTE: implemented since 1.9.11, to make things work even when
+     * annotation introspection is disabled.
      *
      * @return Serialized enum value.
      */
-    public abstract String findEnumValue(Enum<?> value);
+    public String findEnumValue(Enum<?> value) {
+        return value.name();
+    }
 
     /*
     /**********************************************************

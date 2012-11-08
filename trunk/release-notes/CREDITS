@@ -903,6 +903,9 @@ James Roper:
 Laurent Pireyn:
   * Reported [JACKSON-831] External type id, explicit property do not work well together
    [1.9.7]
+  * Reported [JACKSON-875]: Enums are not properly serialized when
+    Feature.USE_ANNOTATIONS is disabled
+   [1.9.12]
 
 Jan Jan:   
   * Reported [JACKSON-832] (partial) Fix numeric range check for Longs (was not working)

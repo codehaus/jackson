@@ -8,11 +8,19 @@ Description:
 
 Fixes:
 
-* [Issue#8]: Problem with 'SmileGenerator', addSeenName()
+* [JACKSON-875]: Enums are not properly serialized when
+  Feature.USE_ANNOTATIONS is disabled
+ (reported by Laurent P)
 
 ------------------------------------------------------------------------
 === History: ===
 ------------------------------------------------------------------------
+
+1.9.11 (06-Nov-2012)
+
+Fixes:
+
+* [Issue#8]: Problem with 'SmileGenerator', addSeenName()
 
 1.9.10 (23-Sep-2012)
 
