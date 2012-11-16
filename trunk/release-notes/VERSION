@@ -14,6 +14,8 @@ Fixes:
 * [Issue#38]: Infinite loop in `JsonParser.nextFieldName()` with trailing
  space after field name
  (reported by matjazs@github)
+* [Issue#42]: NPE in UTF-32 parser
+ (reported by James R)
 
 ------------------------------------------------------------------------
 === History: ===

@@ -411,6 +411,7 @@ public class TestJsonParser
             // should still know the field name
             assertEquals("doc", jp.getCurrentName());
             assertToken(JsonToken.END_OBJECT, jp.nextToken());
+            assertNull(jp.nextToken());
             jp.close();
         }
     }
