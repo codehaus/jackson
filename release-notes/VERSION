@@ -8,6 +8,7 @@ Description:
 
 Fixes:
 
+* One more case for [JACKSON-802] (class loading using Class.forName())
 * [JACKSON-875]: Enums are not properly serialized when
   Feature.USE_ANNOTATIONS is disabled
  (reported by Laurent P)
