@@ -49,7 +49,7 @@ public class TestMapDeserialization
             return result;
         }
     }
-    
+
     /*
     /**********************************************************
     /* Test methods, untyped (Object valued) maps
@@ -58,6 +58,7 @@ public class TestMapDeserialization
 
     public void testUntypedMap() throws Exception
     {
+        
         ObjectMapper mapper = new ObjectMapper();
         // to get "untyped" default map-to-map, pass Object.class
         String JSON = "{ \"foo\" : \"bar\", \"crazy\" : true, \"null\" : null }";
@@ -391,7 +392,7 @@ public class TestMapDeserialization
         assertEquals(1, result.size());
         assertEquals("xyz", result.get("x"));
     }
-
+    
     /*
     /**********************************************************
     /* Error tests
