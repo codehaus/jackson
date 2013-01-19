@@ -129,8 +129,12 @@ public final class JsonStringEncoder
                 }
             }
             // something to escape; 2 or 6-char variant? 
-            int escCode = escCodes[input.charAt(inPtr++)];
-            int length = _appendSingleEscape(escCode, _quoteBuffer);
+            char d = input.charAt(inPtr++);
+            int escCode = escCodes[d];
+            int length = (escCode < 0)
+                    ? _appendNumericEscape(d, _quoteBuffer)
+                    : _appendNamedEscape(escCode, _quoteBuffer);
+                    ;
             if ((outPtr + length) > outputBuffer.length) {
                 int first = outputBuffer.length - outPtr;
                 if (first > 0) {
@@ -144,7 +148,6 @@ public final class JsonStringEncoder
                 System.arraycopy(_quoteBuffer, 0, outputBuffer, outPtr, length);
                 outPtr += length;
             }
-            
         }
         textBuffer.setCurrentLength(outPtr);
         return textBuffer.contentsAsArray();
@@ -249,6 +252,7 @@ public final class JsonStringEncoder
      * Will encode given String as UTF-8 (without any quoting), return
      * resulting byte array.
      */
+    @SuppressWarnings("resource")
     public byte[] encodeAsUTF8(String text)
     {
         ByteArrayBuilder byteBuilder = _byteBuilder;
@@ -341,16 +345,17 @@ public final class JsonStringEncoder
     /**********************************************************
      */
 
-    private int _appendSingleEscape(int escCode, char[] quoteBuffer)
+    private int _appendNumericEscape(int value, char[] quoteBuffer)
     {
-        if (escCode < 0) { // control char, value -(char + 1)
-            int value = -(escCode + 1);
-            quoteBuffer[1] = 'u';
-            // We know it's a control char, so only the last 2 chars are non-0
-            quoteBuffer[4] = HEX_CHARS[value >> 4];
-            quoteBuffer[5] = HEX_CHARS[value & 0xF];
-            return 6;
-        }
+        quoteBuffer[1] = 'u';
+        // We know it's a control char, so only the last 2 chars are non-0
+        quoteBuffer[4] = HEX_CHARS[value >> 4];
+        quoteBuffer[5] = HEX_CHARS[value & 0xF];
+        return 6;
+    }
+
+    private int _appendNamedEscape(int escCode, char[] quoteBuffer)
+    {
         quoteBuffer[1] = (char) escCode;
         return 2;
     }
