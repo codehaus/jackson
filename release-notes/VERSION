@@ -12,6 +12,8 @@ Fixes:
 * [JACKSON-875]: Enums are not properly serialized when
   Feature.USE_ANNOTATIONS is disabled
  (reported by Laurent P)
+* [JACKSON-884]: JsonStringEncoder.quoteAsStringValue() fails to encode
+  ctrl chars correctly.
 * [Issue#38]: Infinite loop in `JsonParser.nextFieldName()` with trailing
  space after field name
  (reported by matjazs@github)
