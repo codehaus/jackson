@@ -20,6 +20,13 @@ dynamically ("bean materialization")
   <issueManagement>
     <url>http://jira.codehaus.org/browse/JACKSON</url>
   </issueManagement>
+  <developers>
+    <developer>
+      <id>cowtowncoder</id>
+      <name>Tatu Saloranta</name>
+      <email>tatu@fasterxml.com</email>
+    </developer>
+  </developers>
 
  <!-- Dependency information -->
  
