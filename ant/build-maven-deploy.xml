@@ -43,19 +43,31 @@
     <fail unless="password" message="Must define -Dpassword" />
 
     <!-- uploads done using webdav, need to register -->
+<!--
     <artifact:install-provider artifactId="wagon-webdav" version="1.0-beta-1" />
+-->
 
     <echo message="(authenticating as user '${user}')" />
-    <artifact:remoteRepository id="repo.release"
+<!--
       url="dav:https://dav.codehaus.org/repository/jackson"
+      url="https://nexus.codehaus.org/service/local/staging/deploy/maven2/"
+      url="https://oss.sonatype.org/service/local/staging/deploy/maven2/"
+-->
+    <artifact:remoteRepository id="repo.release"
+      url="https://oss.sonatype.org/service/local/staging/deploy/maven2/"
    >
       <authentication username="${user}" password="${password}" />
       <releases enabled="true"/> 
       <snapshots enabled="false"/> 
     </artifact:remoteRepository>
 
-    <artifact:remoteRepository id="repo.snapshot"
+<!--
       url="dav:https://dav.codehaus.org/snapshots.repository/jackson"
+      url="https://nexus.codehaus.org/content/repositories/snapshots/"
+      url="https://oss.sonatype.org/content/repositories/snapshots"
+-->
+    <artifact:remoteRepository id="repo.snapshot"
+      url="https://oss.sonatype.org/content/repositories/snapshots"
    >
       <authentication username="${user}" password="${password}" />
       <releases enabled="false"/> 
