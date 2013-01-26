@@ -16,6 +16,9 @@ built on Jackson JSON processor
  <!-- Contact information -->
 
   <url>http://jackson.codehaus.org</url>
+  <scm>
+    <url>http://xircles.codehaus.org/projects/jackson/repos/primary/repo</url>
+  </scm>
   <issueManagement>
     <url>http://jira.codehaus.org/browse/JACKSON</url>
   </issueManagement>
