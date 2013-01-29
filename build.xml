@@ -481,9 +481,33 @@ compile.smile, compile.mrbean" />
        <jar destfile="${dir.dist}/jackson-core-asl-${IMPL_VERSION}-javadoc.jar"
           filesonly="true" compress="true" basedir="${dir.javadoc}" includes="**/*"
        />
+       <jar destfile="${dir.dist}/jackson-core-lgpl-${IMPL_VERSION}-javadoc.jar"
+          filesonly="true" compress="true" basedir="${dir.javadoc}" includes="**/*"
+       />
        <jar destfile="${dir.dist}/jackson-mapper-asl-${IMPL_VERSION}-javadoc.jar"
           filesonly="true" compress="true" basedir="${dir.javadoc}" includes="**/*"
        />
+       <jar destfile="${dir.dist}/jackson-mapper-lgpl-${IMPL_VERSION}-javadoc.jar"
+          filesonly="true" compress="true" basedir="${dir.javadoc}" includes="**/*"
+       />
+
+       <jar destfile="${dir.dist}/jackson-jaxrs-${IMPL_VERSION}-javadoc.jar"
+          filesonly="true" compress="true" basedir="${dir.javadoc}"
+          includes="org/codehaus/jackson/jaxrs/**/*"
+        />
+       <jar destfile="${dir.dist}/jackson-mrbean-${IMPL_VERSION}-javadoc.jar"
+          filesonly="true" compress="true" basedir="${dir.javadoc}"
+          includes="org/codehaus/jackson/mrbean/**/*"
+        />
+       <jar destfile="${dir.dist}/jackson-smile-${IMPL_VERSION}-javadoc.jar"
+          filesonly="true" compress="true" basedir="${dir.javadoc}"
+          includes="org/codehaus/jacsmilerbean/**/*"
+        />
+       <jar destfile="${dir.dist}/jackson-xc-${IMPL_VERSION}-javadoc.jar"
+          filesonly="true" compress="true" basedir="${dir.javadoc}">
+                <include name="org/codehaus/jackson/xc/**" />
+                <include name="org/codehaus/jackson/xml/**" />
+       </jar>
 
        <!-- Then copy javadocs -->
        <copy todir="${dir.dist}">
