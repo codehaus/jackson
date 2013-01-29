@@ -175,64 +175,96 @@
      file="${dir.dist}/jackson-core-asl-${IMPL_VERSION}.jar"
    >
       <remoteRepository refid="repo.release" />
+      <attach file="${dir.dist}/jackson-core-asl-${IMPL_VERSION}.jar.asc" type="jar.asc" />
+      <attach file="${dir.dist}/jackson-core-asl-${IMPL_VERSION}.pom.asc" type="pom.asc" />
       <attach file="${dir.dist}/jackson-core-asl-${IMPL_VERSION}-sources.jar" type="jar" classifier="sources" />
+      <attach file="${dir.dist}/jackson-core-asl-${IMPL_VERSION}-sources.jar.asc" type="jar.asc" classifier="sources" />
       <attach file="${dir.dist}/jackson-core-asl-${IMPL_VERSION}-javadoc.jar" type="jar" classifier="javadoc" />
+      <attach file="${dir.dist}/jackson-core-asl-${IMPL_VERSION}-javadoc.jar.asc" type="jar.asc" classifier="javadoc" />
     </artifact:deploy>
 
     <artifact:deploy pomRefId="pom.asl.mapper" uniqueVersion="false"
      file="${dir.dist}/jackson-mapper-asl-${IMPL_VERSION}.jar"
    >
       <remoteRepository refid="repo.release" />
+      <attach file="${dir.dist}/jackson-mapper-asl-${IMPL_VERSION}.jar.asc" type="jar.asc" />
+      <attach file="${dir.dist}/jackson-mapper-asl-${IMPL_VERSION}.pom.asc" type="pom.asc" />
       <attach file="${dir.dist}/jackson-mapper-asl-${IMPL_VERSION}-sources.jar" type="jar" classifier="sources" />
+      <attach file="${dir.dist}/jackson-mapper-asl-${IMPL_VERSION}-sources.jar.asc" type="jar.asc" classifier="sources" />
       <attach file="${dir.dist}/jackson-mapper-asl-${IMPL_VERSION}-javadoc.jar" type="jar" classifier="javadoc" />
+      <attach file="${dir.dist}/jackson-mapper-asl-${IMPL_VERSION}-javadoc.jar.asc" type="jar.asc" classifier="javadoc" />
     </artifact:deploy>
 
     <artifact:deploy pomRefId="pom.lgpl.core" uniqueVersion="false"
      file="${dir.dist}/jackson-core-lgpl-${IMPL_VERSION}.jar"
    >
       <remoteRepository refid="repo.release" />
+      <attach file="${dir.dist}/jackson-core-lgpl-${IMPL_VERSION}.jar.asc" type="jar.asc" />
+      <attach file="${dir.dist}/jackson-core-lgpl-${IMPL_VERSION}.pom.asc" type="pom.asc" />
       <attach file="${dir.dist}/jackson-core-lgpl-${IMPL_VERSION}-sources.jar" type="jar" classifier="sources" />
+      <attach file="${dir.dist}/jackson-core-lgpl-${IMPL_VERSION}-sources.jar.asc" type="jar.asc" classifier="sources" />
       <attach file="${dir.dist}/jackson-core-lgpl-${IMPL_VERSION}-javadoc.jar" type="jar" classifier="javadoc" />
+      <attach file="${dir.dist}/jackson-core-lgpl-${IMPL_VERSION}-javadoc.jar.asc" type="jar.asc" classifier="javadoc" />
     </artifact:deploy>
 
     <artifact:deploy pomRefId="pom.lgpl.mapper" uniqueVersion="false"
      file="${dir.dist}/jackson-mapper-lgpl-${IMPL_VERSION}.jar"
    >
       <remoteRepository refid="repo.release" />
+      <attach file="${dir.dist}/jackson-mapper-lgpl-${IMPL_VERSION}.jar.asc" type="jar.asc"  />
+      <attach file="${dir.dist}/jackson-mapper-lgpl-${IMPL_VERSION}.pom.asc" type="pom.asc"  />
       <attach file="${dir.dist}/jackson-mapper-lgpl-${IMPL_VERSION}-sources.jar" type="jar" classifier="sources" />
+      <attach file="${dir.dist}/jackson-mapper-lgpl-${IMPL_VERSION}-sources.jar.asc" type="jar.asc" classifier="sources" />
       <attach file="${dir.dist}/jackson-mapper-lgpl-${IMPL_VERSION}-javadoc.jar" type="jar" classifier="javadoc" />
+      <attach file="${dir.dist}/jackson-mapper-lgpl-${IMPL_VERSION}-javadoc.jar.asc" type="jar.asc" classifier="javadoc" />
     </artifact:deploy>
 
     <artifact:deploy pomRefId="pom.jaxrs" uniqueVersion="false"
      file="${dir.dist}/jackson-jaxrs-${IMPL_VERSION}.jar"
    >
       <remoteRepository refid="repo.release" />
+      <attach file="${dir.dist}/jackson-jaxrs-${IMPL_VERSION}.jar.asc" type="jar.asc" />
+      <attach file="${dir.dist}/jackson-jaxrs-${IMPL_VERSION}.pom.asc" type="pom.asc" />
       <attach file="${dir.dist}/jackson-jaxrs-${IMPL_VERSION}-sources.jar" type="jar" classifier="sources" />
+      <attach file="${dir.dist}/jackson-jaxrs-${IMPL_VERSION}-sources.jar.asc" type="jar.asc" classifier="sources" />
       <attach file="${dir.dist}/jackson-jaxrs-${IMPL_VERSION}-javadoc.jar" type="jar" classifier="javadoc" />
+      <attach file="${dir.dist}/jackson-jaxrs-${IMPL_VERSION}-javadoc.jar.asc" type="jar.asc" classifier="javadoc" />
     </artifact:deploy>
 
     <artifact:deploy pomRefId="pom.xc" uniqueVersion="false"
      file="${dir.dist}/jackson-xc-${IMPL_VERSION}.jar"
    >
       <remoteRepository refid="repo.release" />
+      <attach file="${dir.dist}/jackson-xc-${IMPL_VERSION}.jar.asc" type="jar.asc" />
+      <attach file="${dir.dist}/jackson-xc-${IMPL_VERSION}.pom.asc" type="pom.asc" />
       <attach file="${dir.dist}/jackson-xc-${IMPL_VERSION}-sources.jar" type="jar" classifier="sources" />
+      <attach file="${dir.dist}/jackson-xc-${IMPL_VERSION}-sources.jar.asc" type="jar.asc" classifier="sources" />
       <attach file="${dir.dist}/jackson-xc-${IMPL_VERSION}-javadoc.jar" type="jar" classifier="javadoc" />
+      <attach file="${dir.dist}/jackson-xc-${IMPL_VERSION}-javadoc.jar.asc" type="jar.asc" classifier="javadoc" />
     </artifact:deploy>
 
     <artifact:deploy pomRefId="pom.smile" uniqueVersion="false"
      file="${dir.dist}/jackson-smile-${IMPL_VERSION}.jar"
    >
       <remoteRepository refid="repo.release" />
+      <attach file="${dir.dist}/jackson-smile-${IMPL_VERSION}.jar.asc" type="jar.asc" />
+      <attach file="${dir.dist}/jackson-smile-${IMPL_VERSION}.pom.asc" type="pom.asc" />
       <attach file="${dir.dist}/jackson-smile-${IMPL_VERSION}-sources.jar" type="jar" classifier="sources" />
+      <attach file="${dir.dist}/jackson-smile-${IMPL_VERSION}-sources.jar.asc" type="jar.asc" classifier="sources" />
       <attach file="${dir.dist}/jackson-smile-${IMPL_VERSION}-javadoc.jar" type="jar" classifier="javadoc" />
+      <attach file="${dir.dist}/jackson-smile-${IMPL_VERSION}-javadoc.jar.asc" type="jar.asc" classifier="javadoc" />
     </artifact:deploy>
 
     <artifact:deploy pomRefId="pom.mrbean" uniqueVersion="false"
      file="${dir.dist}/jackson-mrbean-${IMPL_VERSION}.jar"
    >
       <remoteRepository refid="repo.release" />
+      <attach file="${dir.dist}/jackson-mrbean-${IMPL_VERSION}.jar.asc" type="jar.asc" />
+      <attach file="${dir.dist}/jackson-mrbean-${IMPL_VERSION}.pom.asc" type="pom.asc" />
       <attach file="${dir.dist}/jackson-mrbean-${IMPL_VERSION}-sources.jar" type="jar" classifier="sources" />
+      <attach file="${dir.dist}/jackson-mrbean-${IMPL_VERSION}-sources.jar.asc" type="jar.asc" classifier="sources" />
       <attach file="${dir.dist}/jackson-mrbean-${IMPL_VERSION}-javadoc.jar" type="jar" classifier="javadoc" />
+      <attach file="${dir.dist}/jackson-mrbean-${IMPL_VERSION}-javadoc.jar.asc" type="jar.asc" classifier="javadoc" />
     </artifact:deploy>
 
   </target>
