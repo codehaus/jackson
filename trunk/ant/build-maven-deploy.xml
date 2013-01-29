@@ -54,7 +54,7 @@
       url="https://oss.sonatype.org/service/local/staging/deploy/maven2/"
 -->
     <artifact:remoteRepository id="repo.release"
-      url="https://nexus.codehaus.org/service/local/staging/deploy/maven2/"
+      url="https://oss.sonatype.org/service/local/staging/deploy/maven2/"
    >
       <authentication username="${user}" password="${password}" />
       <releases enabled="true"/> 
@@ -67,7 +67,7 @@
       url="https://oss.sonatype.org/content/repositories/snapshots"
 -->
     <artifact:remoteRepository id="repo.snapshot"
-      url="https://nexus.codehaus.org/content/repositories/snapshots/"
+      url="https://oss.sonatype.org/content/repositories/snapshots"
    >
       <authentication username="${user}" password="${password}" />
       <releases enabled="false"/> 
@@ -176,6 +176,7 @@
    >
       <remoteRepository refid="repo.release" />
       <attach file="${dir.dist}/jackson-core-asl-${IMPL_VERSION}-sources.jar" type="jar" classifier="sources" />
+      <attach file="${dir.dist}/jackson-core-asl-${IMPL_VERSION}-javadoc.jar" type="jar" classifier="javadoc" />
     </artifact:deploy>
 
     <artifact:deploy pomRefId="pom.asl.mapper" uniqueVersion="false"
@@ -183,6 +184,7 @@
    >
       <remoteRepository refid="repo.release" />
       <attach file="${dir.dist}/jackson-mapper-asl-${IMPL_VERSION}-sources.jar" type="jar" classifier="sources" />
+      <attach file="${dir.dist}/jackson-mapper-asl-${IMPL_VERSION}-javadoc.jar" type="jar" classifier="javadoc" />
     </artifact:deploy>
 
     <artifact:deploy pomRefId="pom.lgpl.core" uniqueVersion="false"
@@ -190,6 +192,7 @@
    >
       <remoteRepository refid="repo.release" />
       <attach file="${dir.dist}/jackson-core-lgpl-${IMPL_VERSION}-sources.jar" type="jar" classifier="sources" />
+      <attach file="${dir.dist}/jackson-core-lgpl-${IMPL_VERSION}-javadoc.jar" type="jar" classifier="javadoc" />
     </artifact:deploy>
 
     <artifact:deploy pomRefId="pom.lgpl.mapper" uniqueVersion="false"
@@ -197,6 +200,7 @@
    >
       <remoteRepository refid="repo.release" />
       <attach file="${dir.dist}/jackson-mapper-lgpl-${IMPL_VERSION}-sources.jar" type="jar" classifier="sources" />
+      <attach file="${dir.dist}/jackson-mapper-lgpl-${IMPL_VERSION}-javadoc.jar" type="jar" classifier="javadoc" />
     </artifact:deploy>
 
     <artifact:deploy pomRefId="pom.jaxrs" uniqueVersion="false"
@@ -204,6 +208,7 @@
    >
       <remoteRepository refid="repo.release" />
       <attach file="${dir.dist}/jackson-jaxrs-${IMPL_VERSION}-sources.jar" type="jar" classifier="sources" />
+      <attach file="${dir.dist}/jackson-jaxrs-${IMPL_VERSION}-javadoc.jar" type="jar" classifier="javadoc" />
     </artifact:deploy>
 
     <artifact:deploy pomRefId="pom.xc" uniqueVersion="false"
@@ -211,6 +216,7 @@
    >
       <remoteRepository refid="repo.release" />
       <attach file="${dir.dist}/jackson-xc-${IMPL_VERSION}-sources.jar" type="jar" classifier="sources" />
+      <attach file="${dir.dist}/jackson-xc-${IMPL_VERSION}-javadoc.jar" type="jar" classifier="javadoc" />
     </artifact:deploy>
 
     <artifact:deploy pomRefId="pom.smile" uniqueVersion="false"
@@ -218,6 +224,7 @@
    >
       <remoteRepository refid="repo.release" />
       <attach file="${dir.dist}/jackson-smile-${IMPL_VERSION}-sources.jar" type="jar" classifier="sources" />
+      <attach file="${dir.dist}/jackson-smile-${IMPL_VERSION}-javadoc.jar" type="jar" classifier="javadoc" />
     </artifact:deploy>
 
     <artifact:deploy pomRefId="pom.mrbean" uniqueVersion="false"
@@ -225,6 +232,7 @@
    >
       <remoteRepository refid="repo.release" />
       <attach file="${dir.dist}/jackson-mrbean-${IMPL_VERSION}-sources.jar" type="jar" classifier="sources" />
+      <attach file="${dir.dist}/jackson-mrbean-${IMPL_VERSION}-javadoc.jar" type="jar" classifier="javadoc" />
     </artifact:deploy>
 
   </target>
