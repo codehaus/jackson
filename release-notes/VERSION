@@ -1,8 +1,15 @@
-Version: 1.9.12
-Release date: 25-Jan-2013
-Description:
+Version: 1.9.13
+Release date: xx-xxx-2013
 
-  Another patch release for 1.9.
+Another patch release for 1.9.
+
+Fixes:
+
+------------------------------------------------------------------------
+=== History: ===
+------------------------------------------------------------------------
+
+1.9.12 (25-Jan-2013)
 
 Fixes:
 
@@ -17,10 +24,6 @@ Fixes:
  (reported by matjazs@github)
 * [Issue#42]: NPE in UTF-32 parser
  (reported by James R)
-
-------------------------------------------------------------------------
-=== History: ===
-------------------------------------------------------------------------
 
 1.9.11 (06-Nov-2012)
 
