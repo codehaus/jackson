@@ -5,6 +5,9 @@ Another patch release for 1.9.
 
 Fixes:
 
+* [JACKSON-887]: StackOverflow with parameterized sub-class field
+ (reported by Alexander M)
+
 ------------------------------------------------------------------------
 === History: ===
 ------------------------------------------------------------------------
