@@ -3,6 +3,7 @@ package org.codehaus.jackson.impl;
 import main.BaseTest;
 
 import org.codehaus.jackson.*;
+import org.codehaus.jackson.io.SerializedString;
 
 import java.io.*;
 import java.util.Random;
@@ -167,5 +168,27 @@ public class TestUtf8Parser
         assertEquals(VALUE.length(), act.length());
         assertEquals(VALUE, act);
         jp.close();
+    }
+
+    // [JACKSON-889]
+    public void testNextFieldName() throws IOException
+    {
+        JsonFactory f = new JsonFactory();
+        SerializedString id = new SerializedString("id");
+
+        ByteArrayOutputStream os = new ByteArrayOutputStream();
+        os.write('{');
+        for (int i = 0; i < 3994; i++) {
+            os.write(' ');
+        }
+        os.write("\"id\":2".getBytes("UTF-8"));
+        os.write('}');
+
+        JsonParser parser = f.createJsonParser(new ByteArrayInputStream(os.toByteArray()));
+        assertEquals(parser.nextToken(), JsonToken.START_OBJECT);
+        assertTrue(parser.nextFieldName(id));
+        assertEquals(parser.nextToken(), JsonToken.VALUE_NUMBER_INT);
+        assertEquals(parser.nextToken(), JsonToken.END_OBJECT);
+        parser.close();
     }
 }

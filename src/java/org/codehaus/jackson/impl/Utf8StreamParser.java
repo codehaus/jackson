@@ -730,7 +730,7 @@ public final class Utf8StreamParser
     {
         // very first thing: common case, colon, value, no white space
         int i;
-        if (_inputPtr < _inputEnd && _inputBuffer[_inputPtr] == INT_COLON) { // fast case first
+        if (_inputPtr < (_inputEnd-1) && _inputBuffer[_inputPtr] == INT_COLON) { // fast case first
             ++_inputPtr;
             i = _inputBuffer[_inputPtr++];
             if (i == INT_QUOTE) {
