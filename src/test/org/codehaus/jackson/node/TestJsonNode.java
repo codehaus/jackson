@@ -78,6 +78,7 @@ public class TestJsonNode
         assertSame(f, BooleanNode.valueOf(false));
         assertStandardEquals(f);
         assertFalse(f.getBooleanValue());
+        assertFalse(f.asBoolean());
         assertEquals("false", f.asText());
         assertEquals(JsonToken.VALUE_FALSE, f.asToken());
 
@@ -88,6 +89,7 @@ public class TestJsonNode
         assertSame(t, BooleanNode.valueOf(true));
         assertStandardEquals(t);
         assertTrue(t.getBooleanValue());
+        assertTrue(t.asBoolean());
         assertEquals("true", t.asText());
         assertEquals(JsonToken.VALUE_TRUE, t.asToken());
 
