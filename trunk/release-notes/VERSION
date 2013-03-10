@@ -1,5 +1,5 @@
 Version: 1.9.13
-Release date: xx-xxx-2013
+Release date: 10-Mar-2013
 
 Another patch release for 1.9.
 
@@ -8,15 +8,14 @@ Fixes:
 * [JACKSON-887]: StackOverflow with parameterized sub-class field
  (reported by Alexander M)
 * [JACKSON-889]: Parsing error in 'nextFieldName()'
-* ???: Add support for updating values of polymorphic types.
+* [Issue#182]: Add support for updating values of polymorphic types.
+ (reported by nssheth@github)
 
 ------------------------------------------------------------------------
 === History: ===
 ------------------------------------------------------------------------
 
 1.9.12 (25-Jan-2013)
-
-Fixes:
 
 * One more case for [JACKSON-802] (class loading using Class.forName())
 * [JACKSON-875]: Enums are not properly serialized when
@@ -32,53 +31,43 @@ Fixes:
 
 1.9.11 (06-Nov-2012)
 
-Fixes:
-
 * [Issue#8]: Problem with 'SmileGenerator', addSeenName()
 
 1.9.10 (23-Sep-2012)
 
-Fixes:
-  * [JACKSON-855]: add StackOverflowError as root cause
-  * [JACKSON-867]: missing Export-Package header for "org.codehaus.jackson.map.ext"
+* [JACKSON-855]: add StackOverflowError as root cause
+* [JACKSON-867]: missing Export-Package header for "org.codehaus.jackson.map.ext"
    (reported by Duncan B)
-  * [Issue#57]: Allow serialization of JDK proxy types
-  * [Issue#71]: java.util.concurrent.ConcurrentNavigableMap support was failing
+* [Issue#57]: Allow serialization of JDK proxy types
+* [Issue#71]: java.util.concurrent.ConcurrentNavigableMap support was failing
 
 1.9.9 (28-Jul-2012)
 
-Fixes:
-  * [Issue-21]: Improve handling of String hash code collisions for
+* [Issue-21]: Improve handling of String hash code collisions for
    symbol tables; exception for degenerate cases (attacks), improvements
    for calculation otherwise
-  * [Issue-24]: ArrayIndexOutOfBoundsException with TextBuffer.append()
-  * [JACKSON-853]: JsonStringEncoder.quoteAsString() problem with buffer boundary
-
-Other:
-  * Improved multi-threader handling of byte-based symbol table; should
-    reduce lock contention for heavily multi-threaded cases, esp. when
-    parsing short documents.
+* [Issue-24]: ArrayIndexOutOfBoundsException with TextBuffer.append()
+* [JACKSON-853]: JsonStringEncoder.quoteAsString() problem with buffer boundary
+* Improved multi-threader handling of byte-based symbol table; should
+  reduce lock contention for heavily multi-threaded cases, esp. when
+  parsing short documents.
 
 
 1.9.8 (28-Jun-2012)
 
-Fixes:
-
-  * [Issue-6]: element count for PrettyPrinter, endObject wrong
+* [Issue-6]: element count for PrettyPrinter, endObject wrong
    (reported by "thebluemountain")
-  * [JACKSON-838]: Utf8StreamParser._reportInvalidToken() skips letters
+* [JACKSON-838]: Utf8StreamParser._reportInvalidToken() skips letters
     from reported token name
    (reported by Lóránt Pintér)
-  * [JACKSON-841] Data is doubled in SegmentedStringWriter output
+* [JACKSON-841] Data is doubled in SegmentedStringWriter output
    (reported by Scott S)
-  * [JACKSON-842] ArrayIndexOutOfBoundsException when skipping C-style comments
+* [JACKSON-842] ArrayIndexOutOfBoundsException when skipping C-style comments
    (reported by Sebastien R)
-  * [JACKSON-845] Problem with Object[][] deserialization, default typing
+* [JACKSON-845] Problem with Object[][] deserialization, default typing
    (reported by Pawel J)
 
 1.9.7 (02-May-2012)
-
-  Fixes:
 
   * [Smile/Issue-2] SmileParser failed to decode surrogate-pair characters for
     long Strings
