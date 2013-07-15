@@ -1,19 +1,19 @@
-Version: 1.9.13
-Release date: 14-Jul-2013
+Version: 1.9.14
+Release date: xx-xxx-2013
 
-Another patch release for 1.9.
+One more patch release for 1.9...
 
-Fixes:
+------------------------------------------------------------------------
+=== History: ===
+------------------------------------------------------------------------
+
+1.9.13 (14-Jul-2013)
 
 * [JACKSON-887]: StackOverflow with parameterized sub-class field
  (reported by Alexander M)
 * [JACKSON-889]: Parsing error in 'nextFieldName()'
 * [Issue#182]: Add support for updating values of polymorphic types.
  (reported by nssheth@github)
-
-------------------------------------------------------------------------
-=== History: ===
-------------------------------------------------------------------------
 
 1.9.12 (25-Jan-2013)
 
