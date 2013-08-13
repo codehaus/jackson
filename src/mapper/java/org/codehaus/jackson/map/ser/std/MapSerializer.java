@@ -344,7 +344,11 @@ public class MapSerializer
                 if (cc == prevValueClass) {
                     currSerializer = prevValueSerializer;
                 } else {
-                    currSerializer = provider.findValueSerializer(cc, _property);
+                    if (_valueType.hasGenericTypes()) {
+                        currSerializer = provider.findValueSerializer(provider.constructSpecializedType(_valueType, cc), _property);
+                    } else {
+                        currSerializer = provider.findValueSerializer(cc, _property);
+                    }
                     prevValueSerializer = currSerializer;
                     prevValueClass = cc;
                 }
@@ -417,6 +421,5 @@ public class MapSerializer
         }
         return result.serializer;
     }
-
 }
 

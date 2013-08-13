@@ -39,6 +39,33 @@ public class TestDefaultForMaps
         public Map<MapKey,List<Object>> map;
     }
 
+    // // For #234
+    
+    static class ItemList {
+        public String value;
+        public List<ItemList> childItems = new LinkedList<ItemList>();
+
+        public void addChildItem(ItemList l) { childItems.add(l); }
+    }
+
+    static class ItemMap
+    {
+        public String value;
+
+        public Map<String, List<ItemMap>> childItems = new HashMap<String, List<ItemMap>>();
+
+        public void addChildItem(String key, ItemMap childItem) {
+          List<ItemMap> items;
+          if (childItems.containsKey(key)) {
+              items = childItems.get(key);
+          } else {
+              items = new ArrayList<ItemMap>();
+          }
+          items.add(childItem);
+          childItems.put(key, items);
+        }
+    }
+
     /*
     /**********************************************************
     /* Unit tests
@@ -93,5 +120,39 @@ public class TestDefaultForMaps
         ObjectMapper mapper = new ObjectMapper();
         return TypeNameIdResolver.construct(mapper.getDeserializationConfig(),
                 TypeFactory.defaultInstance().constructType(Object.class), subtypes, forSerialization, !forSerialization);
+    }
+
+    // // For #234:
+    
+    public void testList() throws Exception
+    {
+        final ObjectMapper mapper = new ObjectMapper();
+        mapper.enableDefaultTyping(ObjectMapper.DefaultTyping.OBJECT_AND_NON_CONCRETE, JsonTypeInfo.As.PROPERTY);
+        ItemList child = new ItemList();
+        child.value = "I am child";
+
+        ItemList parent = new ItemList();
+        parent.value = "I am parent";
+        parent.addChildItem(child);
+        String json = mapper.writerWithDefaultPrettyPrinter().writeValueAsString(parent);
+
+        Object o = mapper.readValue(json, ItemList.class);
+        assertNotNull(o);
+    }
+
+    public void testMap() throws Exception
+    {
+        final ObjectMapper mapper = new ObjectMapper();
+        mapper.enableDefaultTyping(ObjectMapper.DefaultTyping.OBJECT_AND_NON_CONCRETE, JsonTypeInfo.As.PROPERTY);
+        ItemMap child = new ItemMap();
+        child.value = "I am child";
+
+        ItemMap parent = new ItemMap();
+        parent.value = "I am parent";
+        parent.addChildItem("child", child);
+
+        String json = mapper.writerWithDefaultPrettyPrinter().writeValueAsString(parent);
+        Object o = mapper.readValue(json, ItemMap.class);
+        assertNotNull(o);
     }
 }
