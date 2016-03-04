@@ -12,7 +12,7 @@ import java.lang.annotation.Target;
  * not be consider a "getter", "setter" or "creator".
  *<p>
  * In addition, starting with Jackson 1.9, if this is the only annotation
- * associated with a property, it will also cause cause the whole
+ * associated with a property, it will also cause the whole
  * property to be ignored: that is, if setter has this annotation and
  * getter has no annotations, getter is also effectively ignored.
  * It is still possible for different accessors to use different
