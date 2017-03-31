@@ -34,19 +34,19 @@ public enum JsonToken
     START_OBJECT("{"),
         
     /**
-     * START_OBJECT is returned when encountering '}'
+     * END_OBJECT is returned when encountering '}'
      * which signals ending of an Object value
      */
     END_OBJECT("}"),
         
     /**
-     * START_OBJECT is returned when encountering '['
+     * START_ARRAY is returned when encountering '['
      * which signals starting of an Array value
      */
     START_ARRAY("["),
 
     /**
-     * START_OBJECT is returned when encountering ']'
+     * END_ARRAY is returned when encountering ']'
      * which signals ending of an Array value
      */
     END_ARRAY("]"),
@@ -58,7 +58,7 @@ public enum JsonToken
     FIELD_NAME(null),
         
     /**
-     * Placeholder token returned when the input source has a concept
+     * VALUE_EMBEDDED_OBJECT token returned when the input source has a concept
      * of embedded Object that are not accessible as usual structure
      * (of starting with {@link #START_OBJECT}, having values, ending with
      * {@link #END_OBJECT}), but as "raw" objects.
@@ -87,7 +87,7 @@ public enum JsonToken
     VALUE_NUMBER_INT(null),
 
     /**
-     * VALUE_NUMBER_INT is returned when a numeric token other
+     * VALUE_NUMBER_FLOAT is returned when a numeric token other
      * that is not an integer is encountered: that is, a number that does
      * have floating point or exponent marker in it, in addition
      * to one or more digits.
