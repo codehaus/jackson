@@ -100,7 +100,9 @@ test.run.interop, test.run.jaxrs, test.run.failing, test.run.versions"
     />
     <target name="test.run.main" depends="test.compile">
        <!-- showoutput 'yes' to allow outputting debug msgs... -->
-        <junit fork="no" printsummary="yes" haltonfailure="no" showoutput="yes">
+       <junit fork="no" printsummary="yes" haltonfailure="no" showoutput="yes">
+	   <sysproperty key="jackson.deserialization.whitelist.packages"
+            value="org.codehaus.jackson,java.awt.Point,java.io.File,java.util.concurrent.atomic,java.io.Serializable"/>
             <batchtest fork="no" todir="${dir.test.xmlresults}">
                 <fileset dir="${dir.test.classes}">
                     <!-- Need to exclude inner classes... -->
@@ -129,7 +131,9 @@ test.run.interop, test.run.jaxrs, test.run.failing, test.run.versions"
 
     <target name="test.run.interop" depends="test.compile">
         <!-- for interop tests, yes, we need to fork (classloading issues) -->
-        <junit fork="yes" printsummary="yes" haltonfailure="no" showoutput="yes">
+	<junit fork="yes" printsummary="yes" haltonfailure="no" showoutput="yes">
+	    <sysproperty key="jackson.deserialization.whitelist.packages"
+            	value="org.codehaus.jackson,GBean"/>
             <batchtest fork="no" todir="${dir.test.xmlresults}">
                 <fileset dir="${dir.test.classes}">
                     <exclude name="**/*$*.class"/>
@@ -154,7 +158,9 @@ test.run.interop, test.run.jaxrs, test.run.failing, test.run.versions"
 
     <target name="test.run.jaxrs" depends="test.compile">
         <!-- And finally, minimal testing for jax-rs too -->
-        <junit fork="yes" printsummary="yes" haltonfailure="no" showoutput="yes">
+	<junit fork="yes" printsummary="yes" haltonfailure="no" showoutput="yes">
+	    <sysproperty key="jackson.deserialization.whitelist.packages"
+                value="org.codehaus.jackson"/>
             <batchtest fork="no" todir="${dir.test.xmlresults}">
                 <fileset dir="${dir.test.classes}">
                     <exclude name="**/*$*.class"/>
