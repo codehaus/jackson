@@ -904,7 +904,7 @@ public class BeanDeserializerFactory
                     throw new IllegalArgumentException("Delegated constructor with Injectables not yet supported (see [JACKSON-712]) for "
                             +ctor);
                 } else { // otherwise, epic fail
-                    throw new IllegalArgumentException("Argument #"+nonAnnotatedParam.getIndex()+" of constructor "+ctor+" has no property name annotation; must have name when multiple-paramater constructor annotated as Creator");
+                    throw new IllegalArgumentException("Argument #"+nonAnnotatedParam.getIndex()+" of constructor "+ctor+" has no property name annotation; must have name when multiple-parameter constructor annotated as Creator");
                 }
             }
             if (annotationFound) {
@@ -1006,7 +1006,7 @@ public class BeanDeserializerFactory
                 Object injectableId = intr.findInjectableValueId(param);
                 // At this point, name annotation is NOT optional
                 if ((name == null || name.length() == 0) && (injectableId == null)) {
-                    throw new IllegalArgumentException("Argument #"+i+" of factory method "+factory+" has no property name annotation; must have when multiple-paramater static method annotated as Creator");
+                    throw new IllegalArgumentException("Argument #"+i+" of factory method "+factory+" has no property name annotation; must have when multiple-parameter static method annotated as Creator");
                 }
                 properties[i] = constructCreatorProperty(config, beanDesc, name, i, param, injectableId);
             }
