@@ -2,7 +2,9 @@ package org.codehaus.jackson.map.ext;
 
 import java.io.StringReader;
 
+import javax.xml.XMLConstants;
 import javax.xml.parsers.DocumentBuilderFactory;
+import javax.xml.parsers.ParserConfigurationException;
 
 import org.codehaus.jackson.map.DeserializationContext;
 import org.codehaus.jackson.map.deser.std.FromStringDeserializer;
@@ -22,6 +24,11 @@ public abstract class DOMDeserializer<T> extends FromStringDeserializer<T>
         _parserFactory = DocumentBuilderFactory.newInstance();
         // yup, only cave men do XML without recognizing namespaces...
         _parserFactory.setNamespaceAware(true);
+        try {
+            _parserFactory.setFeature(XMLConstants.FEATURE_SECURE_PROCESSING, true);
+        } catch (ParserConfigurationException e) {
+            e.printStackTrace();
+        }
     }
 
     protected DOMDeserializer(Class<T> cls) { super(cls); }
